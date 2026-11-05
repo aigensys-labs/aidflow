@@ -187,4 +187,18 @@ AIDflow decouples **user intent** from **mathematical execution** via a three-la
 
 ---
 
+## Citation
+
+```bibtex
+@software{AIDflow,
+  author = {Michal Ricar, PhD},
+  year = {2026},
+  publisher = {AIGENSYS s.r.o.},
+  title = {AIDflow: Automated Interactive Development Framework for Regulated Scorecard Orchestration},
+  url = {https://github.com/aigensys-labs/aidflow}
+}
+```
+
+---
+
 *Built for practitioners who build models that must survive a regulatory audit.*

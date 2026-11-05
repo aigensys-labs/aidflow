@@ -28,7 +28,7 @@ at instantiation: `worker(param1=1, param2=2)`.
 **`target`** : *`str`*
 <div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The name of the target (label) column in the input dataset. Specifies the dependent variable<br />the model will learn to predict.</div>
 
-**`input_data`** : *`str | Path`*
+**`input_data`** : *`str`*
 <div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Defines path and format of the input dataset.<br />1. file: file name (if in data) or full path<br />2. spark: connection e.g. catalog.db.table_name<br />3. db: connection e.g. postgresql://user:pass@localhost:5432/mydb<br />When local files are used:<br />• Files in `data` folder can be loaded by their filename only, e.g. *test.csv*.<br />• Files located out of the main project dir have to use OS path to the data file.</div>
 
 **`input_source`** : *`str = "file"`*
