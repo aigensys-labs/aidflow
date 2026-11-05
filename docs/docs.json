@@ -315,5 +315,6 @@
   },
   "footerSocials": {
     "github": "https://github.com/aigensys-labs/aidflow"
-  }
+  },
+  "description": "A scorecard framework where a human directs and an AI agent executes the full pipeline. Stability-first, audit-ready, deployable. If your model must survive a committee review, this is your dev environment."
 }
