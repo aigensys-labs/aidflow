@@ -8,7 +8,10 @@
 
 **Automated Interactive Development Framework**<br />**Human-in-the-Loop Scorecard Orchestration for Regulated ML**
 
-![PyPI](https://img.shields.io/pypi/v/aidflow?color=blue&cache=300)![Python](https://img.shields.io/badge/python-3.12%2B-blue)![License](https://img.shields.io/badge/License-FSL--1.1-blue)![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![PyPI](https://img.shields.io/pypi/v/aidflow?color=blue&cache=300)](https://pypi.org/project/aidflow/)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://pypi.org/project/aidflow/)
+[![License](https://img.shields.io/badge/License-FSL--1.1-blue)](https://fsl.software/)
+[![Code Style](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)
 
 </div>
 
@@ -16,7 +19,7 @@
 
 *Built over 15 years of credit scoring, fintech R&D, and regulatory practice.*
 
-<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow-preview.gif" alt="AIDflow-preview">
+<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow-preview.gif" alt="AIDflow" width="550">
 
 <br>
 
