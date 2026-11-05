@@ -733,7 +733,7 @@ class Parameters:
 
     **Genesis**
 
-    project : str    
+    project : str
         Unique identifier for the project. 
         Used as a root directory of model artifacts, and logging files to ensure traceability.
 
@@ -741,7 +741,7 @@ class Parameters:
         The name of the target (label) column in the input dataset. Specifies the dependent variable
         the model will learn to predict.
         
-    input_data : str | Path
+    input_data : str
         Defines path and format of the input dataset. 
         1. file: file name (if in data) or full path
         2. spark: connection e.g. catalog.db.table_name
