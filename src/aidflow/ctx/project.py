@@ -135,8 +135,25 @@ class ProjectContext:
     
     It supports a dual-mode architecture:
     1. **UI Mode (HTML)**: Launches `ProjectGenesis` and `PipelineConfigurator` 
-       web panels for interactive parameter tuning.
-    2. **Script Mode**: Uses dictionary-based arguments passed directly to the setup.
+       web panels for interactive parameter tuning. Kwargs pre-fill the interactive
+      panels for visual verification.
+    2. **Script Mode**: Kwargs values are applied directly for scripted/headless 
+      execution.
+
+    Precedence Hierarchy
+    --------------------
+    Configuration values are resolved by precedence (highest
+    first):
+    1. Kwargs — from the current `genesis()` / `params()` call.
+    2. Saved state — persisted from a prior session - `UI Mode only`.
+    3. Schema defaults — fallback values from the schema layer. 
+    
+    Entry Points
+    ------------
+    AIDflow Parametrization methods:
+    - **genesis**: Initializes the gateway layer (identity + data loading).
+    - **params**: Initializes the pipeline hyperparameters and runtime context. 
+    - **get_setup**: Returns the final merged `Parameters` object used for training.      
 
     Parameters
     ----------
@@ -146,18 +163,6 @@ class ProjectContext:
     css_id : str, default='v1'
         A unique ID suffix used to generate CSS panel identifiers 
         (e.g., 'gateway-v1', 'config-v1').
-
-    Methods
-    -------
-    genesis(theme, kind, **kwargs)
-        Initializes the interactive gateway or sets up script-mode parameters.
-
-    params(theme, **kwargs)
-        Launches the configuration UI or applies script-mode parameters, then 
-        initializes the runtime context.
-
-    get_setup()
-        Returns the final merged `Parameters` object used for training.
 
     Examples
     --------    
