@@ -19,7 +19,7 @@
 
 *Built over 15 years of credit scoring, fintech R&D, and regulatory practice.*
 
-<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow-preview.gif" alt="AIDflow" width="500">
+[<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow-preview.gif" alt="AIDflow" width="500">](https://github.com/aigensys-labs/aidflow/blob/main/docs/assets/aidflow-preview.gif)
 
 <br>
 
