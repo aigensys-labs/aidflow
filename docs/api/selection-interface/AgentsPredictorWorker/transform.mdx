@@ -1,0 +1,38 @@
+---
+title: "AgentsPredictorWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentsPredictorWorker.transform</strong>(self, data, agents=tuple(AGENTS)) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\predict\agents_predictor.py#L451)
+</div>
+
+Predict with one or more agents on a new dataset.
+
+Produces synchronized probability predictions for the
+requested agents on any data sample. Use this to:
+- Score a new OOT window.
+- Predict on a subset of agents (e.g., the top 2).
+- Generate predictions for a different segment.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The dataset to be scored (must contain the features<br />required by the agents).</div>
+
+**`agents`** : *`tuple`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Subset of agents to engage. Defaults to all trained<br />agents.</div>
+
+
+#### Returns
+
+*`AgentsPredictorResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>A unified result object containing synchronized<br />predictions for all requested agents.</div>
+
+
+<Note>
+**No State Change**: This method does not modify the
+fitted state. It produces a fresh prediction on the new
+data. The original fit results remain accessible via
+`.fitted`.
+</Note>

@@ -1,0 +1,259 @@
+:root {
+  /* 1. Typography & Pixel Lock */
+  --md-text-font-family: "Inter", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  --md-code-font-family: "JetBrains Mono", "Roboto Mono", Consolas, monospace;
+  
+  /* 2. Color Palette */
+  --md-typeset-color: #374151;          /* Slate-gray readable body text */
+  --md-accent-fg-color: #2563eb;        /* Vibrant blue for active items */
+  --md-accent-bg-color: #e0edff;        /* Soft blue active background */
+  --nav-hover-bg: #e0edff;
+}
+
+/* 3. Dark Mode Adaptive Inversions */
+[data-md-color-scheme="slate"] {
+  --md-typeset-color: #cbd5e1;
+  --md-accent-fg-color: #60a5fa;
+  --md-accent-bg-color: #1e293b;
+  --nav-hover-bg: #1e293b;
+}
+
+/* Standard body text */
+.md-typeset {
+  font-size: 16px !important;
+  font-weight: 400;
+  color: var(--md-typeset-color) !important;
+}
+
+/* 4. Constrain Main Layout Width */
+.md-grid {
+  max-width: 1150px;
+}
+
+/* 5. Hide the Right-Side Table of Contents */
+.md-sidebar--secondary {
+  display: none !important;
+}
+
+/* 6. Headings */
+.md-typeset h1 {
+  font-size: 30px !important;
+  font-weight: 800;
+  color: var(--md-default-fg-color);
+  border-bottom: none !important;  
+  margin-top: 0;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h2 {
+  font-size: 24px !important;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  border-bottom: none !important;
+  margin-top: 36px;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h3 {
+  font-size: 18px !important;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+/* 7. Paragraph Spacing */
+.md-typeset p {
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+/* 8. Left Sidebar */
+.md-nav__item--section > .md-nav__link,
+.md-nav__title {
+  font-size: 16px;
+  font-weight: 700 !important; 
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em;
+  color: var(--md-typeset-color) !important;
+}
+
+.md-nav__link {
+  font-size: 16px;
+  font-weight: 400 !important; 
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.md-nav__link--active {
+  font-weight: 600;
+  color: var(--md-accent-fg-color) !important;
+  background-color: var(--nav-hover-bg);
+}
+
+.md-nav__link:hover {
+  font-weight: 600;
+  color: var(--md-default-fg-color) !important;
+  background-color: var(--nav-hover-bg);
+  
+}
+
+/* 9. Dark Mode Pagination */
+.md-footer__link {
+  color: var(--md-typeset-color) !important;
+}
+.md-footer__direction {
+  color: #9ca3af !important;
+}
+
+/* 10. Header Backgrounds & Color Adaptations */
+
+/* --- Light Mode Header --- */
+.md-header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.md-header__title {
+  flex-grow: 0 !important;
+  margin-right: 2rem !important;
+  color: #111827 !important;
+}
+
+.md-header__button {
+  color: #374151 !important;
+}
+
+/* --- Dark Mode Header Overrides --- */
+[data-md-color-scheme="slate"] .md-header {
+  background-color: #0f172a !important;
+  border-bottom: 1px solid #1e293b;
+}
+
+[data-md-color-scheme="slate"] .md-header__title,
+[data-md-color-scheme="slate"] .md-header__button {
+  color: #ffffff !important;
+}
+
+/* --- Centered Header Navigation Tabs --- */
+.md-tabs {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  left: 190px !important;            /* Distance from left edge to sit next to logo */
+  height: auto !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  z-index: 10 !important;             /* Keeps tabs behind search overlay */
+  pointer-events: none !important;    /* Pass-through clicks to underlying elements */
+}
+
+.md-tabs__list {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+.md-tabs__item {
+  display: flex !important;
+  align-items: center !important;
+  pointer-events: none !important;
+}
+
+/* Light Mode Tab Links */
+.md-tabs__link {
+  pointer-events: auto !important;   /* Re-enable clicks ONLY on the links */
+  display: inline-flex !important;
+  align-items: center !important;
+  color: #4b5563 !important;         /* Dark gray for light white header */
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 6px 16px !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+}
+
+.md-tabs__link:hover,
+.md-tabs__item--active > .md-tabs__link {
+  color: var(--md-accent-fg-color) !important; /* Active accent blue in light mode */
+  opacity: 1 !important;
+}
+
+/* Dark Mode Tab Link Overrides */
+[data-md-color-scheme="slate"] .md-tabs__link {
+  color: #cbd5e1 !important;         /* Light slate for dark header */
+  opacity: 0.85;
+}
+
+[data-md-color-scheme="slate"] .md-tabs__link:hover,
+[data-md-color-scheme="slate"] .md-tabs__item--active > .md-tabs__link {
+  color: #ffffff !important;         /* Crisp white active state in dark mode */
+  opacity: 1 !important;
+}
+
+/* Push Theme Switcher & Search to the far right edge together */
+.md-header__option {
+  margin-left: auto !important;
+}
+
+.md-search {
+  margin-left: 0 !important;
+}
+
+/* 11. Search Bar Solid Overlay, Stacking & Visibility Fix */
+.md-search {
+  z-index: 30 !important;            /* Places search above tabs (z-index: 10) */
+}
+
+.md-search__inner {
+  z-index: 30 !important;
+}
+
+/* Solid Light Mode Search Box & Text Colors */
+.md-search__form,
+.md-search__output {
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.md-search__input {
+  color: #111827 !important;
+}
+
+.md-search__input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.md-search__icon {
+  color: #4b5563 !important;
+}
+
+/* Solid Dark Mode Search Box & Text Colors */
+[data-md-color-scheme="slate"] .md-search__form,
+[data-md-color-scheme="slate"] .md-search__output {
+  background-color: #0f172a !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-md-color-scheme="slate"] .md-search__input {
+  color: #ffffff !important;
+}
+
+[data-md-color-scheme="slate"] .md-search__input::placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+[data-md-color-scheme="slate"] .md-search__icon {
+  color: #cbd5e1 !important;
+}

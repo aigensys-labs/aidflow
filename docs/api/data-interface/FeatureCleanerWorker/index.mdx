@@ -1,0 +1,189 @@
+---
+title: "FeatureCleanerWorker"
+description: "AID.data.interface.FeatureCleanerWorker"
+---
+
+```python
+from AID.data.interface import FeatureCleanerWorker
+```
+
+Step 1: Feature Quality Screening.
+
+Enforces data standards by cleaning raw datasets and identifying valid 
+numerical and categorical features. This step creates the 'clean' lineage.
+
+#### Parameters
+
+**`inputs`** : *`FeCleanerInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Custom cleaning inputs configuration. If None, automatically resolves        'train.raw', 'test.raw', and 'dtypes.raw' from preceding step.</div>
+
+**`**kwargs`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Additional parameters passed to the FeatureCleaner worker.</div>
+
+
+<Note>
+Inputs full schema can be obtained by `ctx.workers.fe_cleaner.spec` with main params:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>inputs    == None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>pipeline data context</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>train_set != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>custom train data for fe_cleaner training and feature cleaning</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>test_set  != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>custom test data might be provided to apply dtypes by trained model</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>dtypes    != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>custom dtypes of all variables in train_set to apply on train and test</td></tr>
+  </tbody>
+</table>
+</Note>
+
+#### Returns
+
+*`FeatureCleanerWorker`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The populated instance of FeatureCleanerWorker.</div>
+
+
+<Note>
+Populates attributes into the worker context:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>model</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>inputs</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner.spec</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>result</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner.result</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>state</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner.state</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>report</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner.report</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>stats</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner.stats</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>fitter</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.fe_cleaner.fitter</td></tr>
+  </tbody>
+</table>
+</Note>
+
+<Note>
+Registers data into the datasets context:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>data</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.train.clean</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>data</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.test.clean</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>dtypes</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.dtypes.clean</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>dropped</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.dtypes.dropped</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>features</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.features.all.clean</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>features</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.features.num.clean</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>features</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.features.cat.clean</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>stats</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.stats.clean</td></tr>
+  </tbody>
+</table>
+</Note>
+
+#### Examples
+
+Defining the Project Context (Control Plane) & Project Scope:
+
+```python
+import aidflow as aid
+
+ctx = aid.ProjectContext()
+
+ctx.genesis(
+    project      = 'test',
+    input_data   = 'test.csv',
+    target       = 'target',
+    yy_mm        = 'decision_date',
+    yy_mm_format = '%Y-%m-%d'
+)
+ctx.params()
+```
+
+### Worker → Model → Fitter
+Accessing worker's inputs schema → parameters & types (*shown in the display output*):
+
+```python
+ctx.workers.fe_cleaner.spec
+```
+
+Accessing model's fitter options and schema → parameters & types
+(*shown in the display output*):
+
+```python
+ctx.workers.fe_cleaner.fitters
+```
+
+Executing workers with defaults → auto provided by the context:
+
+```python
+ctx.workers.data_loader()   # 0. import data to the context scope
+ctx.workers.fe_cleaner()    # 1. apply cleaning logic to the imported data (0)
+```
+
+Once worker has been executed, thus its main model has been built,    we have access to all populated attributes.
+
+```python
+worker   = ctx.workers.fe_cleaner
+inputs   = worker.spec.inputs
+result   = worker.result
+state    = worker.state
+features = worker.features
+params   = worker.params
+stats    = worker.stats
+fitter   = worker.fitter  # jump to chosen internal fitter
+...
+```
+
+View to model report of executed worker:
+
+```python
+ctx.workers.fe_cleaner.report.show()
+```
+
+### Model → Fitter
+Once worker has been executed, we can obtain internal fitter state    and its parametrization (*shown in the display output*):
+
+```python
+ctx.workers.fe_cleaner.fitter
+```
+
+The fitted fitter provides all populated attributes.
+
+```python
+fitter  = ctx.workers.fe_cleaner.fitter
+params_ = fitter.params
+stats_  = fitter.stats
+```
+
+Direct choice and parametrization of internal fitter:
+
+```python
+fx  = ctx.workers.fe_cleaner.fitters[0]
+prm = dict(
+    max_miss = 0.5,
+    max_1val = 0.6,
+    max_corr = 0.8,
+)
+fe_cleaner = ctx.workers.fe_cleaner(fx_choice = fx, fx_params = prm)
+```
+
+In the experimenting phase, when various time variables might be under testing    (*note that 'time_var2' must be present in the data*):
+
+```python
+cfg = dict(
+    time_var     = 'time_var2',
+    time_format  = '%Y%m%d',
+)
+fe_cleaner = ctx.workers.fe_cleaner(fx_config = cfg)
+```
+
+#### Attributes
+
+<Info>
+  All worker attributes return `None` prior its execution.
+</Info>
+| Attribute | Type | Description |
+| :--- | :--- | :--- |
+| `inputs` | `ModelInput` | Registered populated inputs containing execution timestamps and feature definitions. |
+| `result` | `ModelResult` | Execution output payload containing model predictions and fit results. |
+| `fitter` | `Fitter` | Underlying fitted estimator instance. |
+| `state` | `ModelState` | Consolidated model state (fitter, choice, params, features, report, stats). |
+| `report` | `DashboardInterface` | Interactive report interface. Call `report.show()` to render the visualization dashboard. |
+| `stats` | `FitStats` | Performance metrics and training metadata gathered during fitting. |
+| `features` | `TransResCols` | Feature schema dataclass required for downstream inference. |
+| `params` | `tuple[FitParams, Parameters, ...]` | Tuple of fit settings, execution parameters, optionally transformer parameters. |
+| `choice` | `RegGet.Choice` | Active configuration parameters including internal fitter choice (`fx_choice`). |
+| `model_signature` | `str` | Unique hash identifier for the fitted model instance. |

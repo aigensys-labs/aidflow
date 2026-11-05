@@ -1,0 +1,184 @@
+---
+title: "Parameters"
+description: "AID.core.parameters.Parameters"
+---
+
+```python
+from AID.core.parameters import Parameters
+```
+
+AIDflow parametrization design.
+
+Under the hood, `ProjectContext.params()` provides kwargs to Parameters for
+validation and application of default options. 
+
+The created Parameters instance is set to the context scope as `ctx.setup` and
+serves as the global default configuration for all workers.
+
+Each worker inherits required parameters from `ctx.setup`, but allows custom overrides 
+at instantiation: `worker(param1=1, param2=2)`.
+
+#### Parameters
+
+<div style={{"marginTop": "1.5rem", "marginBottom": "0.5rem", "fontWeight": "600", "fontSize": "0.95rem", "borderBottom": "1px solid var(--tw-prose-hr, #e5e7eb)", "paddingBottom": "0.25rem"}}>Genesis</div>
+
+**`project`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Unique identifier for the project.<br />Used as a root directory of model artifacts, and logging files to ensure traceability.</div>
+
+**`target`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The name of the target (label) column in the input dataset. Specifies the dependent variable<br />the model will learn to predict.</div>
+
+**`input_data`** : *`str | Path`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Defines path and format of the input dataset.<br />1. file: file name (if in data) or full path<br />2. spark: connection e.g. catalog.db.table_name<br />3. db: connection e.g. postgresql://user:pass@localhost:5432/mydb<br />When local files are used:<br />• Files in `data` folder can be loaded by their filename only, e.g. *test.csv*.<br />• Files located out of the main project dir have to use OS path to the data file.</div>
+
+**`input_source`** : *`str = "file"`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Defines the ingestion engine. Options:<br />• file:  Local or network file system (csv / gz / parquet / feather)<br />• spark: Distributed Spark DataFrame<br />• db:    SQL Database connection</div>
+
+**`input_cols`** : *`list = None`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Explicit list of columns to load. Leave empty to load ALL available columns from the source.<br />Supports also syntax by dictionary:<br />• `{"remove": "COL1", "COL2"}`<br />• `{"keep": "COL1", "COL2"}`</div>
+
+**`flow_vars`** : *`list = None`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Columns to retain as non-feature metadata/IDs. These are excluded from feature engineering but        preserved for model application (scoring) and traceability.</div>
+
+**`yy_mm`** : *`str = None`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The column name representing the timestamp/decision date. Used for time-based train/test<br />splits and PSI stability checks.<br />If no time variable is specified, an artificial one is generated based on row order.</div>
+
+**`yy_mm_format`** : *`str = None`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The strftime format string used to parse the time column. Standard Python % directives apply.<br />Common Examples:<br />• "2023-01-15" -&gt; "%Y-%m-%d"<br />• "15Jan23" -&gt; "%d%b%y"</div>
+
+**`import_start`** : *`float = 0.0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Fraction of the dataset to start loading from. Useful if the dataset head contains stale/noisy<br />data or if processing in chunks.</div>
+
+**`import_end`** : *`float = 1.0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Fraction of the dataset to stop loading at. Allows testing with subsets before committing to<br />full data ingestion.</div>
+
+**`train_test`** : *`float = 0.3`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Proportion of the loaded data reserved for the Test Set (held out). The remaining (1-ratio) is<br />used for training/validation.</div>
+
+**`train_valid`** : *`float = 0.33`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Proportion of the Training data further split into a Validation Set. Used for hyperparameter<br />tuning and early stopping.</div>
+
+**`smp_train`** : *`int|float = 1.0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Sub-sampling ratio for the Training set to accelerate the learning during prototyping.<br />• Value over 1 represents sample observation count.<br />• Value between (0, 1) represents fraction of the input dataset.</div>
+
+**`smp_feature`** : *`int|float = 1.0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Sub-sampling ratio of input variables to reduce dimensionality and accelerate the learning<br />during prototyping.<br />• Value over 1 represents sample feature count.<br />• Value between (0, 1) represents fraction of the features in the input dataset.</div>
+
+<div style={{"marginTop": "1.5rem", "marginBottom": "0.5rem", "fontWeight": "600", "fontSize": "0.95rem", "borderBottom": "1px solid var(--tw-prose-hr, #e5e7eb)", "paddingBottom": "0.25rem"}}>Data</div>
+
+**`max_miss`** : *`float = 0.7`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Drop variables with missing values exceeding set percentage.</div>
+
+**`max_1val`** : *`float = 0.9`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Drop variables where &gt; X% of values are identical (mode). High share indicates lack of variance        (e.g., constant columns).</div>
+
+**`max_var`** : *`float = 0.9`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Threshold to detect quasi-IDs (variables with extremely high cardinality/variability).<br />Variables exceeding this are removed to prevent overfitting.</div>
+
+**`max_corr`** : *`float = 0.9`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Threshold for pairwise correlation. Variables with absolute correlation &gt; X are considered redundant        (multicollinearity) and one is dropped.</div>
+
+**`cat_max`** : *`int = 500`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Maximum number of unique categories allowed in a categorical variable. Variables exceeding        this are dropped or require special handling.</div>
+
+**`th_stationarity`** : *`float = 0.1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>p-value threshold for the Dickey-Fuller test. Variables with p-value &gt; X are considered<br />non-stationary (unstable over time).</div>
+
+**`th_outliers`** : *`float = 0.01`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Expected proportion of outliers (noise/errors) in the data. Outliers algorithm uses the set<br />value as the data cutoff threshold.</div>
+
+**`float_downcast`** : *`int | bool = 0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Downcast float64 variable to float32. When enabled, all 64-bit float variables (NumPy &amp; PyArrow)<br />are cast to 32-bit float to reduce memory footprint.</div>
+
+<div style={{"marginTop": "1.5rem", "marginBottom": "0.5rem", "fontWeight": "600", "fontSize": "0.95rem", "borderBottom": "1px solid var(--tw-prose-hr, #e5e7eb)", "paddingBottom": "0.25rem"}}>Encoding</div>
+
+**`gini_cutoff`** : *`float = 0.02`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Minimum Gini Index required for a feature to be retained. Features with lower predictive<br />power are dropped.</div>
+
+**`min_bin_share`** : *`float = 0.03`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Minimum relative size (share) for a bin (cat + num). Bins smaller than this are merged<br />with adjacent bins to ensure stability.</div>
+
+**`max_num_bins`** : *`int = 10`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>aximum N bins to explore during ML numerical binning transformation. Binning exploration<br />goes from 2 to N.</div>
+
+**`num_alpha`** : *`float = 0.05`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Significance level (alpha) for statistical tests during binning optimization.<br />Different bin versions are considered statistically equal if feature performance Bin1 ~ Bin2.</div>
+
+**`ixn_strategy`** : *`int = 1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Strategy for generating interaction features:<br />• 1: LightGBM (LGB) based interactions<br />• 2: XGBoost (XGB) based interactions</div>
+
+**`ixn_max_leaves`** : *`int = 8`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Interaction GB-algo critical gen setup of interaction depth.<br />Maximum number of leaves per tree. Controls model complexity/depth.</div>
+
+**`ixn_min_target`** : *`float = 0.10`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Minimum target rate (imbalance metric) required in an interaction feature.<br />Interactions below this threshold are pruned as noise.</div>
+
+**`woe_strategy`** : *`int = 1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Minimum target rate (imbalance metric) required in an interaction variable.<br />Transformation Strategy to WOE<br />• 1: Gini search<br />• 2: Gini + t-test search</div>
+
+**`woe_alpha`** : *`float = 0.05`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Significance level for bin pruning and stability checks during WOE transformation.</div>
+
+**`woe_stability`** : *`float = 0.65`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Predictive Stability Index cutoff. Features with PSI &lt; X are removed.</div>
+
+<div style={{"marginTop": "1.5rem", "marginBottom": "0.5rem", "fontWeight": "600", "fontSize": "0.95rem", "borderBottom": "1px solid var(--tw-prose-hr, #e5e7eb)", "paddingBottom": "0.25rem"}}>Training</div>
+
+**`gb_strategy`** : *`int = 1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Model training by GBM Tree Strategy:<br />• 1: LightGBM (LGB)<br />• 2: XGBoost (XGB)</div>
+
+**`gb_max_leaves`** : *`int = 31`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Maximum number of leaves per tree. Controls model complexity/depth.</div>
+
+**`gb_estimators`** : *`int = 100`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Total number of boosting stages (trees) to be added.</div>
+
+**`gb_learning_rate`** : *`float = 0.1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Step size shrinkage used in updating leaves. Lower values require more trees.</div>
+
+**`gb_min_child_weight`** : *`float = 0.1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Minimum sum of instance weights (Hessian) needed in a child node.<br />Prevents overfitting by limiting splits with low data support.</div>
+
+**`shadow_quantile`** : *`float = 0.9`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>During Feature Pruning the shadow features are generated as permutated orig.<br />features to provide a noise distribution. Shadow quantile value set to 1 means<br />max value from the noise dst (stronger pruning) 0 min (weaker pruning).</div>
+
+**`cross_val_folds`** : *`int = 3`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Number of cross-validation folds for shadow assessment and where feature significance<br />to model residuals is assessed.</div>
+
+**`glm_strategy`** : *`int = 1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Strategy for GLM Dense Optimization<br />• 1: LassoGLM<br />• 2: ElasticGLM<br />• 3: LogRegGLM</div>
+
+**`glm_alpha`** : *`float = 0.05`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Significance level during GLM Sparse training to add/remove *significant*<br />feature given change in model residulas p-value.</div>
+
+**`glm_eps`** : *`float = 1e-3`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Epsilon (eps) represents a relative search range. Defines the ratio between<br />the strongest and weakest regularization strength.<br />• eps=1e-3 means that alpha_min / alpha_max = 1e-3</div>
+
+**`glm_tol`** : *`float = 1e-4`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Tolerance (tol) represents optimization accuracy. Defines when the change in<br />the loss function is small enough to stop computing a single model.</div>
+
+<div style={{"marginTop": "1.5rem", "marginBottom": "0.5rem", "fontWeight": "600", "fontSize": "0.95rem", "borderBottom": "1px solid var(--tw-prose-hr, #e5e7eb)", "paddingBottom": "0.25rem"}}>Selection</div>
+
+**`select_alpha`** : *`float = 0.05`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Significance level during tuning phase for agents comparison and cross behavior checks.</div>
+
+**`select_bins`** : *`float = 10`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Selection phase transform continous probability to distinct bins for comparison and<br />transition matrix.</div>
+
+**`select_choice`** : *`int = 0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Selection of the final production candidate:<br />• 0: Auto select the best one based on comparison scoring<br />• 1: Sparse Selector &lt;br&gt; 2: Dense Selector<br />• 3: PLS Selector<br />• 4: Tree Selector</div>
+
+<div style={{"marginTop": "1.5rem", "marginBottom": "0.5rem", "fontWeight": "600", "fontSize": "0.95rem", "borderBottom": "1px solid var(--tw-prose-hr, #e5e7eb)", "paddingBottom": "0.25rem"}}>Output</div>
+
+**`save`** : *`bool | int = 1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Set to 1 (True) to persist models, metrics, reports and artifacts to the project output folder.</div>
+
+**`logging`** : *`bool | int = 1`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Set to 1 (True) to persist logging during training to the project output folder "run.log";<br />independent of verbosity level and save state.</div>
+
+**`offload`** : *`bool | int = 0`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Offloads relay-data structures to disk via the Arrow engine to reduce memory footprint.<br />Enable when working with large feature spaces or limited RAM. Trade-off: minor I/O overhead<br />on access in exchange for significantly lower peak memory usage.</div>
+
+**`verbose`** : *`int = 2`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Controls the amount of output:<br />• 0: Silent (Production mode)<br />• 1: Info (Standard logs)<br />• 2: GUI Interactive Panels &amp; Reports</div>
+

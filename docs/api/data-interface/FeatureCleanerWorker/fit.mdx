@@ -1,0 +1,32 @@
+---
+title: "FeatureCleanerWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def FeatureCleanerWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\screen\fe_cleaner.py#L529)
+</div>
+
+Execute the full data quality screening and type enforcement.
+
+Screens training features against quality gates,
+auto-repairs type issues, and enforces the trained
+type mapping on the test set.
+
+#### Parameters
+
+**`inputs`** : *`FeCleanerInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Training + test datasets and variable type<br />classification.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitting strategy identifier. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(max_miss, max_1val, max_var, max_corr, cat_max, downcast).</div>
+
+
+#### Returns
+
+*`FeatureCleaner`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted instance with clean feature set and<br />type mapping available.</div>
+

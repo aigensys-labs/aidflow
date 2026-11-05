@@ -1,0 +1,32 @@
+---
+title: "DataLoaderWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def DataLoaderWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\load\data_loader.py#L497)
+</div>
+
+Execute the full data ingestion and standardization pipeline.
+
+Ingests data from the configured source, verifies
+constraints, standardizes the format, and performs the
+time-based train/test split.
+
+#### Parameters
+
+**`inputs`** : *`DataLoaderInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Flow context configuration (resolved from ctx.setup).</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitting strategy identifier. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(import_start, import_end, train_test, smp_learn, smp_feature).</div>
+
+
+#### Returns
+
+*`DataLoader`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted instance with train/test split and<br />variable type classification available.</div>
+

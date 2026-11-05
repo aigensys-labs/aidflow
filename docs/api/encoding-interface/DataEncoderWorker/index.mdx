@@ -1,0 +1,213 @@
+---
+title: "DataEncoderWorker"
+description: "AID.data.interface.DataEncoderWorker"
+---
+
+```python
+from AID.data.interface import DataEncoderWorker
+```
+
+Step 9: ML Sample Generation & Synchronization.
+
+Acts as the final synchronization point before agent training. It applies    all previously trained encoding transformation logic (Numerical, Categorical, and WOE)    to create synchronized 'ml' versions of the training and test sets.
+
+This method ensures that the exact same encoding pipelines trained during    the Encoding Phase are applied consistently across both datasets,    preventing data leakage and ensuring model validity.
+
+<Note>
+- DataEncoder serves as the entry point to the agent training phase.
+- It applies all fitted encodings to transform input data into ML-ready datasets.
+- Any new data sharing the original training schema can be passed in directly without    requiring a separate test split - new input data are split to train and test part.
+- Results are registered under `ctx.datasets` as `train.ml` and `test.ml`.
+</Note>
+
+#### Parameters
+
+**`inputs`** : *`DataEncoderInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Custom input configuration for sample generation. If None, resolves        defaults from the current pipeline state (train_set, test_set, woe_features).</div>
+
+**`**kwargs`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Additional parameters passed to the DataEncoder worker.</div>
+
+
+<Note>
+Inputs full schema can be obtained by `ctx.workers.data_encoder.spec` with main params:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>inputs    == None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>pipeline data context</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>train_set != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>custom train data for encoding application by data_encoder</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>test_set  != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>custom test for encoding application by data_encoder</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>woe_features != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>optional subset of woe features</td></tr>
+  </tbody>
+</table>
+</Note>
+
+#### Returns
+
+*`DataEncoderWorker`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The populated instance of DataEncoderWorker.</div>
+
+
+<Note>
+Populates attributes into the worker context:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>model</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.data_encoder</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>inputs</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.data_encoder.spec</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>result</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.data_encoder.result</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>state</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.data_encoder.state</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>stats</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.data_encoder.stats</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>fitter</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.data_encoder.fitter</td></tr>
+  </tbody>
+</table>
+</Note>
+
+<Note>
+Registers data into the datasets context:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>data</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.train.ml</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>data</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.test.ml</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>dtypes</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.dtypes.ml</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>features</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.all.ml</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>stats</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.stats.ml</td></tr>
+  </tbody>
+</table>
+</Note>
+
+#### Examples
+
+Defining the Project Context (Control Plane) & Project Scope:
+
+```python
+import aidflow as aid
+
+ctx = aid.ProjectContext()
+
+ctx.genesis(
+    project      = 'test',
+    input_data   = 'test.csv',
+    target       = 'target',
+    yy_mm        = 'decision_date',
+    yy_mm_format = '%Y-%m-%d'
+)
+ctx.params()
+```
+
+### Worker → Model → Fitter
+Accessing worker's inputs schema → parameters & types (*shown in the display output*):
+
+```python
+ctx.workers.data_encoder.spec
+```
+
+Accessing model's fitter options and schema → parameters & types
+(*shown in the display output*):
+
+```python
+ctx.workers.data_encoder.fitters
+```
+
+Executing workers with defaults → auto provided by the context:
+
+```python
+ctx.workers.data_loader()    # 0. import data to the context scope
+ctx.workers.fe_cleaner()     # 1. apply cleaning logic to the imported data (0)
+ctx.workers.fe_stabilizer()  # 2. apply temporal stability logic to the cleaned data (1)
+ctx.workers.obs_stabilizer() # 3. apply observation stability logic to the cleaned data (2)
+ctx.workers.num_encoder()    # 4. apply numerical encoding logic to the stable data (3)
+ctx.workers.cat_encoder()    # 5. apply categorical encoding logic to the stable data (3)
+ctx.workers.ixn_encoder()    # 6. apply interactions encoding logic to the stable data (3)
+ctx.workers.woe_encoder()    # 7. apply woe encoding logic using trained encoding in steps (4-5-6)
+ctx.workers.woe_stabilizer() # 8. apply woe stabilization logic using trained woe encoding in step (7)
+ctx.workers.data_encoder()   # 9. apply trained encodings (4-7) to transform train-test data
+```
+
+Note that steps 0-3 and steps 4-9 can be run by ExecutionContext one-liner:
+
+```python
+ctx.flow.process('data', verbose = 0)     # steps 0 - 3 have been trained within the context scope
+ctx.flow.process('encoding', verbose = 0) # steps 4 - 9 have been trained within the context scope
+```
+
+Once worker has been executed, thus its main model has been built,    we have access to all populated attributes.
+
+```python
+worker   = ctx.workers.data_encoder
+inputs   = worker.spec.inputs
+result   = worker.result
+state    = worker.state
+features = worker.features
+params   = worker.params
+stats    = worker.stats
+fitter   = worker.fitter  # jump to chosen internal fitter
+...
+```
+
+### Model → Fitter
+Once worker has been executed, we can obtain internal fitter state    and its parametrization (*shown in the display output*):
+
+```python
+ctx.workers.data_encoder.fitter
+```
+
+The fitted fitter provides all populated attributes.
+
+```python
+fitter    = ctx.workers.data_encoder.fitter
+params_   = fitter.params
+stats_    = fitter.stats
+```
+
+Use new data to apply fitted encodings to obtain ML-ready datasets:
+
+```python
+data2 = ... # new pd.dataframe with the orig. training schema
+ctx.workers.data_encoder(train_set = data2)
+```
+
+Obtaining created ML-ready sets (auto-provided to agents):
+
+```python
+train = ctx.datasets.train.ml
+test  = ctx.datasets.test.ml
+```
+
+Direct choice and parametrization of internal fitter:
+
+```python
+fx  = ctx.workers.data_encoder.fitters[0]
+prm = dict(
+    preprocess = True,
+    remove_outliers = False
+)
+data_encoder = ctx.workers.data_encoder(fx_choice = fx, fx_params = prm)
+```
+
+```python
+cfg = dict(
+    time_var  = 'time_var2',
+    test_size = 0.3
+)
+data_encoder = ctx.workers.data_encoder(fx_config = cfg)
+```
+
+#### Attributes
+
+<Info>
+  All worker attributes return `None` prior its execution.
+</Info>
+| Attribute | Type | Description |
+| :--- | :--- | :--- |
+| `inputs` | `ModelInput` | Registered populated inputs containing execution timestamps and feature definitions. |
+| `result` | `ModelResult` | Execution output payload containing model predictions and fit results. |
+| `fitter` | `Fitter` | Underlying fitted estimator instance. |
+| `state` | `ModelState` | Consolidated model state (fitter, choice, params, features, report, stats). |
+| `report` | `DashboardInterface` | Interactive report interface. Call `report.show()` to render the visualization dashboard. |
+| `stats` | `FitStats` | Performance metrics and training metadata gathered during fitting. |
+| `features` | `TransResCols` | Feature schema dataclass required for downstream inference. |
+| `params` | `tuple[FitParams, Parameters, ...]` | Tuple of fit settings, execution parameters, optionally transformer parameters. |
+| `choice` | `RegGet.Choice` | Active configuration parameters including internal fitter choice (`fx_choice`). |
+| `model_signature` | `str` | Unique hash identifier for the fitted model instance. |

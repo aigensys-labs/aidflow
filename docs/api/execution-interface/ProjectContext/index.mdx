@@ -1,0 +1,58 @@
+---
+title: "ProjectContext"
+description: "AID.ctx.project.ProjectContext"
+---
+
+```python
+from AID.ctx.project import ProjectContext
+```
+
+Project Context for defining, configuring AIG pipeline parameters and accessing 
+the key engine context components.
+
+This class acts as the entry point for both interactive UI sessions and 
+headless script execution. It manages the initialization of the user interface 
+(if enabled), collects configuration parameters, and delegates the creation 
+of the runtime context (`PipelineContext`).
+
+It supports a dual-mode architecture:
+1. **UI Mode (HTML)**: Launches `ProjectGenesis` and `PipelineConfigurator` 
+   web panels for interactive parameter tuning.
+2. **Script Mode**: Uses dictionary-based arguments passed directly to the setup.
+
+#### Parameters
+
+**`config`** : *`Config`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The global configuration object containing UI mode, theme, and other settings.</div>
+
+**`css_id`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>A unique ID suffix used to generate CSS panel identifiers<br />(e.g., 'gateway-v1', 'config-v1').</div>
+
+
+#### Examples
+
+Interactive usage:
+
+```python
+ctx = ProjectContext()
+ctx.genesis(kind='v')  # Launches gateway in vertical style
+ctx.params()           # Launches config panel
+```
+
+Script usage:
+
+```python
+ctx = ProjectContext()
+ctx.genesis(
+    project      = 'test',
+    input_data   = 'test.csv',
+    target       = 'target',
+    yy_mm        = 'decision_date',
+    yy_mm_format = '%Y-%m-%d'
+)
+ctx.params(
+    min_bin_share = 10,
+    gb_strategy   = 0, 
+    gb_max_leaves = 50
+)
+```

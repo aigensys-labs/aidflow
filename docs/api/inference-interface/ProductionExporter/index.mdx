@@ -1,0 +1,33 @@
+---
+title: "ProductionExporter"
+description: "AID.production.exporter.ProductionExporter"
+---
+
+```python
+from AID.production.exporter import ProductionExporter
+```
+
+Production deployment exporter.
+
+Serializes a fitted champion agent and generates the
+orchestration layer (Airflow DAG) for scheduled scoring.
+
+#### Parameters
+
+**`agent`** : *`WorkerBase | ModelUIBase`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>A fitted champion agent exposing `score(data)`, and `is_fitted`.</div>
+
+**`config`** : *`ExportConfig | None`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Export configuration. Defaults to nightly schedule.</div>
+
+
+#### Examples
+
+```python
+from aidflow.production import ProductionExporter, ExportConfig
+config   = ExportConfig()
+exporter = ProductionExporter(agent, config)
+paths    = exporter.export_all('./deployment/')
+# paths['pickle']      → deployment/champion.pkl
+# paths['airflow_dag'] → deployment/dag.py
+```

@@ -1,0 +1,27 @@
+---
+title: "ProductionExporter.export_airflow_dag"
+sidebarTitle: "export_airflow_dag"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def ProductionExporter.export_airflow_dag</strong>(self, path='') [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\production\exporter.py#L175)
+</div>
+
+Generate a production-ready Airflow DAG file.
+
+The DAG orchestrates:
+- load raw data 
+- preprocess and score by aidflow package
+- push results to warehouse
+
+#### Parameters
+
+**`path`** : *`Path`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Target file path for the generated DAG.</div>
+
+
+#### Returns
+
+*`Path`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The written file path.</div>
+

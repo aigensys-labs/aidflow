@@ -1,0 +1,22 @@
+---
+title: "ProductionExporter.export_all"
+sidebarTitle: "export_all"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def ProductionExporter.export_all</strong>(self, output_dir='') [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\production\exporter.py#L125)
+</div>
+
+Export all production artifacts to the specified directory.
+
+#### Parameters
+
+**`output_dir`** : *`Path`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Target directory. Created if it does not exist.</div>
+
+
+#### Returns
+
+*`dict[str, Path]`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Mapping of artifact name → file path.<br />Keys: `'pickle'`, `'airflow_dag'`.</div>
+

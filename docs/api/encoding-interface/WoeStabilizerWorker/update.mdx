@@ -1,0 +1,30 @@
+---
+title: "WoeStabilizerWorker.update"
+sidebarTitle: "update"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def WoeStabilizerWorker.update</strong>(self, *args, **kwargs) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\encode\woe_stabilizer.py#L824)
+</div>
+
+Re-evaluate stability verdicts with updated thresholds.
+
+Adjusts the `woe_stability` and/or `woe_alpha` and
+re-partitions features without re-running the full
+consistency test (threshold-only updates) or re-fits
+(alpha changes).
+
+#### Parameters
+
+**`*args`** : *`Any`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Positional arguments for update.</div>
+
+**`**kwargs`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Keyword arguments including the new threshold values<br />(`woe_stability`, `woe_alpha`).</div>
+
+
+#### Returns
+
+*`WoeStabilizer`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The updated stabilizer instance.</div>
+

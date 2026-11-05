@@ -1,0 +1,106 @@
+---
+title: "ExecutionContext"
+description: "AID.ctx.interface.ExecutionContext"
+---
+
+```python
+from AID.ctx.interface import ExecutionContext
+```
+
+Execution Context — Pipeline Orchestration & Phase Execution.
+The primary API surface for executing the AIDflow pipeline.
+Provides phase-based access to all workers and a unified
+`process` method for sequential execution.
+Executes `workers` by domain-specific pipeline phase:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>data</td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>`encoding` → `training` → `selection`</td></tr>
+  </tbody>
+</table>
+
+<Note>
+- Automated execution of all pipeline steps or a selected phase via `ctx.flow.process()`
+- Execution runs within a defined context scope (`ctx.setup`), supplied by `ProjectContext`
+- Pipeline steps are sequence-dependent - e.g., the `encoding` phase cannot be executed prior to    the `data` phase
+</Note>
+
+<Note>
+<b>1. data </b>
+<br />────────────────────
+
+0. data_loader
+1. fe_cleaner
+2. fe_stabilizer
+3. obs_stabilizer
+
+<b>2. encoding </b>
+<br />────────────────────
+
+4. num_encoder
+5. cat_encoder
+6. ixn_encoder
+7. woe_encoder
+8. woe_stabilizer
+9. data_encoder
+
+<b>3. training </b>
+<br />────────────────────
+
+10. agent1_predictor
+11. agent2_predictor
+12. agent3_predictor
+13. agent4_predictor
+
+<b>4. selection </b>
+<br />────────────────────
+
+14. agents_predictor
+15. agents_comparator
+16. agents_transition
+17. agent_selector
+18. champion_predictor
+</Note>
+
+#### Examples
+
+Defining the Project Context (Control Plane) & Project Scope:
+
+```python
+import aidflow as aid
+
+ctx = aid.ProjectContext()
+
+ctx.genesis(
+    project      = 'test',
+    input_data   = 'test.csv',
+    target       = 'target',
+    yy_mm        = 'decision_date',
+    yy_mm_format = '%Y-%m-%d'
+)
+ctx.params()
+```
+
+Run the whole flow within the defined context:
+
+```python
+ctx.flow.process('all', verbose = 0)
+```
+
+Run selected flow phase within the defined context:
+
+```python
+ctx.flow.process('data', verbose = 2)
+```
+
+Run selected single worker within the defined context:
+
+```python
+data_loader = ctx.flow.data.data_loader()
+...
+ixn_encoder = ctx.flow.encoding.ixn_encoder()
+...
+agent2_predictor = ctx.flow.training.agent2_predictor()
+...
+agent_selector = ctx.flow.selection.agent_selector()
+```

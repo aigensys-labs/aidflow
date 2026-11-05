@@ -1,0 +1,319 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "AIDflow Documentation",
+  "logo": {
+    "light": "/assets/aidflow.png",
+    "dark": "/assets/aidflow.png"
+  },
+  "colors": {
+    "primary": "#3b82f6",
+    "light": "#60a5fa",
+    "dark": "#0f172a"
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "dracula-soft",
+        "dark": "dracula"
+      }
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/aigensys-labs/aidflow"
+    }
+  ],
+  "topbarCta": {
+    "name": "PyPI",
+    "url": "https://pypi.org/project/aidflow"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "getting-started/overview",
+              "getting-started/installation",
+              "getting-started/quickstart",
+              "getting-started/core-concepts"
+            ]
+          },
+          {
+            "group": "User Guides",
+            "pages": [
+              "user-guides/data-phase",
+              "user-guides/encoding-phase",
+              "user-guides/training-phase",
+              "user-guides/selection-phase",
+              "user-guides/inference-phase"
+            ]
+          },
+          {
+            "group": "Commercial",
+            "pages": [
+              "commercial/licensing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Execution Interface",
+            "pages": [
+              {
+                "group": "Parameters",
+                "pages": [
+                  "api/execution-interface/Parameters/index"
+                ]
+              },
+              {
+                "group": "ProjectContext",
+                "pages": [
+                  "api/execution-interface/ProjectContext/index",
+                  "api/execution-interface/ProjectContext/genesis",
+                  "api/execution-interface/ProjectContext/get_setup",
+                  "api/execution-interface/ProjectContext/params"
+                ]
+              },
+              {
+                "group": "ExecutionContext",
+                "pages": [
+                  "api/execution-interface/ExecutionContext/index",
+                  "api/execution-interface/ExecutionContext/get_worker",
+                  "api/execution-interface/ExecutionContext/help",
+                  "api/execution-interface/ExecutionContext/process"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Data Interface",
+            "pages": [
+              {
+                "group": "DataLoaderWorker",
+                "pages": [
+                  "api/data-interface/DataLoaderWorker/index",
+                  "api/data-interface/DataLoaderWorker/fit",
+                  "api/data-interface/DataLoaderWorker/transform"
+                ]
+              },
+              {
+                "group": "FeatureCleanerWorker",
+                "pages": [
+                  "api/data-interface/FeatureCleanerWorker/index",
+                  "api/data-interface/FeatureCleanerWorker/fit",
+                  "api/data-interface/FeatureCleanerWorker/transform",
+                  "api/data-interface/FeatureCleanerWorker/transform_dual"
+                ]
+              },
+              {
+                "group": "FeatureStabilizerWorker",
+                "pages": [
+                  "api/data-interface/FeatureStabilizerWorker/index",
+                  "api/data-interface/FeatureStabilizerWorker/fit",
+                  "api/data-interface/FeatureStabilizerWorker/transform",
+                  "api/data-interface/FeatureStabilizerWorker/update"
+                ]
+              },
+              {
+                "group": "ObservationStabilizerWorker",
+                "pages": [
+                  "api/data-interface/ObservationStabilizerWorker/index",
+                  "api/data-interface/ObservationStabilizerWorker/fit",
+                  "api/data-interface/ObservationStabilizerWorker/transform",
+                  "api/data-interface/ObservationStabilizerWorker/update"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Encoding Interface",
+            "pages": [
+              {
+                "group": "NumEncoderWorker",
+                "pages": [
+                  "api/encoding-interface/NumEncoderWorker/index",
+                  "api/encoding-interface/NumEncoderWorker/fit",
+                  "api/encoding-interface/NumEncoderWorker/transform"
+                ]
+              },
+              {
+                "group": "CatEncoderWorker",
+                "pages": [
+                  "api/encoding-interface/CatEncoderWorker/index",
+                  "api/encoding-interface/CatEncoderWorker/fit",
+                  "api/encoding-interface/CatEncoderWorker/transform"
+                ]
+              },
+              {
+                "group": "IxnEncoderWorker",
+                "pages": [
+                  "api/encoding-interface/IxnEncoderWorker/index",
+                  "api/encoding-interface/IxnEncoderWorker/fit",
+                  "api/encoding-interface/IxnEncoderWorker/transform"
+                ]
+              },
+              {
+                "group": "WoeEncoderWorker",
+                "pages": [
+                  "api/encoding-interface/WoeEncoderWorker/index",
+                  "api/encoding-interface/WoeEncoderWorker/fit",
+                  "api/encoding-interface/WoeEncoderWorker/transform"
+                ]
+              },
+              {
+                "group": "WoeStabilizerWorker",
+                "pages": [
+                  "api/encoding-interface/WoeStabilizerWorker/index",
+                  "api/encoding-interface/WoeStabilizerWorker/fit",
+                  "api/encoding-interface/WoeStabilizerWorker/transform",
+                  "api/encoding-interface/WoeStabilizerWorker/update"
+                ]
+              },
+              {
+                "group": "DataEncoderWorker",
+                "pages": [
+                  "api/encoding-interface/DataEncoderWorker/index",
+                  "api/encoding-interface/DataEncoderWorker/fit",
+                  "api/encoding-interface/DataEncoderWorker/transform"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Training Interface",
+            "pages": [
+              {
+                "group": "Agent1PredictorWorker",
+                "pages": [
+                  "api/training-interface/Agent1PredictorWorker/index",
+                  "api/training-interface/Agent1PredictorWorker/fit",
+                  "api/training-interface/Agent1PredictorWorker/transform"
+                ]
+              },
+              {
+                "group": "Agent2PredictorWorker",
+                "pages": [
+                  "api/training-interface/Agent2PredictorWorker/index",
+                  "api/training-interface/Agent2PredictorWorker/fit",
+                  "api/training-interface/Agent2PredictorWorker/transform"
+                ]
+              },
+              {
+                "group": "Agent3PredictorWorker",
+                "pages": [
+                  "api/training-interface/Agent3PredictorWorker/index",
+                  "api/training-interface/Agent3PredictorWorker/fit",
+                  "api/training-interface/Agent3PredictorWorker/transform"
+                ]
+              },
+              {
+                "group": "Agent4PredictorWorker",
+                "pages": [
+                  "api/training-interface/Agent4PredictorWorker/index",
+                  "api/training-interface/Agent4PredictorWorker/fit",
+                  "api/training-interface/Agent4PredictorWorker/transform"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Selection Interface",
+            "pages": [
+              {
+                "group": "AgentsPredictorWorker",
+                "pages": [
+                  "api/selection-interface/AgentsPredictorWorker/index",
+                  "api/selection-interface/AgentsPredictorWorker/fit",
+                  "api/selection-interface/AgentsPredictorWorker/transform"
+                ]
+              },
+              {
+                "group": "AgentsComparatorWorker",
+                "pages": [
+                  "api/selection-interface/AgentsComparatorWorker/index",
+                  "api/selection-interface/AgentsComparatorWorker/fit",
+                  "api/selection-interface/AgentsComparatorWorker/transform"
+                ]
+              },
+              {
+                "group": "AgentsTransitionWorker",
+                "pages": [
+                  "api/selection-interface/AgentsTransitionWorker/index",
+                  "api/selection-interface/AgentsTransitionWorker/fit",
+                  "api/selection-interface/AgentsTransitionWorker/transform"
+                ]
+              },
+              {
+                "group": "AgentSelectorWorker",
+                "pages": [
+                  "api/selection-interface/AgentSelectorWorker/index",
+                  "api/selection-interface/AgentSelectorWorker/fit",
+                  "api/selection-interface/AgentSelectorWorker/transform"
+                ]
+              },
+              {
+                "group": "AgentPredictorWorker",
+                "pages": [
+                  "api/selection-interface/AgentPredictorWorker/index",
+                  "api/selection-interface/AgentPredictorWorker/fit",
+                  "api/selection-interface/AgentPredictorWorker/preprocess",
+                  "api/selection-interface/AgentPredictorWorker/score",
+                  "api/selection-interface/AgentPredictorWorker/transform",
+                  "api/selection-interface/AgentPredictorWorker/transform_dual"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Inference Interface",
+            "pages": [
+              {
+                "group": "Predictor",
+                "pages": [
+                  "api/inference-interface/Predictor/index",
+                  "api/inference-interface/Predictor/agent1_predict",
+                  "api/inference-interface/Predictor/agent2_predict",
+                  "api/inference-interface/Predictor/agent3_predict",
+                  "api/inference-interface/Predictor/agent4_predict",
+                  "api/inference-interface/Predictor/cat_encode",
+                  "api/inference-interface/Predictor/champion_predict",
+                  "api/inference-interface/Predictor/data_encode",
+                  "api/inference-interface/Predictor/fe_clean",
+                  "api/inference-interface/Predictor/fe_stabilize",
+                  "api/inference-interface/Predictor/get_model",
+                  "api/inference-interface/Predictor/get_predictor",
+                  "api/inference-interface/Predictor/get_schema",
+                  "api/inference-interface/Predictor/ixn_encode",
+                  "api/inference-interface/Predictor/num_encode",
+                  "api/inference-interface/Predictor/obs_stabilize",
+                  "api/inference-interface/Predictor/woe_encode",
+                  "api/inference-interface/Predictor/woe_stabilize"
+                ]
+              },
+              {
+                "group": "ProductionExporter",
+                "pages": [
+                  "api/inference-interface/ProductionExporter/index",
+                  "api/inference-interface/ProductionExporter/export_airflow_dag",
+                  "api/inference-interface/ProductionExporter/export_all",
+                  "api/inference-interface/ProductionExporter/export_pickle"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footerSocials": {
+    "github": "https://github.com/aigensys-labs/aidflow"
+  }
+}

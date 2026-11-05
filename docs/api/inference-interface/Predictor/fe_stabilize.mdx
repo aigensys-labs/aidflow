@@ -1,0 +1,29 @@
+---
+title: "Predictor.fe_stabilize"
+sidebarTitle: "fe_stabilize"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def Predictor.fe_stabilize</strong>(self, data, preprocess=False) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\predictor\predictor.py#L309)
+</div>
+
+Apply trained time-stability filtering to input data.
+
+Removes variables that were detected as unstable
+(time-variant distributions) during training. Ensures
+only temporally stable features propagate downstream.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Input data of shape (n_samples, n_features).</div>
+
+**`preprocess`** : *`bool`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>If True, accepts original columns and applies<br />`fe_clean` first. If False, expects output<br />from `fe_clean`.</div>
+
+
+#### Returns
+
+*`FeStabilizerResult`*
+
+

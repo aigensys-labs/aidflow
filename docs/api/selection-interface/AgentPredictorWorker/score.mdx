@@ -1,0 +1,30 @@
+---
+title: "AgentPredictorWorker.score"
+sidebarTitle: "score"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentPredictorWorker.score</strong>(self, data) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\select\agent\champion_predictor.py#L673)
+</div>
+
+Equals to:
+>>> d = self.preprocess(data)
+... return self.transform(d).data
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>One-call production inference: raw data</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>P(class=1) scores.</td></tr>
+  </tbody>
+</table>
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Raw input data (pre-WOE, original feature names).</div>
+
+
+#### Returns
+
+*`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Single-column DataFrame of P(class=1) probabilities.<br />Column name = target name. Index matches input.</div>
+

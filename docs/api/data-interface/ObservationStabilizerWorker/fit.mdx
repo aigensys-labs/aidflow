@@ -1,0 +1,32 @@
+---
+title: "ObservationStabilizerWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def ObservationStabilizerWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\screen\obs_stabilizer.py#L486)
+</div>
+
+Execute the full outlier detection and filtering pipeline.
+
+Trains Isolation Forest on the feature matrix, scores
+all observations, and removes flagged outliers from the
+training set.
+
+#### Parameters
+
+**`inputs`** : *`ObsStabilizerInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Training data and feature lists.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitting strategy identifier. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(th_outliers).</div>
+
+
+#### Returns
+
+*`ObservationStabilizer`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted instance with the clean observation set<br />and outlier flags available.</div>
+

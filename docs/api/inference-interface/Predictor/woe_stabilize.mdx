@@ -1,0 +1,28 @@
+---
+title: "Predictor.woe_stabilize"
+sidebarTitle: "woe_stabilize"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def Predictor.woe_stabilize</strong>(self, data=None, encode=False) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\predictor\predictor.py#L459)
+</div>
+
+Apply trained WOE stability filtering.
+
+Removes WOE features that were flagged as unstable
+(distribution shift) during training.
+
+#### Parameters
+
+**`data`** : *`pDF | None`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>WOE-encoded data. If None, returns the list of<br />stable WOE features.</div>
+
+**`encode`** : *`bool`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>If True, applies `woe_encode` first (expects<br />binned data). If False, expects WOE-encoded input.</div>
+
+
+#### Returns
+
+*`WoeStabilizerResult | list`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>• data provided: data subset to stable WOE features only<br />• data is None: list of stable WOE feature names</div>
+

@@ -1,0 +1,34 @@
+---
+title: "AgentPredictorWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentPredictorWorker.transform</strong>(self, data) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\select\agent\champion_predictor.py#L604)
+</div>
+
+Applies the champion model to generate P(class=1) scores.
+Verifies that all required features are present in the
+input to prevent silent failures in production.
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>Execute production inference: ML-ready data</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>probabilities.</td></tr>
+  </tbody>
+</table>
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>ML-ready data (WOE-encoded for GLM, raw for GBM).<br />Must contain all columns in `self.cols.selected`.</div>
+
+
+#### Returns
+
+*`AgentPredictorResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Predictions + full feature lineage metadata.</div>
+
+
+#### Raises
+
+* **`ValueError`**: If any required feature is missing from the input.

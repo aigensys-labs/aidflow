@@ -1,0 +1,22 @@
+---
+title: "ObservationStabilizerWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def ObservationStabilizerWorker.transform</strong>(self, data) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\screen\obs_stabilizer.py#L553)
+</div>
+
+Apply the trained outlier filter to new data.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Input data to filter.</div>
+
+
+#### Returns
+
+*`ObsStabilizerResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Cleaned data (outliers removed) + outlier flags.<br />As the final step of the Screening phase, returned `data` is converted to native<br />Pandas/NumPy dtypes. This single-conversion boundary minimizes peak pipeline<br />memory footprint by preventing redundant downstream allocations and ensuring<br />full compatibility with numpy, LightGBM, XGBoost, and Scikit-Learn.</div>
+

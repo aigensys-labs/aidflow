@@ -1,0 +1,32 @@
+---
+title: "FeatureStabilizerWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def FeatureStabilizerWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\screen\fe_stabilizer.py#L616)
+</div>
+
+Execute the full temporal stationarity screening.
+
+Assesses all features on both the training and test
+segments using the ADF unit-root test, and produces
+the stable feature set.
+
+#### Parameters
+
+**`inputs`** : *`FeStabilizerInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Training + test datasets and feature lists.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitting strategy identifier. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Additional parameters passed to the internal fitter<br />(th_stationarity).</div>
+
+
+#### Returns
+
+*`FeatureStabilizer`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted instance with the stable feature set<br />and exclusion list available.</div>
+

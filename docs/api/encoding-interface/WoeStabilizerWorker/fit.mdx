@@ -1,0 +1,33 @@
+---
+title: "WoeStabilizerWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def WoeStabilizerWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\encode\woe_stabilizer.py#L771)
+</div>
+
+Execute the temporal stability screening on WOE features.
+
+Tests each WOE feature's bin-level consistency across
+time units on both the training and OOS test samples,
+scores overall feature stability, and screens against
+the `stability_cutoff` threshold.
+
+#### Parameters
+
+**`inputs`** : *`WoeStabilizerInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Input configuration including train/test sets and<br />WOE features to screen.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The stability fitting strategy identifier. Defaults<br />to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(woe_stability, woe_alpha).</div>
+
+
+#### Returns
+
+*`WoeStabilizer`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted stabilizer instance.</div>
+

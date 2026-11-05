@@ -1,0 +1,182 @@
+---
+title: "AgentsComparatorWorker"
+description: "AID.selector.interface.AgentsComparatorWorker"
+---
+
+```python
+from AID.selector.interface import AgentsComparatorWorker
+```
+
+Step 15: Performance Benchmarking (Objective Evaluation).
+
+Evaluates all agent predictions against a set of rigorous performance metrics. 
+It computes Scoring accuracy, Lift charts, and Calibration curves to determine 
+which agent provides the most reliable predictive power on unseen data.
+
+#### Parameters
+
+**`inputs`** : *`AgentsComparatorInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Custom evaluation configuration. If None, resolves from 'test.ml' state.</div>
+
+**`**kwargs`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Additional parameters passed to the Comparator worker.</div>
+
+
+<Note>
+Inputs full schema can be obtained by `ctx.workers.agents_comparator.spec` with main params:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>inputs == None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>pipeline data context</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>data   != None</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>custom data for agents_comparator assessment</td></tr>
+  </tbody>
+</table>
+</Note>
+
+#### Returns
+
+*`AgentsComparatorWorker`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The populated instance of AgentsComparatorWorker.</div>
+
+
+<Note>
+Populates attributes into the worker context:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>model</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>inputs</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator.spec</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>result</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator.result</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>state</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator.state</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>report</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator.report</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>stats</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator.stats</td></tr>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>fitter</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.workers.agents_comparator.fitter</td></tr>
+  </tbody>
+</table>
+</Note>
+
+<Note>
+Registers data into the datasets context:
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>stats</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>ctx.datasets.stats.agents.comparison</td></tr>
+  </tbody>
+</table>
+</Note>
+
+#### Examples
+
+Defining the Project Context (Control Plane) & Project Scope:
+
+```python
+import aidflow as aid
+
+ctx = aid.ProjectContext()
+
+ctx.genesis(
+    project      = 'test',
+    input_data   = 'test.csv',
+    target       = 'target',
+    yy_mm        = 'decision_date',
+    yy_mm_format = '%Y-%m-%d'
+)
+ctx.params()
+```
+
+### Worker → Model → Fitter
+Accessing worker's inputs schema → parameters & types (*shown in the display output*):
+
+```python
+ctx.workers.agents_comparator.spec
+```
+
+Accessing model's fitter options and schema → parameters & types
+(*shown in the display output*):
+
+```python
+ctx.workers.agents_comparator.fitters
+```
+
+Executing workers with defaults → auto provided by the context:
+
+```python
+ctx.flow.process('data')         # 1. process workers 0-3 → data load - data stability
+ctx.flow.process('encoding')     # 2. process workers 4-9 → train and apply encoding to train and test samples
+ctx.flow.process('training')     # 3. process workers 10-13 → agents trainining on encoded train sample
+ctx.workers.agents_comparator()  # 4. agents comparison on test sample
+```
+
+Once worker has been executed, thus its main model has been built,    we have access to all populated attributes.
+
+```python
+worker   = ctx.workers.agents_comparator
+inputs   = worker.spec.inputs
+result   = worker.result
+state    = worker.state
+features = worker.features
+params   = worker.params
+stats    = worker.stats
+fitter   = worker.fitter  # jump to chosen internal fitter
+...
+```
+
+View to model report of executed worker:
+
+```python
+ctx.workers.agents_comparator.report.show()
+```
+
+### Model → Fitter
+Once worker has been executed, we can obtain internal fitter state    and its parametrization (*shown in the display output*):
+
+```python
+ctx.workers.agents_comparator.fitter
+```
+
+The fitted fitter provides all populated attributes.
+
+```python
+fitter    = ctx.workers.agents_comparator.fitter
+params_   = fitter.params
+stats_    = fitter.stats
+```
+
+Direct choice and parametrization of internal fitter:
+
+```python
+fx  = ctx.workers.agents_comparator.fitters[0]
+prm = dict(
+    alpha = 0.05,
+    proba_bins = 15
+)
+agents_comparator = ctx.workers.agents_comparator(fx_choice = fx, fx_params = prm)
+```
+
+In the experimenting phase, when various parametrization settings might be under testing    (*note that internal fitter API (fx_config) can vary with respect to chosen fitter*):
+
+```python
+cfg = dict(
+    target = 'target2',
+    preprocess = True
+)
+agents_comparator = ctx.workers.agents_comparator(fx_config = cfg)
+```
+
+#### Attributes
+
+<Info>
+  All worker attributes return `None` prior its execution.
+</Info>
+| Attribute | Type | Description |
+| :--- | :--- | :--- |
+| `inputs` | `ModelInput` | Registered populated inputs containing execution timestamps and feature definitions. |
+| `result` | `ModelResult` | Execution output payload containing model predictions and fit results. |
+| `fitter` | `Fitter` | Underlying fitted estimator instance. |
+| `state` | `ModelState` | Consolidated model state (fitter, choice, params, features, report, stats). |
+| `report` | `DashboardInterface` | Interactive report interface. Call `report.show()` to render the visualization dashboard. |
+| `stats` | `FitStats` | Performance metrics and training metadata gathered during fitting. |
+| `features` | `TransResCols` | Feature schema dataclass required for downstream inference. |
+| `params` | `tuple[FitParams, Parameters, ...]` | Tuple of fit settings, execution parameters, optionally transformer parameters. |
+| `choice` | `RegGet.Choice` | Active configuration parameters including internal fitter choice (`fx_choice`). |
+| `model_signature` | `str` | Unique hash identifier for the fitted model instance. |

@@ -1,0 +1,86 @@
+---
+title: "Predictor"
+description: "AID.predictor.predictor.Predictor"
+---
+
+```python
+from AID.predictor.predictor import Predictor
+```
+
+Inference Engine — Production Scoring API.
+The primary user-facing interface for applying trained AIDflow
+pipelines to new data. Provides access to every pipeline stage
+(cleaning, encoding, agent prediction) using the exact
+parameters locked during training.
+> `Applicable for projects with stored (save=1) models only.`
+#### What It Does      
+- **Loads** all trained models from a project's storage.
+- **Preprocesses** input data through the full pipeline
+  standards.
+- **Predicts** with any trained agent or the champion
+  production model.
+- **Exposes** intermediate stages for diagnostic or
+  custom-chain use.
+#### Pipeline Stages Available
+1. **Data Quality**: `fe_clean` — type/quality/relevance
+   validation against trained standards.
+2. **Stability**: `fe_stabilize`, `obs_stabilize` —
+   time-stability filtering and outlier labeling.
+3. **Encoding**: `num_encode`, `cat_encode`,
+   `ixn_encode`, `woe_encode`, `woe_stabilize`, 
+   `data_encode` — full feature transformation pipeline.
+4. **Prediction**: `agent1_predict` … `agent4_predict`,
+   `champion_predict` — model inference.
+#### Two Usage Modes
+- **preprocess=True** (default): Pass original input columns.
+  The full preprocessing pipeline is applied automatically.
+- **preprocess=False**: Pass pre-encoded data (e.g., WOE
+  features). Skips preprocessing — useful for chaining
+  stages or when encoding is applied externally.
+
+<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
+  <tbody>
+  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><code>(cleaning</code></td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>stabilization → encoding) using trained</td></tr>
+  </tbody>
+</table>
+
+#### Parameters
+
+**`project`** : *`str | Parameters`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Base training project. Accepts a project name (str) or<br />a `Parameters` object. Defines which trained models<br />are loaded for inference.</div>
+
+**`path`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Alternative project setup path for comparison. Must<br />reside within the base project's `2_Output` folder.</div>
+
+
+<Note>
+**Training-Serving Symmetry**: 
+- Every transformation uses the parameters locked during training 
+(binning thresholds, imputation values, encoding maps, stability filters). 
+- No statistics are re-derived at inference time.
+
+**Chainable Stages**: 
+- Individual stages (`fe_clean`, `woe_encode`, etc.) can be called 
+independently to inspect intermediate results or build custom pipelines.
+
+**Champion vs. Agents**: 
+- The `champion_agent_predict` method applies the production model 
+(selected during the Selection stage). 
+- Individual agent predictions (`agent1_predict` … `agent4_predict`) 
+are available for comparison or monitoring.
+</Note>
+
+#### Examples
+
+```python
+from aidflow.predictor import Predictor
+pred = Predictor(project='my_project')
+
+# Full pipeline prediction (raw data in, probability out)
+result = pred.champion_agent_predict(new_raw_data, preprocess=True)
+result.data  # P(class=1) probabilities
+
+# Individual agent for comparison
+a1 = pred.agent1_predict(new_raw_data, preprocess=True)
+a2 = pred.agent2_predict(new_raw_data, preprocess=True)
+```

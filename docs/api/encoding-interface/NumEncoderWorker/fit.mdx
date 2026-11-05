@@ -1,0 +1,33 @@
+---
+title: "NumEncoderWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def NumEncoderWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\encode\num_encoder.py#L444)
+</div>
+
+Analyze and learn numerical bin encoding.
+
+Executes the non-greedy bin search, min-bin-share
+merging, and predictive gates for each numerical
+feature. Results are stored as encoding maps ready for
+`transform`.
+
+#### Parameters
+
+**`inputs`** : *`NumEncoderInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Input configuration including training set and<br />numerical feature lists.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The numerical encoding strategy. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(max_num_bins, gini_cutoff, num_alpha, min_bin_share).</div>
+
+
+#### Returns
+
+*`NumEncoder`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted encoder instance.</div>
+

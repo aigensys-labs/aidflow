@@ -1,0 +1,45 @@
+---
+title: "AgentsComparatorWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentsComparatorWorker.transform</strong>(self, data, agents=tuple(AGENTS)) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\compare\agents_comparator.py#L522)
+</div>
+
+Re-evaluate the full comparison on a new dataset.
+
+Runs the complete multi-agent scoring pipeline on any
+data sample. Use this to:
+- Monitor agent rankings on subsequent OOT windows.
+- Compare a subset of agents (e.g., the top 2 from
+  the initial ranking).
+- Generate a fresh scoring report for a different
+  segment or time period.
+- Perform "What-If" analysis: does the ranking hold
+  on a different sample?
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The dataset for performance evaluation (must contain<br />target + features).</div>
+
+**`agents`** : *`tuple`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Subset of agents to include (e.g., `(1, 2)` for<br />a head-to-head comparison, or `(1, 3, 4)` for<br />multiple agents).</div>
+
+
+#### Returns
+
+*`AgentsComparatorResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Full scoring package (overview, scoring, lift,<br />calibration) for the requested agents.</div>
+
+
+<Note>
+**No State Change**: This method does not modify the
+fitted state. It produces a fresh analysis on the new
+data. The original fit results remain accessible via
+`.result` and `.stats`.
+
+**Head-to-Head**: Use `agents=(i, j)` for a focused
+comparison between two specific agents.
+</Note>

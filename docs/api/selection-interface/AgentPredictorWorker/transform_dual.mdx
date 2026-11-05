@@ -1,0 +1,28 @@
+---
+title: "AgentPredictorWorker.transform_dual"
+sidebarTitle: "transform_dual"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentPredictorWorker.transform_dual</strong>(self, inputs) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\select\agent\champion_predictor.py#L639)
+</div>
+
+Synchronized dual inference: train + test in one call.
+
+Executes `transform` on both the training and test
+sets, returning paired predictions. Used for pre-flight
+validation before go-live deployment — ensures that
+the scoring pipeline produces consistent results across
+both data sources.
+
+#### Parameters
+
+**`inputs`** : *`AgentPredictorInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Must contain both `train_set` and `test_set`<br />(ML-ready data).</div>
+
+
+#### Returns
+
+*`AgentPredictorResultDual`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Paired predictions: `data` (train) and<br />`test_data` (test), with full feature lineage.</div>
+

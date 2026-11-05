@@ -1,0 +1,39 @@
+---
+title: "AgentsComparatorWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentsComparatorWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\compare\agents_comparator.py#L477)
+</div>
+
+Execute the full multi-agent comparison and scoring.
+
+Predicts with all agents, computes per-metric scores
+(performance, calibration, cross-audit), standardizes
+to a 0–1 scale, applies weights, and ranks agents by
+composite score.
+
+#### Parameters
+
+**`inputs`** : *`AgentsComparatorInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Container for target evaluation data and configuration.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The comparison strategy identifier. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameter overrides, passed to the internal fitter<br />(select_alpha, select_bins).</div>
+
+
+#### Returns
+
+*`AgentsComparator`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted model instance containing the calculated performance matrices.</div>
+
+
+<Note>
+**Agent Ranking**: The ranked list is available via
+`.stats.ordered` — the first element is the
+recommended agent.
+</Note>

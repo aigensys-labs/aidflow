@@ -1,0 +1,33 @@
+---
+title: "Agent4PredictorWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def Agent4PredictorWorker.fit</strong>(self, inputs, fx_choice=REG.LGB, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\learner\agents\agent4_predictor.py#L459)
+</div>
+
+Train the GBM agent on numerical and/or categorical features.
+
+Executes the full two-stage feature selection pipeline
+(tree-based selection + shadow pruning), fits the final
+GBM with early stopping, and computes validation
+diagnostics.
+
+#### Parameters
+
+**`inputs`** : *`Agent4Input`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Training configuration including train_set,<br />num_features, and cat_features.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The GBM engine: REG.LGB (LightGBM, default)<br />or REG.XGB (XGBoost).</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(gb_max_leaves, gb_learning_rate, gb_estimators,<br />gb_min_child_weight, shadow_quantile, cross_val_folds).</div>
+
+
+#### Returns
+
+*`Agent4Predictor`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted agent instance.</div>
+

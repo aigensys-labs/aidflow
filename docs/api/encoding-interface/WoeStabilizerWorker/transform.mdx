@@ -1,0 +1,27 @@
+---
+title: "WoeStabilizerWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def WoeStabilizerWorker.transform</strong>(self, data) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\encode\woe_stabilizer.py#L854)
+</div>
+
+Select the stable WOE features from the input data.
+
+This is a pass-through selection (no value
+transformation) — the WOE values were already computed
+in the previous stage. Only the stable features (per
+the fit/update verdict) are retained.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Data containing WOE features.</div>
+
+
+#### Returns
+
+*`WoeStabilizerResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Stable WOE data + full feature lineage metadata.</div>
+

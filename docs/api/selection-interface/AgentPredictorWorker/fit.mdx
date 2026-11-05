@@ -1,0 +1,34 @@
+---
+title: "AgentPredictorWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentPredictorWorker.fit</strong>(self, inputs, fx_choice=REG.AIG) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\select\agent\champion_predictor.py#L557)
+</div>
+
+Freeze and package the champion agent for production.
+
+Resolves the agent, binds encoders, re-fits the model
+on the curated feature subset, and saves the deployment
+artifact. After this call, the object is immutable and
+ready for `transform` / `preprocess`.
+
+#### Parameters
+
+**`inputs`** : *`AgentPredictorInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Training/test data, feature subset, and agent choice.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Fitter choice key.</div>
+
+
+#### Returns
+
+*`AgentPredictor`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Fitted, deployment-ready champion agent.</div>
+
+
+#### Raises
+
+* **`ValueError`**: If `train_set` is empty or `features` is empty.

@@ -1,0 +1,41 @@
+---
+title: "DataEncoderWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def DataEncoderWorker.transform</strong>(self, data, test_size=None) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\transform\data_encoder.py#L498)
+</div>
+
+Training phase utility for automatic feature encoding, preprocessing, 
+and train/test splits.
+
+- Native Dtype Enforcement:
+    - Converts datasets to native NumPy/Pandas dtypes to ensure full 
+      compatibility with LightGBM, XGBoost, and Scikit-Learn.
+    - Prevents repeated N-step conversions during training, minimizing 
+      peak pipeline RAM footprint.
+
+- Train/Test Partitioning:
+    - Retains user-supplied `test_set` if explicitly provided.
+    - Automatically splits `data` / train_set by `test_size` if no 
+      test set is present.
+
+- Feature Encoding Extension:
+    - Extends train and test sets by WOE features given project-level 
+      fitted encoding.
+
+#### Parameters
+
+**`data`** : *`pDF | pa.Table | DataEncoderInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The raw or input-config data to be encoded for ML sampling.</div>
+
+**`test_size`** : *`float`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Fraction of data allocated to the test set (used only when<br />no explicit test set is provided).<br />• None: uses value set during init<br />• 0: returns test_set = None - no data split</div>
+
+
+#### Returns
+
+*`DataEncoderResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>An object containing synchronized train and test sets ready for agents.</div>
+

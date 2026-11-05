@@ -1,0 +1,41 @@
+---
+title: "AgentSelectorWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def AgentSelectorWorker.transform</strong>(self, data) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\selector\select\agent_selector.py#L599)
+</div>
+
+Generate a fresh selection audit report on any dataset.
+
+Re-evaluates the champion agent's diagnostics (performance,
+SHAP drift) on a new data sample without re-fitting.
+Use this to:
+- Monitor the champion on a subsequent OOT window.
+- Detect distribution shift before it impacts production.
+- Generate a fresh audit report for compliance.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The dataset to evaluate (must contain target + features).<br />Typically a new OOT sample.</div>
+
+
+#### Returns
+
+*`AgentSelectorResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Updated performance and SHAP diagnostics on the<br />new data, with the same champion predictor.</div>
+
+
+<Note>
+**No Re-fitting**: This method does not re-train the
+champion. It only re-computes the diagnostics on the
+new data. The `agent_predictor` remains the same
+fitted instance from `fit`.
+
+**Use Case**: If your OOT window shifts (e.g., next
+month's data), call `transform` on the new sample to
+verify that the champion's feature behavior remains
+stable. If SHAP drift increases, consider re-selecting.
+</Note>

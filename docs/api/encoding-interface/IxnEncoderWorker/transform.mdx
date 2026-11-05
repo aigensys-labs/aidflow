@@ -1,0 +1,28 @@
+---
+title: "IxnEncoderWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def IxnEncoderWorker.transform</strong>(self, data, subset=None) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\encode\ixn_encoder.py#L574)
+</div>
+
+Apply mined interaction rules to new data.
+
+Evaluates each rule condition against the input data,
+producing binary (0/1) interaction columns.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>New data containing the original features referenced<br />by the mined rules.</div>
+
+**`subset`** : *`list`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Specific interaction names to produce. If None, all<br />trained interactions are produced.</div>
+
+
+#### Returns
+
+*`IxnEncoderResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Binary interaction columns + feature lineage metadata.</div>
+

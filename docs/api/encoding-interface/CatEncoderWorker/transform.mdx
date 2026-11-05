@@ -1,0 +1,28 @@
+---
+title: "CatEncoderWorker.transform"
+sidebarTitle: "transform"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def CatEncoderWorker.transform</strong>(self, data, subset=None) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\encode\cat_encoder.py#L483)
+</div>
+
+Apply fitted category mappings to new data.
+
+Maps each categorical feature to its merged (post-MBS)
+category values using the learned encoding maps.
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>New data containing the original categorical features.</div>
+
+**`subset`** : *`list`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Specific features to process and return.<br />Default = None: all trained features.</div>
+
+
+#### Returns
+
+*`CatEncoderResult`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Transformed data + feature lineage metadata.</div>
+

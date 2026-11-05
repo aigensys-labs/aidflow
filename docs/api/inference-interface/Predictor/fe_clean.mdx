@@ -1,0 +1,30 @@
+---
+title: "Predictor.fe_clean"
+sidebarTitle: "fe_clean"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def Predictor.fe_clean</strong>(self, data, subset=None) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\predictor\predictor.py#L285)
+</div>
+
+Validate and clean input data against trained standards.
+
+Applies the trained data-quality pipeline: type
+validation, outlier detection, and relevance filtering.
+Variables that do not match the trained behavioral
+profile are flagged (and optionally removed).
+
+#### Parameters
+
+**`data`** : *`pDF`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Input data of shape (n_samples, n_features).</div>
+
+**`subset`** : *`list`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Specific features to process and return.<br />Default = None: all trained features.</div>
+
+
+#### Returns
+
+*`FeCleanerResult`*
+
+

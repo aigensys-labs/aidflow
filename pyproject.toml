@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aidflow"
+version = "3.0.9"
+description = "Automated Interactive Development Framework | Scorecard DEV"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "AIGENSYS", email = "info@aigensys.com" },
+    { name = "Michal Ricar", email = "michal.ricar@aigensys.com" }
+]
+keywords = [
+    "scorecard",
+    "credit-scoring",
+    "woe",
+    "feature-selection",
+    "ml-pipeline",
+    "regulatory-reporting",
+    "logistic-regression",
+    "gradient-boosting",
+    "human-in-the-loop",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: 3 :: Only",    
+]
+requires-python = ">=3.12"
+dependencies = [
+    # data base
+    "pyarrow >= 26.0",
+    "pandas >= 3.1",
+    "numpy >= 2.5",
+    "numba >= 0.68",
+    "wrapt >= 2.5.2",
+    # multiprocess / ray
+    "threadpoolctl >= 3.7",
+    "multiprocess >= 0.70.1",
+    # glm
+    "scipy >= 1.18",
+    "scikit-learn >= 1.9",
+    "statsmodels >= 0.15",
+    # gbm
+    "xgboost >= 3.4",
+    "lightgbm == 4.6",
+    "shap >= 0.54",
+    "optuna >= 5.0",
+    "optuna-integration[lightgbm,xgboost]",
+    # artifact io base
+    "mgzip2 >= 0.2.6",
+    # compute progress
+    "tqdm >= 4.7",
+    "p_tqdm >= 1.4",
+    # reports
+    "ipykernel >= 7.4",
+    "ipywidgets >= 8.1",
+    "jinja2 >= 3.1.6",
+    "plotly >= 7.1",
+    "anywidget >= 0.11",
+    "matplotlib >= 3.11",
+    "itables >= 2.9",
+]
+
+[project.optional-dependencies]
+notebook = ["notebook >= 7.6"]
+ray = ["ray[data]>=2.59; python_version<'3.14'"]
+all = [
+    "ray[data]>=2.59; python_version<'3.14'",
+    "notebook >= 7.6"
+]
+
+[project.urls]
+Homepage = "https://github.com/aigensys-labs/aidflow"
+Repository = "https://github.com/aigensys-labs/aidflow"
+Documentation = "https://aidflow.aigensys.com/"
+
+[project.scripts]
+aidflow = "aidflow.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aidflow"]

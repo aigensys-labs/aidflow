@@ -1,0 +1,31 @@
+---
+title: "DataEncoderWorker.fit"
+sidebarTitle: "fit"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def DataEncoderWorker.fit</strong>(self, inputs, fx_choice=REG.AIG, **params) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\transform\data_encoder.py#L459)
+</div>
+
+Apply the full encoding pipeline to produce ML-ready samples.
+
+Executes dtypes standardization (if mismatch), WOE encoding, 
+and train/test split.
+
+#### Parameters
+
+**`inputs`** : *`DataEncoderInput`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Input configuration including train_set, test_set,<br />and woe_features.</div>
+
+**`fx_choice`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The encoding strategy identifier. Defaults to REG.AIG.</div>
+
+**`**params`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Runtime parameters passed to the internal fitter<br />(test_size).</div>
+
+
+#### Returns
+
+*`DataEncoder`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>The fitted encoder instance with ML-ready samples.</div>
+

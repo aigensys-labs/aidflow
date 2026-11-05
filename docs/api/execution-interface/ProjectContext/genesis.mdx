@@ -1,0 +1,26 @@
+---
+title: "ProjectContext.genesis"
+sidebarTitle: "genesis"
+---
+
+<div className="font-mono text-base my-3">
+  <strong>def ProjectContext.genesis</strong>(self, theme=None, kind='v', **kwargs) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\ctx\project.py#L212)
+</div>
+
+Initializes the gateway layer parameters.
+
+In the UI mode, this launches the `ProjectGenesis` web panel to handle
+initial data loading or model selection. In script mode, it simply
+captures the provided `kwargs` for later use.
+
+#### Parameters
+
+**`theme`** : *`str`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Custom theme name for the UI. Defaults to `self.theme`.</div>
+
+**`kind`** : *`(v, h)`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Layout orientation for the gateway: 'v' for vertical, 'h' for horizontal.</div>
+
+**`**kwargs`** : *`dict`*
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Configuration arguments passed in a script mode.</div>
+
