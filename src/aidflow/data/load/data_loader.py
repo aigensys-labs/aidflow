@@ -42,7 +42,7 @@ Its output is consumed by:
 """
 
 from ...deps.common         import  wraps
-from ...deps.data           import  pDF, pSe
+from ...deps.data           import  pa, pDF, pSe
 
 from ...core.structure      import  (
                                     SID, 
@@ -165,7 +165,11 @@ class Importer:
         self.fx_choice = fx_choice
         self.fx = FREG.get(self.fx_choice)
 
-    def process(self, params:ImpParamsBase, direct_data:pDF=None, verbose:bool=True) -> pDF:
+    def process(self, 
+        params: ImpParamsBase, 
+        direct_data: pDF | pa.Table = None, 
+        verbose: bool = True
+    ) -> pDF:
         self.fitter = self.fx.build(params=params)
         return self.fitter.process(direct_data=direct_data, verbose=verbose)
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -335,7 +339,7 @@ class DataLoaderInput(ModelInput):
 
     Attributes
     ----------
-    direct_data: pDF = None
+    direct_data: pDF | pa.Table = None
         Sideload data already present in memory. When provided,
         the import step (input_source / input_data) is bypassed
         entirely — the data is used as-is for downstream processing.
@@ -362,7 +366,7 @@ class DataLoaderInput(ModelInput):
         Defaults to ctx setup values. Each step can be overriden to 
         customize verbosity level.
     """
-    direct_data: pDF = None
+    direct_data: pDF | pa.Table = None
 
 @Dataclass.base(dynamic_params=True)
 class DataLoaderResult(ModelResult):

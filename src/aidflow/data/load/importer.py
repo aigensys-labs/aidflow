@@ -378,20 +378,20 @@ class DataImporter:
         return data.reset_index(drop=True)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     
-    def pipeline(self, direct_data:pDF=None) -> pDF:
+    def pipeline(self, direct_data: pDF | pa.Table = None) -> pDF:
         """
         Execute the full ingestion pipeline: import → verify → standardize.
         
         Parameters
         ----------
-        direct_data: pDF = None
+        direct_data: pDF | pa.Table = None
             Sideload data already present in memory. When provided,
             the import step (input_source / input_data) is bypassed
             entirely — the data is used as-is for downstream processing.  
 
         Returns
         -------
-        pDF
+        pDF | pa.Table
             Standardised DataFrame ready for the AIDflow pipeline.
 
         Raises
@@ -408,7 +408,10 @@ class DataImporter:
         return self._standardize(di)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     
-    def process(self, direct_data: pDF = None, verbose: int|bool = True) -> pDF:
+    def process(self, 
+        direct_data: pDF | pa.Table = None, 
+        verbose: int|bool = True
+    ) -> pDF:
         """
         Execute the ingestion pipeline with progress display.
         
@@ -422,7 +425,7 @@ class DataImporter:
 
         Parameters
         ----------
-        direct_data: pDF = None
+        direct_data: pDF | pa.Table = None
             Sideload data already present in memory. When provided,
             the import step (input_source / input_data) is bypassed
             entirely — the data is used as-is for downstream processing.        

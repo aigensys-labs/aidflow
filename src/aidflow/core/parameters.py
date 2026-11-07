@@ -961,8 +961,8 @@ class Parameters:
 
     offload : bool | int = 0
         Offloads relay-data structures to disk via the Arrow engine to reduce memory footprint.
-        Enable when working with large feature spaces or limited RAM. Trade-off: minor I/O overhead
-        on access in exchange for significantly lower peak memory usage.
+        Enable when working with large feature spaces or limited RAM. Trade-off: minor I/O 
+        overhead on access in exchange for significantly lower peak memory usage.
 
     verbose : int = 2
         Controls the amount of output: 

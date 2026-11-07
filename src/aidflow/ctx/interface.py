@@ -29,14 +29,25 @@ All execution runs within the context scope defined by
 """
 
 from ..deps.types           import Literal
+from ..deps.data            import pDF
 
-from ..core.structure       import AIGFLOW, REG
-from ..core.foundation      import AigParam, AigStop
+from ..core.structure       import (
+                                   REG, 
+                                   AIGFLOW
+                                   )
+from ..core.factory         import Dataclass
+from ..core.foundation      import (
+                                   AigParam, 
+                                   AigStop
+                                   )
 from ..core.base.worker     import WorkerBase
 from ..core.protocol        import ProjectContextProtocol
 from ..core.accessor        import Format
 
-from ..data.interface       import DataPhase
+from ..data.interface       import (
+                                   DataPhase, 
+                                   DataLoaderInput
+                                   )
 from ..data.interface       import EncodingPhase   
 from ..learner.interface    import TrainingPhase
 from ..selector.interface   import SelectionPhase
@@ -56,8 +67,7 @@ class ExecutionContext:
     Provides phase-based access to all workers and a unified
     `process` method for sequential execution.
     
-    Executes `workers` by domain-specific pipeline phase:
-    - `data` → `encoding` → `training` → `selection`
+    Executes `workers` by domain-specific pipeline phase: data - encoding - training - selection.
 
     Notes
     -----
@@ -129,6 +139,21 @@ class ExecutionContext:
     ctx.flow.process('all', verbose = 0)
     ```
 
+    Run the whole flow within the defined context 
+    with custom data present in memory:
+
+    ```python
+    import pandas as pd
+
+    my_data = pd.DataFrame(dict(
+        target = [...], 
+        decision_data = [...],
+        ...
+    ))
+
+    ctx.flow.process('all', data = my_data, verbose = 1)
+    ```
+
     Run selected flow phase within the defined context:
     
     ```python
@@ -179,6 +204,7 @@ class ExecutionContext:
 
     def process(self, 
         phase: Literal['all', 'data', 'encoding', 'training', 'selection'] = 'all',
+        data: pDF | None = None,
         verbose: bool | Verbosity | None = None
     ) -> None:
         """
@@ -189,10 +215,16 @@ class ExecutionContext:
         phase : Literal['all', 'data', 'encoding', 'training', 'selection']
             Process workers by the chosen phase or run the whole flow by 'all'.
 
+        data: pDF = None
+            Applicable only for phase `'all' or 'data'`.            
+            Sideload data already present in memory. When provided,
+            the import step (input_source / input_data) is bypassed
+            entirely — the data is used as-is for downstream processing.
+
         verbose : bool | Verbosity | None = None
             Verbosity level of workers; None → context default value.
         """
-        return self._processor.process(phase, verbose)
+        return self._processor.process(phase, data, verbose)
 
     @staticmethod
     def help() -> None:
@@ -221,6 +253,9 @@ class ExecutionProcessor:
     ):
         self._set_domain(execution)
         self._verbose = verbose
+        
+        schema = Dataclass.schema(DataLoaderInput)
+        self._direct_data = schema.direct_data
 
     def _set_domain(self, exe: ExecutionContext) -> None:
         self.domain = {
@@ -241,23 +276,24 @@ class ExecutionProcessor:
 
     def process(self, 
         phase: Literal['all', 'data', 'encoding', 'training', 'selection'] = 'all',
+        data: pDF | None = None,
         verbose: bool | Verbosity | None = None
     ) -> None:
         """Executes workers for the chosen phase within the defined context scope."""
         if phase != 'all':
             self._verify(phase)
-            self._process(self.MAP[phase], verbose)
+            self._process(self.MAP[phase], data, verbose)
             return
         
         for workers in self.MAP.values():
-            self._process(workers, verbose)
+            self._process(workers, data, verbose)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
     def _excluded() -> list:
         return [AIGFLOW.Selection.champion_agent]
     
-    def _process(self, workers: dict, verbose: bool | Verbosity) -> None:
+    def _process(self, workers: dict, data: pDF | None, verbose: bool | Verbosity) -> None:
         excluded = self._excluded()
         for w in workers.values():
             if w in excluded:
@@ -265,8 +301,13 @@ class ExecutionProcessor:
             worker = self.get_worker(w)
             verbose = AigParam.di(verbose, self._verbose)
             ExecutionRepr.header(worker, verbose)
-            worker(verbose = verbose)
+            worker(verbose = verbose, **self._data(w, data))
 
+    def _data(self, w: str, data:pDF|None) -> dict:
+        if data is None or w != AIGFLOW.Data.loader:
+            return {}
+        return {self._direct_data: data}
+    
     def _verify(self, phase: str) -> None:
         m = list(self.MAP)
         if phase not in m:

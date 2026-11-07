@@ -177,7 +177,7 @@ at instantiation: `worker(param1=1, param2=2)`.
 <div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Set to 1 (True) to persist logging during training to the project output folder "run.log";<br />independent of verbosity level and save state.</div>
 
 **`offload`** : *`bool | int = 0`*
-<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Offloads relay-data structures to disk via the Arrow engine to reduce memory footprint.<br />Enable when working with large feature spaces or limited RAM. Trade-off: minor I/O overhead<br />on access in exchange for significantly lower peak memory usage.</div>
+<div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Offloads relay-data structures to disk via the Arrow engine to reduce memory footprint.<br />Enable when working with large feature spaces or limited RAM. Trade-off: minor I/O<br />overhead on access in exchange for significantly lower peak memory usage.</div>
 
 **`verbose`** : *`int = 2`*
 <div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Controls the amount of output:<br />• 0: Silent (Production mode)<br />• 1: Info (Standard logs)<br />• 2: GUI Interactive Panels &amp; Reports</div>

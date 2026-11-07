@@ -87,7 +87,7 @@ class Export:
         html_df = itables_html(sample, pageLength=pageLength)
         path    = FileUtils.ensure_extension(path, 'html')
         try:
-            with open(path, "w") as file:
+            with open(path, "w", encoding="utf-8") as file:
                 file.write(html_df)
         except:                 
             cls._log(path)
@@ -119,7 +119,7 @@ class Export:
         try:
             if isinstance(html, HTML):
                 html = html.data            
-            with open(path, "w") as file:
+            with open(path, "w", encoding="utf-8") as file:
                 file.write(html)
         except Exception as e: 
             cls._log(path)

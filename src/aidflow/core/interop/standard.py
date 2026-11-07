@@ -194,7 +194,8 @@ class DataStandard:
             return data
                 
         if isinstance(data, pDF):
-            data[name] = array
+            array.name = name
+            data = Pd.concat([data, array], axis=1)
             if position is not None:
                 Pd.move_column_inplace(data, name, position)
             return data

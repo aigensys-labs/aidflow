@@ -8,16 +8,12 @@ from AID.ctx.interface import ExecutionContext
 ```
 
 Execution Context — Pipeline Orchestration & Phase Execution.
+
 The primary API surface for executing the AIDflow pipeline.
 Provides phase-based access to all workers and a unified
 `process` method for sequential execution.
-Executes `workers` by domain-specific pipeline phase:
 
-<table style={{"border": "none", "borderCollapse": "collapse", "background": "transparent", "margin": 0}}>
-  <tbody>
-  <tr style={{"border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}><td style={{"paddingRight": "16px", "fontWeight": "500", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>data</td><td style={{"paddingRight": "12px", "whiteSpace": "nowrap", "verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>→</td><td style={{"verticalAlign": "top", "border": "none", "borderBottom": "none", "boxShadow": "none", "background": "transparent"}}>`encoding` → `training` → `selection`</td></tr>
-  </tbody>
-</table>
+Executes `workers` by domain-specific pipeline phase: data - encoding - training - selection.
 
 <Note>
 - Automated execution of all pipeline steps or a selected phase via `ctx.flow.process()`
@@ -85,6 +81,21 @@ Run the whole flow within the defined context:
 
 ```python
 ctx.flow.process('all', verbose = 0)
+```
+
+Run the whole flow within the defined context
+with custom data present in memory:
+
+```python
+import pandas as pd
+
+my_data = pd.DataFrame(dict(
+    target = [...], 
+    decision_data = [...],
+    ...
+))
+
+ctx.flow.process('all', data = my_data, verbose = 1)
 ```
 
 Run selected flow phase within the defined context:
