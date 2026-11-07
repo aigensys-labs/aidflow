@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aidflow"
-version = "3.0.9"
+version = "3.0.10"
 description = "Automated Interactive Development Framework | Scorecard DEV"
 readme = "README.md"
 license = { file = "LICENSE" }
