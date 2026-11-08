@@ -31,7 +31,7 @@ from ...utils.builtins      import List, Str
 from ...display.plots       import Plot
 from ...display.rgb         import RgbANSI
 
-from .binning               import Bins, EncodingMap
+from .binning               import Binning, EncodingMap
 from ..tests                import TestSampleDiff
 
 
@@ -320,7 +320,7 @@ class WoE:
         y_,x_ = cls._align_input(y_true, x)
         data_ = cls._group_data(y_, x_)
         woe   = cls._encode(data_)
-        d_e   = Bins.data_mapping(x_, woe, x_.name, _WOE)
+        d_e   = Binning.data_mapping(x_, woe, x_.name, _WOE)
         
         if return_encoding: 
             return d_e, woe
@@ -642,7 +642,7 @@ class WoEOverview:
             x = {}
             for s, d in samples.items():
                 x[s] = self._group_data(d, fe)
-
+                
             df[fe] = self._create(x)
 
         return {OV.DATA: df, OV.SUM: self._table(df)}

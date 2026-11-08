@@ -569,6 +569,10 @@ class WorkerProcessor:
             ( kwargs.get(key) is None )
         )
     
+    def is_fitted(self, worker: str) -> bool:
+        """True if specified worker's internal model has been fitted; False otherwise."""
+        return self.task.get_worker(worker).is_fitted
+    
     def _is_base(self) -> bool:
         return issubclass(self.config.Model, ModelBase)
     # ─────────────────────────────────────────────────────────────────────────────────────────────

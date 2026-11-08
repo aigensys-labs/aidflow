@@ -278,7 +278,7 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def get_choice(self, fx_choice:str, inputs:"AgentsComparatorInput"):
-        agents   = self.get_model_dependecy(DEPS)
+        agents   = self.get_model_dependecy(DEPS, is_req=False)
         defaults = self.Config(
             predictors = PredictorAdapter(agents),
             target     = AigParam.di(inputs.target, self.setup.target)

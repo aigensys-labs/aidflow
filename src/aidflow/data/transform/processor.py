@@ -79,17 +79,18 @@ class EncoderParamsCfg:
 
     Attributes
     ----------
-    fe_cleaner : ModelAdapterBase, default=None
+    fe_cleaner : ModelAdapterBase
         Trained feature cleaner.
     woe_encoder : ModelAdapterBase, default=None
-        Trained WOE encoder. Applied to all features to produce 
+        Optional trained WOE encoder. Applied to all features to produce 
         the final WOE representation.
+        Default None will skip WOE feature encoding.
     time_var : str, default=None
         Time column name. If set, train/test split is done
         chronologically (most recent `test_size` fraction = test).
         If None or not present in data, a random split is used.
     """
-    fe_cleaner:     ModelAdapterBase = None
+    fe_cleaner:     ModelAdapterBase
     woe_encoder:    ModelAdapterBase = None
     time_var:       str = None
 
@@ -127,7 +128,7 @@ class EncoderInput:
         using `test_size` (time-based or random).
     train_woe : pDF | None, default=None
         Pre-computed WOE features for the train set. If None, the
-        WOE encoder is applied to produce them.
+        WOE encoder is applied to produce them (if provided).
     woe_features : list | None, default=None
         WOE feature column names to include. If None, all WOE features
         from the encoder output are used.
@@ -245,6 +246,8 @@ class Fitter(FitterDataBase):
    
     def _extend_data(self, d:pDF, inputs:EncoderInput, is_train:bool = False) -> pDF:
         """Extend data by encoded WOE feature data."""
+        if self.prm.woe_encoder is None:
+            return d
         woe = self._encode_data(d, inputs, is_train)
         return Pd.concat([d, woe.data[woe.fes]], axis=1)
     # ─────────────────────────────────────────────────────────────────────────────────────────────    
@@ -386,7 +389,7 @@ class Fitter(FitterDataBase):
         Steps:
         1. Normalize and verify inputs.
         2. Resolve and preprocess train/test data.
-        3. Apply WOE encoding to both sets.
+        3. Apply WOE encoding to both sets (only if woe_encoder provided).
         4. Ensure identical column structure.
         5. Record dtype schema and shape stats.
 
@@ -429,8 +432,9 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
     ----------
     fe_cleaner : ModelAdapterBase
         Trained feature cleaner.
-    woe_encoder : ModelAdapterBase
+    woe_encoder : ModelAdapterBase, default=None
         Trained WOE encoder (the primary transformation).
+        None → WOE encoding is skipped.
     time_var : str, default=None
         Time column for chronological train/test split.
     test_size : float, default=0.3
@@ -462,7 +466,6 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
     >>> from aidflow.fitters import DataEncoderProcessor
     >>> encoder = DataEncoderProcessor(
     ...     fe_cleaner=fe_cleaner,
-    ...     obs_stabilizer=obs_analyzer,
     ...     woe_encoder=woe_encoder,
     ...     time_var='AIG_YY_MM',
     ...     test_size=0.3,
@@ -484,11 +487,11 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
         Produce ML-ready train/test samples from raw data.
 
         Applies the full encoding pipeline:
-        1. Dtype verification & standardization (Arrow → native).
-        2. Outlier removal (optional): filter flagged observations.
-        3. WOE encoding: transform all features to WOE values.
-        4. Train/test split: time-based or random.
-        5. Column alignment: ensure test matches train columns.
+        1. Normalize and verify inputs.
+        2. Resolve and preprocess train/test data.
+        3. Apply WOE encoding to both sets (only if woe_encoder provided).
+        4. Ensure identical column structure.
+        5. Record dtype schema and shape stats.
 
         Parameters
         ----------

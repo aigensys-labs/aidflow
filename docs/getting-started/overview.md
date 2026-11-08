@@ -10,6 +10,8 @@ Framework where a human directs and an AI agent executes the full pipeline — s
 
 ![AIDflow Preview](/assets/aidflow-preview.gif)
 
+---
+
 ## Who This Is For
 
 - **AI Orchestration Endpoints** — one command surface that lets LLM 
@@ -24,6 +26,7 @@ Framework where a human directs and an AI agent executes the full pipeline — s
 
 If your scoring model must survive a committee review, AIDflow is your development environment.
 
+---
 
 ## Why AIDflow?
 
@@ -51,6 +54,7 @@ pipeline state.
 lineage, SHAP explainability vectors, and performance benchmarks for seamless 
 regulatory approval.
 
+---
 
 ## Get Started in Seconds
 

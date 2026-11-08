@@ -290,7 +290,7 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def get_choice(self, fx_choice:str, inputs:"AgentSelectorInput"):
-        agents   = self.get_model_dependecy(DEP1)
+        agents   = self.get_model_dependecy(DEP1, is_req=False)
         cleaner  = self.get_model_dependecy(DEP2)
         encoder  = self.get_model_dependecy(DEP3)
         compare  = self.get_model_dependecy(DEP4)

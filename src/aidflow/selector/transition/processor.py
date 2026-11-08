@@ -65,10 +65,7 @@ from ...deps.plots                  import  go, make_subplots
 from ...deps.types                  import  (
                                             NDArray, 
                                             )
-from ...core.base.fitter            import  (
-                                            FitterDataBase, 
-                                            FitterModelBase
-                                            )
+from ...core.base.fitter            import  FitterModelBase
 from ...core.factory                import  (
                                             Dataclass, 
                                             DictClass
@@ -84,7 +81,7 @@ from ...ml.models.transition        import  (
 
 from ..base.processor               import  (
                                             AGENTS,
-                                            SelectorInputBase
+                                            FitterSelectionBase
                                             )
 from ..predict.adapter              import  PredictorAdapter                                            
 
@@ -219,7 +216,7 @@ class TransitionVectors:
     count:      pDF
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-class Fitter(FitterDataBase, SelectorInputBase[TransitionInput]):
+class Fitter(FitterSelectionBase[TransitionInput, TransitionParams]):
     """
     Transition Analysis Worker — cross-agent crosstab computation.
 
@@ -241,7 +238,7 @@ class Fitter(FitterDataBase, SelectorInputBase[TransitionInput]):
     agents_condition: int = 2
 
     def __init__(self, params: TransitionParams):
-        self.prm = params
+        super().__init__(params)
         self.predictors = self.prm.predictors
     # ─────────────────────────────────────────────────────────────────────────────────────────────
         

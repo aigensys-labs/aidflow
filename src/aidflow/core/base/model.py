@@ -920,10 +920,11 @@ class ModelProcessorBase(Generic[TransformerT, TransformerC, TransformerR], Vali
             return d
         return ReportIO(self.setup).load(self.MODEL)
         
-    def get_model_dependecy(self, model:str|list) -> "ModelBase | dict[str, ModelBase]":
+    def get_model_dependecy(self, model:str|list, is_req:bool=True
+    ) -> "ModelBase | dict[str, ModelBase]":
         """
         Returns model instance / dictionary populated by requested model instances 
-        if they were fitted under current project, otherwise raise.
+        if they were fitted under current project, otherwise raise when is_req=True.
         """
         ts = self.setup.project_signature
 
@@ -931,9 +932,10 @@ class ModelProcessorBase(Generic[TransformerT, TransformerC, TransformerR], Vali
             model = ProjectModelRegistry.get_model(ts, m)
             if model is not None:
                 return model
-            raise ValueError(
-                f'AIG SAFETY ► Model dependecy {m} must be fitted prior {self.MODEL} model fit.'
-            )
+            if is_req:                
+                raise ValueError(
+                    f'AIG SAFETY ► Model dependecy {m} must be fitted prior {self.MODEL} model fit.'
+                )
 
         if isinstance(model, str):
             return get_model(model)        

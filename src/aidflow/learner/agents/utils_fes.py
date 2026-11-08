@@ -33,7 +33,10 @@ class RawFeatures:
         """
         fes = VarStd.fe_to_var(selected)
 
-        if not self.encoder.cols.encoding:
+        if (
+            self.encoder is None or 
+            not self.encoder.cols.encoding
+        ):
             return fes
         
         return self._get_raw(fes)

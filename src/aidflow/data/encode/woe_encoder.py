@@ -398,7 +398,7 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
 
     def get_params(self, fx_choice:str, inputs:"WoeEncoderInput", params:dict):
         params  = self.get_fit_params(fx_choice, inputs.fx_params, params)
-        encoder = self.get_model_dependecy(DEP3)
+        encoder = self.get_model_dependecy(DEP3, is_req=False)
 
         fit = FitParams(
             num_features = inputs.num_features, 
@@ -604,7 +604,7 @@ class WoeEncoder(Processor, ModelBase):
         selected = self.cols.vars_selected
         self.ixn_mapping = {}
         
-        ixn_encoder: IxnEncoder = self.get_model_dependecy(DEP3)
+        ixn_encoder: IxnEncoder = self.get_model_dependecy(DEP3, is_req=False)
 
         if ixn_encoder is None or not ixn_encoder.cols.encoding:
             self._vars_req = selected

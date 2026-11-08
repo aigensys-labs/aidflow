@@ -7,6 +7,7 @@ Getting AIDflow into your environment is straightforward. We support all major P
 - **OS:** Linux, macOS, Windows
 - **Memory:** 8 GB+ (recommended: 16 GB for `--size large` runs)
 
+---
 
 ## Basic Installation
 
@@ -26,6 +27,7 @@ pip install aidflow[ray]
 pip install aidflow[all]
 ```
 
+---
 
 ## What's Inside
 
@@ -35,6 +37,7 @@ pip install aidflow[all]
 - **Execution:** Ray (optional) | multiprocessing
 - **Output:** HTML reports | ANSI terminal | Jupyter interactive
 
+---
 
 ## Verifying Installation
 To ensure AIDflow is correctly installed and your environment is ready for the ProjectContext orchestration, run:
@@ -43,6 +46,8 @@ To ensure AIDflow is correctly installed and your environment is ready for the P
 import aidflow
 print(aidflow.__version__)
 ```
+
+---
 
 ## Customizing Your Environment
 For corporate environments with specific security constraints (e.g., internal PyPI mirrors), you can install via your config file:

@@ -4,7 +4,7 @@ sidebarTitle: "transform"
 ---
 
 <div className="font-mono text-base my-3">
-  <strong>def DataEncoderWorker.transform</strong>(self, data, test_size=None) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\transform\data_encoder.py#L498)
+  <strong>def DataEncoderWorker.transform</strong>(self, data, test_size=None) [[source]](https://github.com/aigensys-labs/aidflow/blob/main/AID/\\TRUENAS\aig_modeling\_Products\AID\1_0_Lib\AID\data\transform\data_encoder.py#L503)
 </div>
 
 Training phase utility for automatic feature encoding, preprocessing, 
@@ -23,7 +23,7 @@ and train/test splits.
 
 - Feature Encoding Extension:
     - Extends train and test sets by WOE features given project-level 
-      fitted encoding.
+      fitted encoding (only if WoeEncoder was fitted during pipeline).
 
 #### Parameters
 

@@ -590,7 +590,7 @@ class FeatureStabilizerWorker(WorkerBase[FeStabilizerResult]):
 
     ```python
     cfg = dict(
-        time_var     = 'time_var2',
+        time_var = 'time_var2',
     )
     fe_stabilizer = ctx.workers.fe_stabilizer(fx_config = cfg)
     ```
@@ -2035,16 +2035,18 @@ class DataEncoderWorker(WorkerBase[DataEncoderResult]):
     )
 
     def _get_contract(self, is_default: bool = True):
+        is_woe = self._processor.is_fitted(AIGFLOW.Encoding.woe_encoder)
+        is_wfe = self._processor.is_fitted(AIGFLOW.Encoding.woe_stabilizer)
         return WorkerContract(
 
             defaults = DataEncoderEnvelope(
                 inputs = DataEncoderInput(
                     train_set    = self.sets.get('train.stable'),
                     test_set     = self.sets.get('test.clean'),
-                    woe_features = self.sets.get('features.woe.stable')
+                    woe_features = self.sets.get('features.woe.stable') if is_wfe else None
                 ),
                 config = DataEncoderEnvelopeCfg(
-                    train_woe = self.sets.get('train.encoded.woe') if is_default else None
+                    train_woe = self.sets.get('train.encoded.woe') if is_default and is_woe else None
                 )
             ),
 

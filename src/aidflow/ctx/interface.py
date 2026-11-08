@@ -35,7 +35,10 @@ from ..core.structure       import (
                                    REG, 
                                    AIGFLOW
                                    )
-from ..core.factory         import Dataclass
+from ..core.factory         import (
+                                   Dataclass, 
+                                   DictClass
+                                   )
 from ..core.foundation      import (
                                    AigParam, 
                                    AigStop
@@ -215,7 +218,7 @@ class ExecutionContext:
         phase : Literal['all', 'data', 'encoding', 'training', 'selection']
             Process workers by the chosen phase or run the whole flow by 'all'.
 
-        data: pDF = None
+        data: pDF | None = None
             Applicable only for phase `'all' or 'data'`.            
             Sideload data already present in memory. When provided,
             the import step (input_source / input_data) is bypassed
@@ -240,7 +243,7 @@ class ExecutionProcessor:
     sequence dependency, and dispatches workers in order.
     """
 
-    MAP = {
+    MAP: dict[str, DictClass] = {
         'data'           : AIGFLOW.Data,
         'encoding'       : AIGFLOW.Encoding,
         'training'       : AIGFLOW.Training,
@@ -307,21 +310,36 @@ class ExecutionProcessor:
         if data is None or w != AIGFLOW.Data.loader:
             return {}
         return {self._direct_data: data}
+
+    def _get_models(self, phase:str) -> tuple:
+        return self.MAP[phase].values()
     
+    def _sum_fitted(self, phase: str) -> int:
+        return sum(
+            self.get_worker(model).is_fitted 
+            for model in self._get_models(phase)
+        )
+
+    def _is_valid_training(self, phase: str) -> bool:
+        if phase != 'training':
+            return False
+        return self._sum_fitted(phase) > 0
+          
     def _verify(self, phase: str) -> None:
-        m = list(self.MAP)
-        if phase not in m:
-            raise self._raise(f'Invalid phase choice, available options ► {', '.join(m)}')
-        v = m.index(phase)
-        for i in range(v):
-            phase = self.MAP[m[i]]
-            for model in phase.values():
-                worker = self.get_worker(model)
-                if not worker.is_fitted:
-                    raise self._raise(
+        phases = list(self.MAP)
+        if phase not in phases:
+            raise self._raise(f'Invalid phase choice, available options ► {', '.join(phases)}')
+        r = phases.index(phase)
+        for i in range(r):
+            phase = phases[i]
+            if self._is_valid_training(phase):
+                continue
+            if self._sum_fitted(phase) == len(self._get_models(phase)):
+                continue
+            raise self._raise(
                 'Pipeline steps are sequence-dependent → e.g., the "encoding" ' 
                 'phase cannot be executed prior to the "data" phase'
-                )
+            )
 
     @staticmethod
     def _raise(msg:str) -> None:

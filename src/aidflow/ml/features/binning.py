@@ -20,6 +20,7 @@ from ...core.interop    import  (
                                 TypeStandard
                                 )
 from ...core.standard   import  (
+                                VarType,
                                 VarStd, 
                                 TypeDef
                                 )
@@ -59,7 +60,7 @@ class EncodingMap:
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-# Bins Ops
+# Bin Ops
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class BinsUtils:
     """
@@ -168,9 +169,10 @@ class BinsUtils:
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def data_bins(data:pDF|pSe, bins:pDF|pSe, x:str, xT:str=None) -> tuple[pSe, pSe]:
+    def extract_data_bins(data:pDF|pSe, bins:pDF|pSe, x:str, xT:str=None
+    ) -> tuple[pSe, pSe]:
         """
-        Extract the data series and bin series from potentially
+        Extract the data series and bin series from
         container objects (DataFrame or Series).
 
         Parameters
@@ -229,7 +231,7 @@ class BinsUtils:
         return TypeStandard.cat_fill_missing(d)    
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
         
-class Bins:
+class Binning:
     """
     Binning operations — merge, transform, and map.
 
@@ -323,7 +325,7 @@ class Bins:
     def merge(
         v1: str|list, 
         v2: str=None, 
-        vtype: Literal['N','C']='N', 
+        vtype: VarType = VarType.N, 
         div: str = VarStd.CAT_DIV
     ) -> str:
         """
@@ -350,7 +352,7 @@ class Bins:
         str
             The merged bin representation.
         """
-        if vtype == 'C':            
+        if vtype == VarType.C:            
             return BinsUtils.merge_cat(v1, v2, div)        
         return BinsUtils.merge_num(v1, v2)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -359,7 +361,7 @@ class Bins:
     def mapping(
         Ox:      pSe, 
         Dx:      pSe, 
-        vtype:   Literal['N','C'], 
+        vtype:   VarType, 
         missing: str = VarStd.MISSING, 
         div:     str = VarStd.CAT_DIV
     ) -> list:
@@ -377,7 +379,7 @@ class Bins:
             Original bin labels (full resolution).
         Dx : pSe
             Merged bin labels (reduced resolution).
-        vtype : 'N' | 'C'
+        vtype : 'N' | 'C' -  VarType standard
             Variable type (determines matching logic).
         missing : str, default=VarStd.MISSING
             Missing value standard (bypasses matching).
@@ -392,13 +394,13 @@ class Bins:
         """
 
         def match(o, d):
-            if vtype == 'N':
+            if vtype == VarType.N:
                 if o in d: 
                     return True                
             else:
                 o = o.split(div)
                 d = d.split(div)            
-                if all(True if m in d else False for m in o): 
+                if all(m in d for m in o): 
                    return True
             return False
         
@@ -419,7 +421,7 @@ class Bins:
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def data_mapping(data:pDF|pSe, mapping:pDF, x:str, xT:str, category_type:bool=True) -> pSe:
+    def data_mapping(data:pDF|pSe, mapping:pDF, x:str, xT:str) -> pSe:
         """
         Map data values to target bin labels using a mapping table.
 
@@ -436,14 +438,12 @@ class Bins:
         xT : str
             Target variable name (the desired bin label column
             in mapping).
-        category_type : bool, default=True
-            If True, return as categorical dtype.
 
         Returns
         -------
         pSe
-            Series of the same length as input, where each value
-            of `x` is replaced by its mapped `xT` bin label.
+            Series of `categorical dtype` and the same length as input, 
+            where each value of `x` is replaced by its mapped `xT` bin label.
         """
         d = data
         if isinstance(data, pDF): 
@@ -453,10 +453,7 @@ class Bins:
         m = mapping[X].to_dict()
         m = dict(zip(*[m[v].values() for v in X]))  # M = {value1: new_value1, value2: new_value2, ...}
         
-        t = mapping[xT].dtype.name
-        if category_type:
-            t = TypeDef.category[0]
-        
+        t = TypeDef.category[0]        
         return d.map(m).astype(t)
     
     @staticmethod
@@ -493,7 +490,7 @@ class Bins:
             Binned categorical series (same length as input).
             Points outside all bins receive NaN.
         """
-        d, b = BinsUtils.data_bins(data, mapping, x, xT)
+        d, b = BinsUtils.extract_data_bins(data, mapping, x, xT)
         bins = np.unique( b[b!=VarStd.MISSING] )
         cond = [
             ((d >  b.left)  if b.closed in ['right', 'both'] else (d >= b.left)) & 
@@ -539,7 +536,7 @@ class Bins:
             Binned categorical series (same length as input).
             Points not in any bin receive the missing standard.
         """         
-        d, b = BinsUtils.data_bins(data, mapping, x, xT)
+        d, b = BinsUtils.extract_data_bins(data, mapping, x, xT)
         bins = np.unique(b)
         cond = [d.isin(b.split(div)) for b in bins]
         return BinsUtils.transform(cond, bins, d.index, VarStd.MISSING)
@@ -705,7 +702,7 @@ class MinBinShare:
         target: str, 
         x:      str, 
         th:     float = 0.03, 
-        vtype:  Literal['N','C'] = 'N', 
+        vtype:  VarType = VarType.N, 
         xG:     str = None
     ):
         self.target = target
@@ -736,7 +733,7 @@ class MinBinShare:
         sort by descending target mean (ensures nearest-neighbor
         lookup works on a rate-ordered table).
         """
-        if self.vtype == 'C':                
+        if self.vtype == VarType.C:
             d = d.sort_values(by=['mean'], ascending=False)
         return d
 
@@ -744,8 +741,8 @@ class MinBinShare:
         """Standardize numerical bin labels for MBS processing."""
         if to_or_from_std == 0:
             d[self.x] = d[self.x].astype(str)           # Processing as string with reverse to orig. type after transformation
-        elif self.vtype == 'N': 
-            d[self.x] = d[self.x].apply(Bins.to_interval_type)   
+        elif self.vtype == VarType.N: 
+            d[self.x] = d[self.x].apply(Binning.to_interval_type)   
         return d
     
     def _data_std_dynamic_org(self, data:pDF) -> tuple[pDF, pDF]:
@@ -787,7 +784,7 @@ class MinBinShare:
 
     def _merge_bins(self, ft:dict) -> str:        
         v1,v2 = ft['ft'][self.x]
-        return Bins.merge(v1, v2, self.vtype)  
+        return Binning.merge(v1, v2, self.vtype)  
 
     @staticmethod
     def _merge_mean(ft:dict) -> float:
@@ -865,7 +862,7 @@ class MinBinShare:
         dt = pd.concat([d,miss])    
 
         mapping = do.copy()
-        mapping[self.xG] = Bins.mapping(o[self.x], d[self.x], self.vtype)
+        mapping[self.xG] = Binning.mapping(o[self.x], d[self.x], self.vtype)
         mapping[self.xG] = TypeStandard.any_to_cat(mapping[self.xG])
         return mapping, dt, do
     # ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -892,7 +889,7 @@ class MinBinShare:
             Mapping table + processed data + original stats.
         """          
         stats = self._data_to_stats(data, self.target, self.x)
-        miss  = Bins.ensure_missing(stats, self.x) 
+        miss  = Binning.ensure_missing(stats, self.x) 
         d, o  = self._data_std_dynamic_org(stats)
         self._add_u_to_dynamic_data(d)
         d = self._mbs_treatment(d)

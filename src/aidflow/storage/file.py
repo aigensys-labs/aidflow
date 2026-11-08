@@ -533,10 +533,12 @@ class FileIO:
             logger.error(f'{err} ► {path}')
 
     @staticmethod
-    def save_csv(df:pDF, path:str|Path, **kwargs):
-        """Simplified pandas csv save interface."""
+    def save_csv(df:pDF, path:str|Path, **kwargs) -> str:
+        """Simplified pandas csv save interface. Returns save path string."""
         path = FileUtils.ensure_extension(path, 'csv')
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(path, **kwargs)
+        return path
 
     @staticmethod
     def load_csv(path:str|Path, **kwargs) -> pd.DataFrame:

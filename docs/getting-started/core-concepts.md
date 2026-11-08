@@ -5,6 +5,8 @@ AIDflow is built on five architectural principles:
 - **Memory-Aware Relay**
 - **Distributed Compute**
 
+---
+
 ## 1. Context-Driven Orchestration (`ProjectContext`)
 
 Most ML projects pass data between functions as disconnected variables (`df_clean`, `df_stable`, `X_train`). Hidden state. No traceability. Reproducibility is manual luck.
@@ -18,6 +20,7 @@ The context is the source of truth. When a worker executes, it registers its out
 - **Reproducibility.** Load the context, call the worker, get the same result. Every time.
 - **Sequence Safety.** A step cannot execute until its prerequisite has registered. The pipeline enforces itself.
 
+---
 
 ## 2. The Three-Layer Abstraction (The "Super-Gear")
 
@@ -38,6 +41,7 @@ AIDflow decouples the user's intent from the mathematical execution using a thre
 *   **Role:** The Compute Engine.
 *   **Responsibility:** Pure mathematical execution. This is where the actual matrix multiplication, optimization, and fitting occur. It has no knowledge of the UI or the Project Context—it only knows data and parameters.
 
+---
 
 ## 3. Strict Data Lineage
 
@@ -51,6 +55,7 @@ Each transition is logged. Each state is immutable once registered. This guarant
 - **No drift.** The exact encoders fitted on training data are locked and applied identically at inference time.
 - **Full audit trail.** Every transition is recorded — an immutable chain for regulatory review.
 
+---
 
 ## 4. Memory-Aware Relay (Offload)
 
@@ -62,6 +67,7 @@ High-dimensional scorecard projects — hundreds of features, millions of rows �
 ctx.params(offload=1)
 ```
 
+---
 
 ## 5. Distributed Compute (Ray)
 

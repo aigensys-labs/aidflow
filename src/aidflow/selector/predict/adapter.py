@@ -35,12 +35,12 @@ class PredictorAdapter:
     
         self._verify(predictors)
 
-        self.predictors: dict[str, AgentAdapter] = {
+        self.predictors: dict[str, AgentAdapter | None] = {
             m: AgentAdapter(p) for m in AGENTS.values() 
-                for p in predictors if p.MODEL == m
+                for p in predictors if self._is_model(p, m)
         }
-
-    def get_agent(self, a:str|int) -> AgentAdapter:
+    
+    def get_agent(self, a:str|int, none_raises: bool = True) -> AgentAdapter | None:
         """
         Agent Adapter with standard Agent's API.
         - API extension by `predict` → transform(data).data
@@ -48,20 +48,34 @@ class PredictorAdapter:
         """
         if isinstance(a, int):
             a = AGENTS.get(a)
-        if a not in AGENTS.values():
-            raise ValueError(f'Unkown agents requested: {a} ► available agents: {AGENTS}')
-        return self.predictors[a]
+        self._verify_agent(a, none_raises)
+        return self.predictors.get(a)
 
     def is_gbm(self, a:str|int) -> bool:
         m = self.get_agent(a)
         return m.MODEL == AIGFLOW.Training.agent4
     
     @staticmethod
+    def _is_model(p: agent_type, m: str) -> bool:
+        if p is None:
+            return False
+        return p.MODEL == m
+        
+    def _verify_agent(self, a:str, none_raises: bool = True) -> None:
+        if a not in AGENTS.values():
+            raise ValueError(f'Unkown agents requested: {a} ► available agents: {AGENTS}')
+        if not (self.predictors.get(a) is None and none_raises):
+            return
+        raise ValueError(
+            f'AIG SAFETY ► Agent Choice {a} is possible only when {a} was fitted prior.'            
+        )
+        
+    @staticmethod
     def _verify(predictors:tuple) -> None:
         e = 'AIG SAFETY ► "predictors"'
         
         if predictors is not None:
-            if all([isinstance(a, agent_type) for a in predictors]):
+            if all([(isinstance(a, agent_type) or a is None) for a in predictors]):
                 return            
             raise ValueError(
                 f'{e} provided by tuple|list must be an instance of registred agent predictor:\n► {agent_type}'

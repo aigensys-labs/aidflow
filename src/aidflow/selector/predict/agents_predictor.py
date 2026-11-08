@@ -263,7 +263,7 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     # ─────────────────────────────────────────────────────────────────────────────────────────────            
         
     def get_params(self, fx_choice:str, inputs:"AgentsPredictorInput"):
-        agents  = self.get_model_dependecy(DEPS)
+        agents  = self.get_model_dependecy(DEPS, is_req=False)
         params_ = PredictorParamsBase(
             predictors = PredictorAdapter(agents)
         )        
@@ -314,13 +314,13 @@ class AgentsPredictorResult(ModelResult):
 
     Attributes
     ----------
-    agent1 : pDF
+    agent1 : pDF | None
         Agent 1 probability predictions (P(class=1)).
-    agent2 : pDF
+    agent2 : pDF | None
         Agent 2 probability predictions (P(class=1)).
-    agent3 : pDF
+    agent3 : pDF | None
         Agent 3 probability predictions (P(class=1)).
-    agent4 : pDF
+    agent4 : pDF | None
         Agent 4 probability predictions (P(class=1)).
 
     Notes
@@ -336,10 +336,10 @@ class AgentsPredictorResult(ModelResult):
     into the Comparator (scoring), Transition (cross-agent
     analysis), and Selector (champion evaluation) stages.
     """
-    agent1: pDF
-    agent2: pDF
-    agent3: pDF
-    agent4: pDF
+    agent1: pDF | None
+    agent2: pDF | None
+    agent3: pDF | None
+    agent4: pDF | None
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 class AgentsPredictor(Processor, ModelBase):   

@@ -53,10 +53,7 @@ from ...deps.types                  import  (
                                             Callable, 
                                             ArrayLike
                                             )
-from ...core.base                   import  (
-                                            FitterDataBase, 
-                                            FitterModelBase
-                                            )
+from ...core.base                   import  FitterModelBase
 from ...core.factory                import  (
                                             Dataclass, 
                                             DictClass
@@ -89,7 +86,7 @@ from ...display.style               import  TableStyle
 
 from ..base.processor               import  (
                                             AGENTS,
-                                            SelectorInputBase
+                                            FitterSelectionBase
                                             )
 from ..predict.adapter              import  PredictorAdapter
 
@@ -766,7 +763,7 @@ class Scoring:
         return r[a].sort_values(ascending=False).index.to_list()    
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-class Fitter(FitterDataBase, SelectorInputBase[ComparatorInput]):
+class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
     """
     Comparison Worker — full multi-agent evaluation pipeline.
 
@@ -793,7 +790,7 @@ class Fitter(FitterDataBase, SelectorInputBase[ComparatorInput]):
     stats: ComparatorStats = None
     
     def __init__(self, params: ComparatorParams):
-        self.prm = params
+        super().__init__(params)
         self.predictor = PredictorStats(self.prm.predictors, self.prm.preprocess)
 
     def get_weights(self) -> dict:
@@ -1082,7 +1079,7 @@ class ScoringTheme(ScoringStatsBase):
     def _mapping(self, a:int) -> int:
         if not self._is_idx:
             return a 
-        return list(AGENTS)[a]
+        return self.agents[a]
 
     def _opacity(self, agent:int, opacity:float):        
         if opacity is not None:

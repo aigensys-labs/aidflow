@@ -156,12 +156,12 @@ class PopulationStability:
     # ─────────────────────────────────────────────────────────────────────────────────────────────        
     
     @staticmethod
-    def _get_bins(bins:pSe|np.ndarray) -> list:
+    def _get_bins(bins:pSe|pd.Categorical) -> list:
         if isinstance(bins, pSe):
             bins:pd.Categorical = bins.cat
         return sorted([x.left for x in bins.categories] + [np.inf])
 
-    def _get_fe_se(self, d:pDF, fe:str, bins:pSe|np.ndarray=None) -> pSe:
+    def _get_fe_se(self, d:pDF, fe:str, bins:pSe|pd.Categorical=None) -> pSe:
         """
         Extract and optionally bin a single feature column.
 

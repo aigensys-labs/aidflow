@@ -42,10 +42,7 @@ from ...deps.data                   import  pDF, pSe, np
 from ...deps.plots                  import  go
 from ...deps.types                  import  NDArray
 
-from ...core.base                   import  (
-                                            FitterDataBase, 
-                                            FitterModelBase
-                                            )
+from ...core.base                   import  FitterModelBase
 from ...core.factory                import  (
                                             Dataclass, 
                                             DictClass
@@ -87,7 +84,7 @@ from ...display.style               import  TableStyle
 
 from ..base.processor               import  (
                                             AGENTS,
-                                            SelectorInputBase
+                                            FitterSelectionBase
                                             )
 from ..predict.adapter              import  PredictorAdapter                                            
 from ..compare.processor            import  (
@@ -970,7 +967,7 @@ class AgentChoicePredictor(PredictorBase):
         }
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
    
-class Fitter(FitterDataBase, SelectorInputBase[SelectorInput]):
+class Fitter(FitterSelectionBase[SelectorInput, SelectorParams]):
     """
     Selector Fitter — orchestrates the full selection and deployment pipeline.
 
@@ -996,7 +993,7 @@ class Fitter(FitterDataBase, SelectorInputBase[SelectorInput]):
     agents_condition: int = 1
 
     def __init__(self, params: SelectorParams):
-        self.prm = params
+        super().__init__(params)
         
         self.woe_encoder = WOEEncoder(
             predictors  = self.prm.predictors,

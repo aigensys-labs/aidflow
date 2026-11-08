@@ -1,5 +1,7 @@
-Welcome to AIDflow. This guide will take you through the "Golden Path" — the standardized, high-performance workflow for moving from raw data ingestion to a production-ready champion model.
+Welcome to AIDflow. This guide will take you through the "Golden Path" — the standardized, 
+high-performance workflow for moving from raw data ingestion to a production-ready champion model.
 
+---
 
 # Raw Data → Champion Model
 
@@ -169,6 +171,8 @@ score = pred.champion_predict(new_data, preprocess=True)
 prod = aid.ProductionExporter(ctx.workers.champion_predictor)
 prod.export_all('./production')
 ```
+
+---
 
 ## Power-User Tips: 
 

@@ -31,7 +31,7 @@ class LBL(DictClass):
 # SELECTION → UI → PANEL
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class AgentsOverviewPanel:
-    """Tuninng Choice Overview of chosen significant features by Agent."""
+    """Overview of chosen significant features by Agent during training."""
 
     def __init__(self, 
         project_id: str,

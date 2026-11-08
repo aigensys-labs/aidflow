@@ -776,12 +776,14 @@ class Agent4PredictorWorker(WorkerBase[Agent4Result]):
     )
 
     def _get_contract(self, is_default: bool = True):
+        is_target  = self._processor.is_fitted(AIGFLOW.Encoding.woe_stabilizer)
+        dst_target = 'target' if is_target else 'dist'
         return WorkerContract(
 
             defaults = Agent4Input(
                 train_set    = self.sets.get('train.ml'),
-                num_features = self.sets.get('features.num.stable.target'),
-                cat_features = self.sets.get('features.cat.stable.target'),
+                num_features = self.sets.get(f'features.num.stable.{dst_target}'),
+                cat_features = self.sets.get(f'features.cat.stable.{dst_target}'),
             ),
             
             datasets = DatasetBinding(fitted = {

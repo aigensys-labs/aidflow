@@ -78,6 +78,7 @@ from ....core.base                  import  (
                                             ModelProcessorBase,
                                             ModelInput,
                                             ModelResult,
+                                            ModelBase,
                                             ModelBaseDual,
                                             ModelUIBase
                                             )
@@ -173,7 +174,7 @@ class Fitter(FitterBase[FitParams]):
     DREG = DREG
 
     def _init_dash(self, train_set: pDF, test_set: pDF) -> None:
-        sync = DashBackground.set_background_sync(self)        
+        sync = DashBackground.set_background_sync(self)
         super()._init_dash(
             train_set   = train_set, 
             test_set    = test_set,
@@ -297,7 +298,7 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def get_choice(self, fx_choice:str, inputs:"AgentPredictorInput"):
-        agents  = self.get_model_dependecy(DEP1)
+        agents = self.get_model_dependecy(DEP1, is_req=False)
 
         defaults = self.Config(
             predictors  = PredictorAdapter(agents),
@@ -315,9 +316,9 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
         return params_, self.setup
     # ─────────────────────────────────────────────────────────────────────────────────────────────            
 
-    def get_encoders(self):
+    def get_encoders(self) -> tuple[ModelBase, ModelBase]:
         cleaner = self.get_model_dependecy(DEP2)
-        encoder = self.get_model_dependecy(DEP3)
+        encoder = self.get_model_dependecy(DEP3, is_req=False)
         return cleaner, encoder
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
@@ -542,16 +543,26 @@ class AgentPredictor(Processor, ModelBaseDual):
         ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _set_agent_type(self, agent_choice: int|str) -> None:
-        agents = self.get_model_dependecy(DEP1)
-        self.is_gbm = PredictorAdapter(agents).is_gbm(agent_choice)
+    def _get_agents_adapter(self):
+        agents = self.get_model_dependecy(DEP1, is_req=False)
+        return PredictorAdapter(agents)
 
+    def _set_agent_type(self, agent_choice: int|str, encoder: ModelBase|None) -> None:
+        agents = self._get_agents_adapter()
+        self.is_gbm = agents.is_gbm(agent_choice)
+
+        if self.is_gbm or encoder is not None:
+            return
+        raise ValueError(
+            'AIG SAFETY ► GLM Agents are WOE based - WoeEncoder must be fitted prior.'
+        )   
+    
     def _get_features(self, inputs: AgentPredictorInput) -> list:
         if inputs.features:
             return inputs.features
-        agents = self.get_model_dependecy(DEP1)
-        agent  = PredictorAdapter(agents).get_agent(inputs.agent_choice)
-        return agent.features.selected
+        agents = self._get_agents_adapter()
+        agent  = agents.get_agent(inputs.agent_choice)
+        return agent.features.selected       
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     
     def fit(self, inputs: AgentPredictorInput, fx_choice: str = REG.AIG):
@@ -585,8 +596,8 @@ class AgentPredictor(Processor, ModelBaseDual):
             len(inputs.train_set) and len(features)
         )
         
-        self._set_agent_type(inputs.agent_choice)
         self._encoders = self.get_encoders()
+        self._set_agent_type(inputs.agent_choice, self._encoders[1])
         
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, features)

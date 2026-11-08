@@ -87,8 +87,9 @@ from ....core.standard              import  (
 from ....core.display               import  Display
 
 from ....ml.features                import  (
-                                            Bins, 
+                                            Binning, 
                                             WoE,
+                                            Encoding,
                                             EncodingMap
                                             )
 from ....ml.metrics                 import  (
@@ -311,7 +312,7 @@ class WorkerUtils:
         str
             The merged bin label.
         """        
-        merged_bin = Bins.merge(bins, vtype=var.type) 
+        merged_bin = Binning.merge(bins, vtype=var.type) 
         dt = var.dt 
         ix = dt[dt[var.x].isin(bins)].index
         dt.loc[ix, var.x] = merged_bin
@@ -391,7 +392,7 @@ class WorkerUtils:
                 .replace(np.nan, 0) 
                 .reset_index()
         ) 
-        miss = Bins.ensure_missing(d_xt, x)     
+        miss = Binning.ensure_missing(d_xt, x)     
         d_xt = d_xt[d_xt[x] != VarStd.MISSING]  
 
         if vtype == VarType.C: 
@@ -443,9 +444,9 @@ class WorkerUtils:
         dt = var.dt.reset_index(drop=True)
         do = var.do
 
-        # Num Vars formatter Back
-        if ( len(do) > 1 ) and ( var.type == VarType.N ): 
-            dt[x] = dt[x].apply(Bins.to_interval_type)
+        # Num Vars formatter back
+        if ( var.type == VarType.N ): 
+            dt[x] = dt[x].apply(Binning.to_interval_type)
 
         # Standard WOE Result output - bins + missing
         dt = pd.concat([dt, var.miss])
@@ -457,12 +458,12 @@ class WorkerUtils:
         do[LBL.W] = WoE.extend(do, x, adjust_missing=True)[LBL.W] # COMPARE WOE → TRANSF vs ORIG       
 
         # Transformed Input → Output to Join Train Data by orig var
-        dw[xW] = Bins.mapping(do[x], dt[x], var.type, VarStd.MISSING)
+        dw[xW] = Binning.mapping(do[x], dt[x], var.type, VarStd.MISSING)
         dw[xW] = TypeStandard.any_to_cat(dw[xW])        
         
         # dw for efficient join to measure performance
         dt = dt.rename(columns={x: xW})
-        dw[LBL.W] = Bins.data_mapping(dw, dt, xW, LBL.W)
+        dw[LBL.W] = Binning.data_mapping(dw, dt, xW, LBL.W)
         return WorkerResult(
             encoding = dw,
             encoded  = dt,
@@ -602,7 +603,7 @@ class FitWorkerTest:
 
         def prune(alpha:float) -> tuple[dict, pSe]:            
             woe  = self.prune_encode(var, alpha)
-            woe_ = Bins.data_mapping(dw, woe.encoding, self.x, LBL.W).astype(float)
+            woe_ = Binning.data_mapping(dw, woe.encoding, self.x, LBL.W).astype(float)
             gini = Gini.fast_calc(y_, woe_)
             bins = len(woe.encoded) - 1  # Number of Pruned Bins after test wo Missing (-1)
             return self._stand_search_res(alpha, bins, gini, woe_)
@@ -1005,7 +1006,7 @@ class FitWorkerGini:
     def _woe(self, var:WorkerUtils.VarData) -> pSe:
         """Compute WOE values for the current bin structure."""
         woe  = WorkerUtils.data_encode(var)
-        return Bins.data_mapping(var.df, woe.encoding, self.x, LBL.W).astype(float)    
+        return Binning.data_mapping(var.df, woe.encoding, self.x, LBL.W).astype(float)    
     
     def _merge_bins(self, var:WorkerUtils.VarData, i:int) -> tuple[list[str, str], pSe, float]:        
         """
@@ -1260,8 +1261,8 @@ class FitWorker:
         xT = var.xT
         dx = var.df
         
-        w = Bins.data_mapping(dx, woe.encoding, xT, LBL.W).astype(float)  # Pruned WOE perf.
-        o = Bins.data_mapping(dx, woe.original, xT, LBL.W).astype(float)  # Original WOE perf.
+        w = Binning.data_mapping(dx, woe.encoding, xT, LBL.W).astype(float)  # Pruned WOE perf.
+        o = Binning.data_mapping(dx, woe.original, xT, LBL.W).astype(float)  # Original WOE perf.
         
         if ( w.isna().sum() ) > 0 or ( o.isna().sum() > 0 ):
             raise ValueError(RgbANSI.bold_red(f'WARNING: WOE_TRANSFORM → {xT}: WOE JOIN FAILED!'))
@@ -1533,13 +1534,12 @@ class Fitter(FitterDataBase):
 
             xT, xW, xWOE = xT_xW
 
-            # Final representation of orig. variable after all transformational steps
-            if vtype == VarType.N: XW = Bins.transform_numerical_data(data, mapping, var, xW)
-            if vtype == VarType.C: XW = Bins.transform_categorical_data(data, mapping, var, xW)
+            woe, x_w = Encoding(
+                ensure_trf = True, 
+                incl_miss  = True
+            ).encode(data[var], mapping, xW, LBL.W, vtype)
 
-            # WOE encoding of transformed var
-            woe = Bins.data_mapping(XW, mapping, xW, LBL.W).astype(float)
-            dt.update( {xW: XW, xWOE: woe} )
+            dt.update( {xW: x_w, xWOE: woe.astype(float)} )
 
         return pDF(dt)
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

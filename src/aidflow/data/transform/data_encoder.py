@@ -86,10 +86,9 @@ MODEL = AIGFLOW.Encoding.data_encoder
 FREG  = FitRegister(MODEL)
 DREG  = None
 DESC  = 'AIG TRAINING STAGE ► ML DATA ENCODER ► APPLY TRAINED ENCODING TO TRAIN AND TEST SAMPLES'
-DEPS =  (
-        AIGFLOW.Data.fe_cleaner,
-        AIGFLOW.Encoding.woe_encoder,
-        )
+DEP1  = AIGFLOW.Data.fe_cleaner
+DEP2  = AIGFLOW.Encoding.woe_encoder
+DEPS =  (DEP1, DEP2)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -238,13 +237,13 @@ class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def get_choice(self, fx_choice:str, inputs:"DataEncoderInput"):
-        encoders = self.get_model_dependecy(DEPS)
-        adapter  = lambda x: ModelAdapterBase(encoders[x])
+        cleaner = self.get_model_dependecy(DEP1)
+        encoder = self.get_model_dependecy(DEP2, is_req=False)
 
         defaults = self.Config(
-            fe_cleaner      = adapter(AIGFLOW.Data.fe_cleaner),
-            woe_encoder     = adapter(AIGFLOW.Encoding.woe_encoder),
-            time_var        = AigParam.di(inputs.time_var, self.setup.time_var)
+            fe_cleaner  = ModelAdapterBase(cleaner),
+            woe_encoder = ModelAdapterBase(encoder) if encoder is not None else None,
+            time_var    = AigParam.di(inputs.time_var, self.setup.time_var)
         )  
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
         return RegGet.choice(fx_choice, fx_config)   
@@ -280,6 +279,8 @@ class DataEncoderInput(ModelInput):
     woe_features : list | None, default=None
         WOE feature column names to include in the output.
         If None, all WOE features from the encoder are used.
+        Applicable when WoeEncoder was fitted during pipeline
+        execution only.
     """
     train_set: pDF 
     test_set:  pDF|None = None
@@ -316,6 +317,9 @@ class DataEncoderResult(ModelResult):
     The final result of the encoding application. Contains
     standardized training and test samples with WOE-encoded
     features, ready for consumption by all training agents.
+
+    When WoeEncoder has been skipped during pipeline execution, 
+    WOE-encoding is skipped.
 
     Attributes
     ----------
@@ -370,6 +374,7 @@ class DataEncoder(Processor, ModelBase):
        column structure across train-test samples.
     2. **WOE encode**: Transform all features to WOE
        representation using the trained encoder.
+       (only if WoeEncoder was fitted during pipeline)
     3. **Split**: Create train/test samples (time-based or
        random) when no explicit test set is provided.
 
@@ -460,8 +465,8 @@ class DataEncoder(Processor, ModelBase):
         """
         Apply the full encoding pipeline to produce ML-ready samples.
 
-        Executes dtypes standardization (if mismatch), WOE encoding, 
-        and train/test split.
+        Executes dtypes standardization (if mismatch), WOE encoding 
+        (only if WoeEncoder was fitted during pipeline), and train/test split.
 
         Parameters
         ----------
@@ -516,7 +521,7 @@ class DataEncoder(Processor, ModelBase):
 
         - Feature Encoding Extension:
             - Extends train and test sets by WOE features given project-level 
-              fitted encoding.
+              fitted encoding (only if WoeEncoder was fitted during pipeline).
 
         Parameters
         ----------

@@ -32,7 +32,7 @@ Integration:
 """
 
 from ....deps.common                            import  Path
-from ....deps.data                              import  np, pDF, pSe
+from ....deps.data                              import  np, pd, pDF, pSe
 from ....deps.plots                             import  go
 from ....deps.data_view                         import  itables_show
 from ....deps.types                             import  Literal
@@ -54,7 +54,11 @@ from ....core.interop                           import  Pd
 from ....core.standard                          import  VarStd
 
 from ....ml.sampling                            import  Subsampling
-from ....ml.features                            import  Correlation
+from ....ml.features                            import  (
+                                                        Encoding,
+                                                        Binning,
+                                                        Correlation
+                                                        )
 from ....ml.features.woe                        import  (
                                                         OV,
                                                         WoEOverview
@@ -222,6 +226,55 @@ class StatsUtils:
         if not is_gbm:
             return fes
         return VarStd.var_to_woe(fes)
+
+    @classmethod
+    def align_data(cls, train:pDF, test:pDF, target:str, woe_fes:list, is_gbm:bool
+    ) -> tuple[pDF, pDF]:
+        """Align data by WOE-encoded equivalents for GBM models."""
+        if not is_gbm:
+            return train, test
+        return cls._get_encoded_data(train, test, target, woe_fes)        
+
+    @classmethod
+    def _get_encoded_data(cls, train:pDF, test:pDF, target:str, woe_fes:list
+    ) -> tuple[pDF, pDF]:
+        """Align data by WOE-encoded equivalents for GBM models."""        
+        y   = train[target]
+        woe = [x for x in woe_fes if x not in train.columns]
+
+        if not woe:
+            return train, test
+        
+        train_w, test_w = {}, {}
+        for x in woe:
+            fe = VarStd.fe_to_var(x)
+            train_w[x], woe = cls._get_encoded_fe(y, train[fe])
+            test_w[x] = cls._get_mapped_fe(test[fe], woe, fe)
+        
+        return (
+            Pd.concat([train, pDF(train_w)], axis=1),
+            Pd.concat([test,  pDF(test_w)],  axis=1)
+        )
+    
+    @staticmethod
+    def _get_encoded_fe(y:pSe, x:pSe) -> pSe:
+        """
+        Encodes feature to WOE repre. 
+        Numerical fe is discretized to 10 bins max given reporting purposes.
+        """
+        en = Encoding(
+            n_bins      = 7, 
+            transform   = True, 
+            ensure_trf  = True, 
+            incl_miss   = True
+        )
+        xt, woe, _ = en.process(y, x)
+        return xt, woe
+
+    def _get_mapped_fe(x:pSe, woe:pDF, fe:str) -> pSe:
+        b = Encoding(incl_miss=True).encode(x, woe, fe, VarStd.WOE)
+        m = b.isna()
+        return b
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 class DashStatsCreator:
@@ -278,7 +331,16 @@ class DashStatsCreator:
 
         self.aligned_fes = StatsUtils.align_fes(self.features, self.is_gbm)
     # ─────────────────────────────────────────────────────────────────────────────────────────────        
-
+    
+    def _get_dash_data(self, train:pDF, test:pDF) -> DashData:  
+        train_, test_ = StatsUtils.align_data(
+            train, test, self.target, self.aligned_fes, self.is_gbm
+        )
+        return DashData(
+            train = train_,
+            test  = test_
+        )     
+       
     def _active_smpl(self) -> list[str]:
         """Returns list of active samples with respect to GLM / GBM sample use."""
         tv = StatsUtils.smpl_tv(self.is_gbm)
@@ -370,7 +432,7 @@ class DashStatsCreator:
 
     def _stability(self, data: DashData) -> dict[str, dict]:
         """Compute temporal feature stability (consistency) per sample."""
-        s = FeaturesStabilityPlot(self.target, self.aligned_fes, self.project_sig)
+        s = FeaturesStabilityPlot(self.setup, self.target, self.aligned_fes)
         return s.create( self._samples(data) )    
     # ─────────────────────────────────────────────────────────────────────────────────────────────    
 
@@ -399,7 +461,8 @@ class DashStatsCreator:
             >>> stats.optim_cutoff                      # 0.342
             >>> stats.stability.model_psi[0]            # {'Vol_PSI': 0.06, ...}
         """        
-        dd    = DashData(train = train_set, test = test_set)
+        dd = self._get_dash_data(train_set, test_set)
+
         y, p  = self._predict(dd)
         yp_te = y[SMPL.TE], p[SMPL.TE]
 
@@ -1187,24 +1250,39 @@ class FeaturesStabilityPlot:
     assessments.
 
     Parameters:
+        setup (Parameters): Project configuration.
         target (str): Target column name.
         woe_features (list): WOE-encoded feature names.
-        project_sig (str): The project signature for registry lookups.
 
     Example:
         >>> stab = FeaturesStabilityPlot(target='y', woe_fes=features, sig=project_sig)
         >>> results = stab.create({'Valid Sample': val_df, 'Test Sample': oot_df})
     """
 
-    def __init__(self, target:str, woe_features:list, project_sig: str):
+    def __init__(self, setup: Parameters, target:str, woe_features:list):
+        self.setup  = setup
         self.target = target
         self.fes    = woe_features
-        self.sig    = project_sig
+        self.sig    = setup.project_signature
 
         self._p = Dataclass.schema(WOE_FitParams)
         self._c = Dataclass.schema(WOE_FitParamsCfg)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-        
+
+    def _get_params(self, m: WoeStabilizer) -> dict:
+        """Retrieve parameters for FeConsistency from 
+        fitted WoeStabilizer or flow parametrization.
+        """
+        if m is not None:
+            return m.get_all_params()
+        return {
+            self._c.time_var:           self.setup.time_var,
+            self._p.stability_cutoff:   self.setup.woe_stability,
+            self._p.alpha:              self.setup.woe_alpha,
+            self._c.time_unit:          None,
+            self._c.max_time_units:     None
+        }
+
     def _get_stability_prm(self) -> WOE_FitParams:
         """
         Retrieve the stability parameters from the fitted WOE Stabilizer.
@@ -1214,12 +1292,12 @@ class FeaturesStabilityPlot:
         step.        
         """
         m: WoeStabilizer = ProjectModelRegistry.get_model(self.sig, AIGFLOW.Encoding.woe_stabilizer)
-        p = m.get_all_params()        
+        p = self._get_params(m)
         return {
+            self._c.time_var:           p[self._c.time_var],
             self._p.stability_cutoff:   p[self._p.stability_cutoff],
             self._p.alpha:              p[self._p.alpha],
             self._c.time_unit:          p[self._c.time_unit],
-            self._c.time_var:           p[self._c.time_var],
             self._c.max_time_units:     p[self._c.max_time_units]
         }
     

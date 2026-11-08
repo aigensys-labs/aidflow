@@ -36,9 +36,12 @@ Submodules
 """
 
 from .binning import (
-    Bins,
+    Binning,
     MinBinResult,
     EncodingMap
+)
+from .encoding import (
+    Encoding
 )
 from .interaction import (
     TreeMiner, 

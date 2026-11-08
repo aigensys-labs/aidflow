@@ -19,15 +19,19 @@
       }
     }
   },
-  "topbarLinks": [
-    {
-      "name": "GitHub",
-      "url": "https://github.com/aigensys-labs/aidflow"
+  "navbar": {
+    "links": [
+      {
+        "type": "github",
+        "label": "GitHub",
+        "href": "https://github.com/aigensys-labs/aidflow"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "PyPI",
+      "href": "https://pypi.org/project/aidflow"
     }
-  ],
-  "topbarCta": {
-    "name": "PyPI",
-    "url": "https://pypi.org/project/aidflow"
   },
   "navigation": {
     "tabs": [
@@ -40,6 +44,7 @@
               "getting-started/overview",
               "getting-started/installation",
               "getting-started/quickstart",
+              "getting-started/pipeline-control",
               "getting-started/core-concepts"
             ]
           },

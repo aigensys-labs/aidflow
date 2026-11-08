@@ -67,8 +67,9 @@ from ....core.standard              import  (
 from ....core.display               import  Display
 
 from ....ml.features                import  (
-                                            Bins, 
+                                            Binning, 
                                             MinBinResult,
+                                            Encoding,
                                             EncodingMap
                                             )
 from ....ml.metrics                 import  SeparationMetrics
@@ -434,7 +435,7 @@ class FitWorker:
             return search
         try:
             t, x   = var.ds[self.target], var.ds[var.x]
-            b,g,s  = Bins.num_bin_search(t, x, self.max_bins, self.alpha)
+            b,g,s  = Binning.num_bin_search(t, x, self.max_bins, self.alpha)
             search = self.SearchSpace(bins = b, gini = g, stats = s)
         except:
             pass
@@ -459,7 +460,12 @@ class FitWorker:
         Accepts either a pre-split tuple or a DataFrame with column
         selection, returning a consistent (target, x) pair.
         """        
-        x_, woe, _ = self._diag.preprocess_x(target, x, ensure_enc=True, add_iv=True)
+        x_, woe, _ = Encoding(
+            transform   = True,
+            ensure_enc  = True, 
+            add_iv      = True,
+            incl_miss   = True
+        ).process(target, x)
         return x_, self._diag.iv_total(woe)
 
     def calc_gini(self, target:pSe, x:pSe|None) -> float:
@@ -657,10 +663,10 @@ class FitWorker:
         df = var.df
 
         th  = self.min_share
-        mbs = Bins.min_bin_share(df, self.target, xT, th, xG=xG)    # MBS Fx to Optimize minimal share of bins
+        mbs = Binning.min_bin_share(df, self.target, xT, th, xG=xG) # MBS Fx to Optimize minimal share of bins
         map = mbs.mapping[[xT, xG]]                                 # Final encoded Var with MBS Treatment
         
-        xg   = Bins.data_mapping(df, map, xT, xG)
+        xg   = Binning.data_mapping(df, map, xT, xG)
         perf = self.update_perf(var, perf, xg)
 
         if not self.is_predictive(var, perf, 'a'):
@@ -904,8 +910,8 @@ class Fitter(FitterDataBase):
             fitted: EncodingMap  = self.encoding[num]
             xT, xG  = fitted.vars
             mapping = fitted.map
-            XT = Bins.transform_numerical_data(data, mapping, num, xT)
-            XG = Bins.data_mapping(XT, mapping, xT, xG) 
+            XT = Binning.transform_numerical_data(data, mapping, num, xT)
+            XG = Binning.data_mapping(XT, mapping, xT, xG) 
             dt.update( {xG: XG} )
 
         return pDF(dt)        

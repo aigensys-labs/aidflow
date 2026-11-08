@@ -60,8 +60,9 @@ from ....core.standard              import  (
 from ....core.display               import  Display
                                             
 from ....ml.features                import  (
-                                            Bins, 
+                                            Binning, 
                                             MinBinResult,
+                                            Encoding,
                                             EncodingMap
                                             )
 from ....ml.metrics                 import  SeparationMetrics
@@ -343,7 +344,12 @@ class FitWorker:
         tuple[pSe, float]
             WOE-encoded values and total IV.
         """        
-        x_, woe, _ = self._diag.preprocess_x(target, x, ensure_enc=True, add_iv=True)
+        x_, woe, _ = Encoding(
+            transform   = True,
+            ensure_enc  = True, 
+            add_iv      = True,
+            incl_miss   = True
+        ).process(target, x)
         return x_, self._diag.iv_total(woe)
 
     def calc_gini(self, target:pSe, x:pSe|None) -> float:
@@ -494,10 +500,10 @@ class FitWorker:
         df = var.df
 
         th  = self.min_share
-        mbs = Bins.min_bin_share(df, self.target, x, th, vtype='C', xG=xG) # MBS Fx to Optimize minimal share of bins
-        map = mbs.mapping[[x, xG]]                                         # Final Transformed Var with MBS Treatment
+        mbs = Binning.min_bin_share(df, self.target, x, th, vtype='C', xG=xG)   # MBS Fx to Optimize minimal share of bins
+        map = mbs.mapping[[x, xG]]                                              # Final Transformed Var with MBS Treatment
         
-        xg = Bins.transform_categorical_data(df, map, x, xG)
+        xg = Binning.transform_categorical_data(df, map, x, xG)
         perf = self.update_perf(var, perf, xg)
 
         if not self.is_predictive(var, perf, 'a'):
@@ -751,12 +757,12 @@ class Fitter(FitterDataBase):
         """     
         dt = {}
         for cat in data.columns:
-            if cat not in self.encoding:     # removed variables during fit - not predictive
+            if cat not in self.encoding: # removed variables during fit - not predictive
                 continue                            
             fitted:EncodingMap = self.encoding[cat]
             x, xG   = fitted.vars
             mapping = fitted.map
-            XG = Bins.transform_categorical_data(data, mapping, cat, xG)
+            XG = Binning.transform_categorical_data(data, mapping, cat, xG)
             dt.update( {xG: XG} )
 
         return pDF(dt)        

@@ -22,16 +22,13 @@ from ..deps.types       import  (
                                 NDArray
                                 )
 from ..core.factory     import  DictClass, Dataclass
-from ..core.interop     import  (
-                                Pd,
-                                TypeStandard
-                                )
-from ..core.standard    import  TypeDef
+from ..core.interop     import  Pd
 
 from ..utils.builtins   import  List
 from ..display.plots    import  Plot
 
 from .features.woe      import  IVL, IV, WoE
+from .features.encoding import  Encoding
 
 
 class LBL(DictClass):
@@ -68,160 +65,7 @@ class MetricsBase:
     def __init__(self, incl_miss:bool = True, th_discrete:int = 20, return_stats:bool = False):
         self.incl_miss    = incl_miss
         self.th_discrete  = th_discrete    
-        self.return_stats = return_stats
-    
-    @staticmethod
-    def _woe_pdf(
-        y_true: pSe|NDArray, 
-        x:      pSe|NDArray, 
-        transform: bool = True,
-        add_iv:    bool = False
-    ) -> tuple[pSe, pDF, int]:
-        """
-        Feature x Series Transformation / Encoding to Weight of Evidence.
-        
-        Parameters
-        ----------
-        y_true : pSe
-            Target variable series on which basis WOE encoding is computed.
-        x : pSe
-            Feature series to be Encoded to WOE Form.
-        transform : bool = True
-            True → transforms x series to the WOE Form; False skips transformation.
-        add_iv : bool = False
-            True → extends WOE pDF by IV values; False otherwise.
-        
-        Returns
-        -------
-        tuple: (Series, DataFrame, int)
-            - Series: Transformed x series to the WOE form.
-            - DataFrame: Calculated WOE by groups (bins/unique vals.) of x.
-            - int: Length of unique values in the Series.
-        """
-        if transform:
-            x_t, woe = WoE.transform(y_true, x, return_encoding=True)
-        else:
-            x_t = None
-            woe = WoE.encode(y_true, x)
-        if add_iv:
-            woe = IV.extend(woe)
-        return x_t, woe, len(woe)
-    
-    def preprocess_x(self, 
-        y_true: pSe|NDArray, 
-        x:      pSe|NDArray,
-        bins:        int = None,
-        transform:  bool = True,
-        ensure_enc: bool = False,
-        add_iv:     bool = False,
-    ) -> tuple[pSe|None, pDF|None, int|None]:
-        """
-        Deterministic Feature Preprocessing and Binning Gateway.
-        
-        Serves as the critical decision engine for WOE based discrimination 
-        metrics. It analyzes the distribution and type of a feature to determine 
-        the optimal transformation strategy (Binned vs. Continuous) before calculating 
-        metrics Gini or IV.
-
-        The method implements a strict logic flow:
-        1. Type Detection: Identifies if the feature is Numerical or Categorical.
-        2. Sparsity Check: Evaluates the number of unique values against the 
-           `th_discrete` threshold to decide between `cut` (equal-width) 
-           and `qcut` (equal-frequency) binning.
-        3. Missing Value Integration: If `incl_miss` is enabled, it injects 
-           standardized missing categories to ensure nulls are captured in 
-           the model's discrimination power.
-        4. Encoding Path: Routes the feature to the WOE engine if it is 
-           categorical or binned, or retains raw values if continuous.
-
-        Parameters
-        ----------
-        y_true : pSe | NDArray
-            The target variable (binary/ground truth) used to calculate 
-            discrimination and evidence.
-        x : pSe | NDArray
-            The feature series to be analyzed and preprocessed.
-        bins : int, optional
-            The requested number of bins for numerical discretization. 
-            If None, the method dynamically determines the binning 
-            strategy based on `th_discrete`.
-        transform : bool = True
-            True → transforms x series to the WOE Form; False skips transformation.
-        ensure_enc : bool = False
-            True → ensures that WOE encoding is returned regardless the fe type + params setup.
-        add_iv : bool = False
-            True → extends WOE pDF by IV values.
-
-        Returns
-        -------
-        tuple : (pSe|None, pDF|None, int|None)
-        None*3: 
-            - tuple of [None] x 3 if the feature lacks sufficient variance to be useful
-        Series : pSe | None
-            - Original feature → *num x* + ( bins = None ) + ( no missing part | include_miss = False )
-            - Encoded feature → *cat x* | *num x* (except orginal fe)
-            - **None** → ( transform = False )
-        WOE Table : pDF | None
-            - The calculated Weight of Evidence mapping.
-            - ( ensure_enc = True )
-            - **None** → *num x* and ( bins = None ) and (no miss or incl_missing = False)
-        Cardinality : int 
-            - The number of unique levels/bins identified.
-        """        
-        if not isinstance(x, pSe):
-            i = y_true.index if isinstance(y_true, pSe) else None
-            x = pSe(x, index=i)
-
-        is_num_type = ( x.dtype in TypeDef.numeric )
-        is_missing  = self.incl_miss and ( x.isnull().sum() > 0 )
-        
-        # NUM Vars discretization condition
-        # ─────────────────────────────────────────────────
-        u = Pd.get_len_unique_values(x)
-        t = self.th_discrete    # th → discreate | continuous num var
-        c = ( u < t )           # discreate NUM vars → use cut instead of qcut
-
-        if u < 2 and ( not is_missing ):
-            return tuple([None]*3)
-        
-        # (a) Categorical/Object FE 
-        #  → Encoding to be able directly compute Gini
-        # ─────────────────────────────────────────────────
-        if ( not is_num_type ):
-            if is_missing:
-                x = TypeStandard.cat_fill_missing(x)
-
-            return self._woe_pdf(y_true, x, transform, add_iv)
-
-        # (b) NUM FE 
-        # ─────────────────────────────────────────────────
-        # → Requested orig. values with missing part 
-        # → Approximate orig.values by woe + missing
-        # ─────────────────────────────────────────────────
-        if ( bins is None ) and ( is_missing ):
-            bins = min(t, u)
-            c = ( bins == u )
-
-        # (b.1) Orig 
-        # → WOE = None - as we cannot use continuous fe
-        # ─────────────────────────────────────────────────
-        if not bins:
-            woe = None
-            if ensure_enc:
-                woe = self._woe_pdf(y_true, x, False, add_iv)[1]
-            return x, woe, u
-
-        # (b.2)
-        # → Binning Applied 
-        # → Encoding thus Missing part can be included directly
-        # ─────────────────────────────────────────────────
-        if c: x = Pd.cut(x,  bins, duplicates='drop') 
-        else: x = Pd.qcut(x, bins, duplicates='drop') 
-
-        if is_missing:
-            x = TypeStandard.cat_fill_missing(x)
-
-        return self._woe_pdf(y_true, x, transform, add_iv)    
+        self.return_stats = return_stats  
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 class Gini(MetricsBase):
@@ -391,7 +235,11 @@ class Gini(MetricsBase):
         
         # y_true, x_fe
         y = data[target]
-        x_, woe, length = self.preprocess_x(y, data[x], bins)
+        x_, woe, length = Encoding(
+            n_bins      = bins, 
+            incl_miss   = self.incl_miss, 
+            th_discrete = self.th_discrete
+        ).process(y, data[x])
 
         # no data to compute gini
         if x_ is None or length < 2:
@@ -640,8 +488,15 @@ class SeparationMetrics(MetricsBase):
             The overall Information Value of the feature.
             If return_stats = True, pDF as structured audit table containing WoE and IV per bucket.
         """        
-        woe = self.preprocess_x(y_true, x, bins, transform=False, ensure_enc=True, add_iv=True)[1]
-        
+        woe = Encoding(
+            n_bins      = bins, 
+            transform   = False, 
+            ensure_enc  = True, 
+            add_iv      = True, 
+            incl_miss   = self.incl_miss, 
+            th_discrete = self.th_discrete
+        ).process(y_true, x)[1]
+
         iv_total = self.iv_total(woe)
         
         if not self.return_stats:

@@ -27,6 +27,7 @@ Usage
 from ..deps.common   import Path
 from ..deps.data     import np, pd, pDF
 from ..deps.ml.stats import ArmaProcess
+from ..storage.file  import FileIO
 
 
 _PRESETS = {
@@ -141,7 +142,7 @@ class DataGetter:
         path: str|Path = 'data/test.csv'
     ) -> str:
         """
-        Generate synthetic demo data and save to disk.
+        Generate synthetic demo data and save to disk as `csv`.
 
         Parameters
         ----------
@@ -154,11 +155,9 @@ class DataGetter:
         -------
         str
             File path to the generated CSV.
-        """    	
+        """
         demo_data = DataGetter.get(size)
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        demo_data.to_csv(path, index=False)
-        return str(path)
+        return FileIO.save_csv(demo_data, path)
     
     @staticmethod
     def generate_data(

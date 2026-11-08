@@ -38,15 +38,12 @@ Usage Flow
 """
 
 from ...deps.data                   import  pDF                                           
-from ...core.base                   import  (
-                                            FitterDataBase,
-                                            FitterModelBase
-                                            )
+from ...core.base                   import  FitterModelBase
 from ...core.foundation             import  AigParam
 from ...core.factory                import  Dataclass
 from ..base.processor               import  (
                                             AGENTS, 
-                                            SelectorInputBase
+                                            FitterSelectionBase
                                             )
 from .adapter                       import  PredictorAdapter                                            
 
@@ -153,13 +150,13 @@ class PredictorStats:
     agent4 : pDF
         Agent 4 stats.
     """    
-    agent1: pDF
-    agent2: pDF
-    agent3: pDF
-    agent4: pDF
+    agent1: pDF = None
+    agent2: pDF = None
+    agent3: pDF = None
+    agent4: pDF = None
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-class Fitter(FitterDataBase, SelectorInputBase[PredictorInput]):
+class Fitter(FitterSelectionBase[PredictorInput, PredictorParams]):
     """
     Prediction Worker — unified multi-agent prediction execution.
 
@@ -181,10 +178,6 @@ class Fitter(FitterDataBase, SelectorInputBase[PredictorInput]):
     SelectionInput : type = PredictorInput
     agents_condition: int = 1
 
-    def __init__(self, params: PredictorParams):
-        self.params = params
-    # ─────────────────────────────────────────────────────────────────────────────────────────────
-
     def predict(self, agent:str, data:pDF) -> pDF:
         """
         Obtain a probability prediction from a single trained agent.
@@ -203,8 +196,8 @@ class Fitter(FitterDataBase, SelectorInputBase[PredictorInput]):
             Predicted probability (single column), indexed
             identically to the input.
         """
-        pa = self.params.predictors.get_agent(agent)
-        return pa.predict(data, preprocess = self.params.preprocess)
+        pa = self.prm.predictors.get_agent(agent)
+        return pa.predict(data, preprocess = self.prm.preprocess)
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     
     def _get_agents(self, inputs: PredictorInput) -> dict:
@@ -276,7 +269,7 @@ class Fitter(FitterDataBase, SelectorInputBase[PredictorInput]):
         for a, r in agents.items():
             pred[r] = self.predict(AGENTS[a], inputs_.data)
 
-        t:pDF = inputs_.data[[self.params.target]]
+        t:pDF = inputs_.data[[self.prm.target]]
 
         self.stats = PredictorStats(**{
             r: t.assign(**{'Prediction': pred[r]}).describe() 

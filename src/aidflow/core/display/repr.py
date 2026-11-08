@@ -8,17 +8,22 @@ model's "frozen state"—displaying exactly which hyperparameters, settings,
 and versions were used to produce a specific result.
 """
 
-from ...deps.types      import  (
-                                get_args,
-                                get_origin,
-                                Union,
-                                UnionType
-                                )
-from ...display.rgb     import  RgbANSI
-
-from ..factory          import  DictClass
-from ..accessor         import  Rgb
-    
+from ...deps.types import (
+    get_args,
+    get_origin,
+    Union,
+    UnionType
+)
+from ...display.rgb import (
+    RgbANSI
+)
+from ..factory import (
+    DictClass, 
+    Dataclass
+)
+from ..accessor import (
+    Rgb
+)
 
 class REPR(DictClass):
     T = 'title'
@@ -207,9 +212,14 @@ class ModelRepr:
 
     def __init__(self, model: type):
         from ..base import ModelBase, FIT
+        from ..base.model import ModelState
+
         self.model: ModelBase = model
         self.FIT = FIT
 
+        self._path  = f'{type(model).__module__}.{type(model).__name__}'
+        self._state = ', '.join(Dataclass.get_names(ModelState))
+                                                   
     def help(self, is_worker:bool=False):
         """Worker-Model repr."""
         worker = "worker's " if is_worker else ''   
@@ -219,12 +229,12 @@ class ModelRepr:
         ) if self.FIT.SPEC in self.model.__dict__ else ''
         
         return (
-           f"► {self.model.MODEL} {worker}model at {type(self.model).__module__}.{type(self.model).__name__}:"
+           f"► {self.model.MODEL} {worker}model at {self._path}:"
             "\n  • transform(data) → application on new data"
            f"{io}"
             "\n  • fitter → model's internal fitter"
             "\n  • state  → model's internal state"
-           f"\n  • state's attrs: {self.model.state.keys()}"
+           f"\n  • state's attrs: {self._state}"
             "\n    → state.fitter   → internal fitter view"
             "\n    → state.stats    → fitter metadata view"
             "\n    → state.report.show() → report view"
