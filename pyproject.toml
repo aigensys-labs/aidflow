@@ -58,7 +58,7 @@ dependencies = [
     "optuna >= 5.0",
     "optuna-integration[lightgbm,xgboost]",
     # artifact io base
-    "mgzip2 >= 0.2.6",
+    "mgzip >= 0.2.5",
     # compute progress
     "tqdm >= 4.7",
     "p_tqdm >= 1.4",
