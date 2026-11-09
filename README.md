@@ -1,6 +1,6 @@
 <h1 align="center">
 
-<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow.png" alt="AIDflow" width="400">
+<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow.webp" alt="AIDflow" width="400">
 
 </h1>
 

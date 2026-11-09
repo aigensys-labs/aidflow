@@ -3,8 +3,8 @@
   "theme": "mint",
   "name": "AIDflow Documentation",
   "logo": {
-    "light": "/assets/aidflow.png",
-    "dark": "/assets/aidflow.png"
+    "light": "/assets/aidflow.webp",
+    "dark": "/assets/aidflow.webp"
   },
   "colors": {
     "primary": "#3b82f6",
