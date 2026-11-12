@@ -19,7 +19,7 @@
 
 *Built over 15 years of credit scoring, fintech R&D, and regulatory practice.*
 
-[<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow-preview.gif" alt="AIDflow" width="500">](https://github.com/aigensys-labs/aidflow/blob/main/docs/assets/aidflow-preview.gif)
+[<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow.jpg" alt="AIDflow" width="500">](https://github.com/aigensys-labs/aidflow/blob/main/docs/assets/aidflow.jpg)
 
 
 **A human directs. An AI agent executes. The output survives committee review.**
@@ -97,6 +97,9 @@ prod.export_all('./production')
 # → self-contained scoring module
 ```
 
+
+[<img src="https://raw.githubusercontent.com/aigensys-labs/aidflow/main/docs/assets/aidflow-preview.gif" alt="AIDflow" width="500">](https://github.com/aigensys-labs/aidflow/blob/main/docs/assets/aidflow-preview.gif)
+
 ---
 
 ## Documentation
@@ -108,6 +111,7 @@ prod.export_all('./production')
 - [API Reference](https://aidflow.aigensys.com/api/execution-interface/Parameters)
 
 ---
+
 
 ## Capabilities
 
