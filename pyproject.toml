@@ -7,7 +7,7 @@ name = "aidflow"
 version = "3.0.11"
 description = "Automated Interactive Development Framework | Scorecard DEV"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "FSL-1.1-Apache-2.0"
 authors = [
     { name = "AIGENSYS", email = "info@aigensys.com" },
     { name = "Michal Ricar", email = "michal.ricar@aigensys.com" }
