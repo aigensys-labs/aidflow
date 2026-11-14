@@ -92,7 +92,7 @@ score = pred.champion_predict(new_data, preprocess=True)
 ### Export Production Artifact
 
 ```python
-prod = aid.ProductionExporter(ctx.selection.champion_predictor)
+prod = aid.ProductionExporter(ctx.workers.champion_predictor)
 prod.export_all('./production')
 # → self-contained scoring module
 ```
