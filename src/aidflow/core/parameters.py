@@ -12,8 +12,8 @@ Key architectural features:
    consistency across the CLI, GUI, and internal logic.
 
 2. Automated Validation: Provides a standardized interface for the validation 
-   engine (`utils/param.py`) to enforce constraints such as numeric ranges (min/max), 
-   allowed categorical options, and type safety.
+   engine (`validation/params.py`) to enforce constraints such as numeric ranges 
+   (min/max), allowed categorical options, and type safety.
 
 3. UI-Aware Definitions: Enables "Zero-Code" GUI generation via `get_panel_defaults`, 
    allowing the user interface to automatically render sliders, dropdowns, 
@@ -757,7 +757,7 @@ class Parameters:
         * spark: Distributed Spark DataFrame
         * db:    SQL Database connection
                 
-    input_cols : list = None
+    input_cols : list | dict = None
         Explicit list of columns to load. Leave empty to load ALL available columns from the source.
         Supports also syntax by dictionary: 
         * `{"remove": "COL1", "COL2"}` 
