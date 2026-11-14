@@ -115,13 +115,12 @@ class Predictor:
     > `Applicable for projects with stored (save=1) models only.`
     
     #### What It Does      
-    - **Loads** all trained models from a project's storage.
-    - **Preprocesses** input data through the full pipeline
-      (cleaning → stabilization → encoding) using trained
-      standards.
-    - **Predicts** with any trained agent or the champion
+    - *`Loads`* all trained models from a project's storage.
+    - *`Preprocesses`* input data through the full pipeline
+      using trained standards.
+    - *`Predicts`* with any trained agent or the champion
       production model.
-    - **Exposes** intermediate stages for diagnostic or
+    - *`Exposes`* intermediate stages for diagnostic or
       custom-chain use.
 
     #### Pipeline Stages Available
@@ -164,7 +163,7 @@ class Predictor:
     independently to inspect intermediate results or build custom pipelines.
 
     **Champion vs. Agents**: 
-    - The `champion_agent_predict` method applies the production model 
+    - The `champion_predict` method applies the production model 
     (selected during the Selection stage). 
     - Individual agent predictions (`agent1_predict` … `agent4_predict`) 
     are available for comparison or monitoring.
@@ -176,7 +175,7 @@ class Predictor:
     pred = Predictor(project='my_project')
     
     # Full pipeline prediction (raw data in, probability out)
-    result = pred.champion_agent_predict(new_raw_data, preprocess=True)
+    result = pred.champion_predict(new_raw_data, preprocess=True)
     result.data  # P(class=1) probabilities
     
     # Individual agent for comparison

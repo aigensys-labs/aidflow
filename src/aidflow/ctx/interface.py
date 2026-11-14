@@ -70,7 +70,7 @@ class ExecutionContext:
     Provides phase-based access to all workers and a unified
     `process` method for sequential execution.
     
-    Executes `workers` by domain-specific pipeline phase: data - encoding - training - selection.
+    Executes `workers` by domain-specific pipeline phase: *data - encoding - training - selection*.
 
     Notes
     -----
