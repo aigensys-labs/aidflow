@@ -320,5 +320,6 @@
   },
   "footerSocials": {
     "github": "https://github.com/aigensys-labs/aidflow"
-  }
+  },
+  "description": "AIDflow is a pipeline-first framework for binary classification scorecards in regulated environments."
 }
