@@ -121,7 +121,7 @@ DESC  = 'AIG DATA STAGE ► WOE ENCODING ► Transform Encoded Num and Cat FEs t
 DEP1  = AIGFLOW.Encoding.num_encoder
 DEP2  = AIGFLOW.Encoding.cat_encoder
 DEP3  = AIGFLOW.Encoding.ixn_encoder
-DEPS  = DEP1 + DEP2 + DEP3
+DEPS  = (DEP1, DEP2, DEP3)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
