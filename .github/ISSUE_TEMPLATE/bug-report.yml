@@ -1,0 +1,66 @@
+name: "\U0001F41B Bug report"
+description: Create a report to help us improve AIDflow.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        Please write a clear and concise description of what the bug is.
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Run this and paste the output:
+        ```
+        python3 -c 'import aidflow; print(f"- AIDflow version: {aidflow.__version__}")'
+        python3 -c 'import platform; print(f"- Python: {platform.python_version()}")'
+        python3 -c 'import platform; print(f"- OS: {platform.platform()}")'
+        ```
+      value: |
+        - AIDflow version:
+        - Python version:
+        - OS:
+        - (Optional) Other relevant packages:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages / stack traces
+      description: Copy and paste any relevant error output.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: |
+        How do we reproduce this? A minimal code example is ideal.
+        Note: pickle files will not be accepted (security risk).
+      value: |
+        1.
+        2.
+        3.
+
+        ```python
+        # minimal reproducible example
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context (optional)
+      description: Anything else that helps us understand the issue.
+    validations:
+      required: false

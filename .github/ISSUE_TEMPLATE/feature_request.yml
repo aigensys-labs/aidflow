@@ -1,0 +1,36 @@
+name: "\U0001F4A1 Feature request"
+description: Suggest an idea or improvement for AIDflow.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest an improvement!
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem are you trying to solve? Why is this needed?
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Proposed solution
+      description: How should AIDflow handle this? Include API sketch if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered (optional)
+    validations:
+      required: false
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context (optional)
+      description: Code examples, error messages, or links to relevant discussions.
+    validations:
+      required: false

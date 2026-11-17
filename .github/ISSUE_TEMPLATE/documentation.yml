@@ -1,0 +1,13 @@
+name: "\U0001f4d6 Documentation"
+description: Report an issue related to https://aidflow.aigensys.com/.
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: explanation
+    attributes:
+      label: What's the issue?
+      description: |
+        Which page or section is wrong, outdated, or missing?
+        Include the URL if possible.
+    validations:
+      required: true
