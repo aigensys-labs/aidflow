@@ -6,9 +6,9 @@ Thank you for your interest in AIDflow.
 ## Development Setup
 
 ```bash
-git clone git@github.com:aigensys-labs/aidflow.git
+git clone https://github.com/aigensys-labs/aidflow.git
 cd aidflow
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
 
