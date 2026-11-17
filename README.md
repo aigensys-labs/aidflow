@@ -184,6 +184,7 @@ AIDflow decouples **user intent** from **mathematical execution** via a three-la
 - **Permitted**: Internal use, non-commercial education/research, professional services delivery.
 - **Restricted**: Building a competing commercial product on top of AIDflow's core engine.
 - **After 2 years**: Automatically converts to **Apache 2.0** (full open source, no restrictions).
+- **Not covered**: Trademarks/branding and separately owned IP are not granted by the license.
 
 [Full license → LICENSE](https://github.com/aigensys-labs/aidflow/blob/main/LICENSE) |
 [Learn more → fsl.software](https://fsl.software/)
