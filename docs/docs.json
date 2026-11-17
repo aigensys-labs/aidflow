@@ -36,7 +36,12 @@
   },
   "seo": {
     "indexing": "navigable",
+    "organization": {
+      "name": "AIGENSYS",
+      "url": "https://aigensys.com"
+    },    
     "metatags": {
+      "canonical": "https://aidflow.aigensys.com",
       "description": "AIDflow is a pipeline-first framework for binary classification scorecards in regulated environments.",
       "og:site_name": "AIDflow",
       "og:type": "website",
