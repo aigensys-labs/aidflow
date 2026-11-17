@@ -1,22 +1,20 @@
 """
 Centralized manifest of all available Fitter, Model and Dashboard implementations.
 
-This module serves as a high-level convenience layer that aggregates every 
-available model implementation within the framework. Upon import, it triggers 
-the automatic discovery and registration process, populating the `ModelRegistry` 
-and `DashRegistry` with all defined components. This ensures that any Fitter or 
-Dashboard added to the library is immediately available for selection and use 
+This module serves as a high-level convenience layer that aggregates every
+available model implementation within the framework. Upon import, it triggers
+the automatic discovery and registration process, populating the `ModelRegistry`
+and `DashRegistry` with all defined components. This ensures that any Fitter or
+Dashboard added to the library is immediately available for selection and use
 within the Model pipeline without requiring manual configuration.
 """
 
-from ..data.load.processor import (
-    DataProcessor
-)
+from ..data.load.processor import DataProcessor
 
 from ..data.screen.fitters import (
     FeatureStandardizer,
     FeatureTemporalAnalyzer,
-    ObservationAnalyzer
+    ObservationAnalyzer,
 )
 
 from ..data.encode.fitters import (
@@ -26,12 +24,10 @@ from ..data.encode.fitters import (
     InteractionExtractorXGB,
     WoeTransformerTest,
     WoeTransformerGini,
-    WoeStabilityAnalyzer
+    WoeStabilityAnalyzer,
 )
 
-from ..data.transform.processor import (
-    DataEncoderProcessor
-)
+from ..data.transform.processor import DataEncoderProcessor
 
 from ..learner.agents.fitters import (
     SparseBinaryGLM,
@@ -40,25 +36,15 @@ from ..learner.agents.fitters import (
     LogRegBinaryGLM,
     PLSBinaryGLM,
     LightBinaryGBM,
-    ExtremeBinaryGBM    
+    ExtremeBinaryGBM,
 )
 
-from ..selector.predict.processor import(
-    PredictorProcessor
-)
+from ..selector.predict.processor import PredictorProcessor
 
-from ..selector.compare.processor import(
-    ComparatorProcessor
-)
+from ..selector.compare.processor import ComparatorProcessor
 
-from ..selector.transition.processor import(
-    TransitionProcessor
-)
+from ..selector.transition.processor import TransitionProcessor
 
-from ..selector.select.processor import(
-    SelectorProcessor
-)
+from ..selector.select.processor import SelectorProcessor
 
-from ..selector.select.agent.fitter import(
-    PredictorFitter
-)
+from ..selector.select.agent.fitter import PredictorFitter

@@ -25,16 +25,10 @@ Example:
     >>> ModelDataResult.offload('AIGFLOW.Data.fe_stabilizer', project_sig)
 """
 
-from ...parameters import (
-    Parameters
-)
-from .base import (
-    FittedIDBase, 
-    FittedResultBase,
-    FittedIORegistry
-)
+from ...parameters import Parameters
+from .base import FittedIDBase, FittedResultBase, FittedIORegistry
 
-        
+
 class FittedID(FittedIDBase):
     """
     Routing implementation for ModelBase-level data results.
@@ -43,23 +37,23 @@ class FittedID(FittedIDBase):
     this implementation always resolves to the ModelBase instance itself.
     The data descriptor lives directly on the Model class.
     """
-    
+
     @property
     def setup(self) -> Parameters:
         from ..model import ModelBase
-        
+
         if isinstance(self.instance, ModelBase):
             return self.instance.setup
-        
-        raise TypeError(self._error())   
-    
+
+        raise TypeError(self._error())
+
     @property
     def model(self) -> str:
         from ..model import ModelBase
 
         if isinstance(self.instance, ModelBase):
             return self.instance.MODEL
-        
+
         raise TypeError(self._error())
 
     def get_target_instance(self):
@@ -73,16 +67,16 @@ class FittedID(FittedIDBase):
             ModelBase: The instance holding the result data.
         """
         from ..model import ModelBase, ModelUIBase
-        
+
         if isinstance(self.instance, ModelBase):
             return self.instance
-        
+
         if isinstance(self.instance, ModelUIBase):
             return self.instance.model
-        
+
         raise TypeError(self._error())
 
-    def _get_fitted(self, descriptor:bool=False):
+    def _get_fitted(self, descriptor: bool = False):
         """
         Retrieve the result data from the ModelBase's `_result` descriptor.
 
@@ -92,22 +86,23 @@ class FittedID(FittedIDBase):
 
         Returns:
             ModelDataResult | Any: The descriptor or the result data.
-        """        
+        """
 
         instance = self.get_target_instance()
         cls_ = type(instance)
-        
+
         desc: "ModelDataResult" = cls_._result
 
-        if descriptor:        
+        if descriptor:
             return desc
 
         return desc.get_result(instance)
 
-    def _error(self):        
-        return ('AIG SAFETY ► '
-            f'ModelDataResult does not support {type(self.instance)}: '
-            'ModelDataResult supports ModelBase instance only.'
+    def _error(self):
+        return (
+            "AIG SAFETY ► "
+            f"ModelDataResult does not support {type(self.instance)}: "
+            "ModelDataResult supports ModelBase instance only."
         )
 
 
@@ -122,6 +117,7 @@ class ModelDataResult(FittedResultBase):
 
     The key difference from `FittedResult` is that routing is always
     to the Model itself — there is no Fitter/ModelRunner ambiguity.
-    """    
+    """
+
     _id = FittedID
     _io = FittedIORegistry()

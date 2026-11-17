@@ -27,7 +27,7 @@ class Dict:
     """
 
     @classmethod
-    def deep_copy(cls, org:dict) -> dict:
+    def deep_copy(cls, org: dict) -> dict:
         """
         Create a deep copy of a nested dict structure, preserving
         `DictDataclass` type identity at each level.
@@ -48,7 +48,7 @@ class Dict:
         dict | DictDataclass
             A new structure with the same shape and types,
             independent of the original.
-        """        
+        """
         new = {}
         for key, value in org.items():
             if isinstance(value, dict):
@@ -57,13 +57,13 @@ class Dict:
                 dict_cls = value.__class__
                 new[key] = dict_cls(**cls.deep_copy(value))
             else:
-                new[key] = value 
+                new[key] = value
         if isinstance(org, DictDataclass):
             return org.__class__(**new)
         return new
 
     @staticmethod
-    def get_flattened_values(dct: dict|Any) -> tuple:
+    def get_flattened_values(dct: dict | Any) -> tuple:
         """
         Extract all leaf values from an arbitrarily nested
         dictionary structure into a single flat tuple.
@@ -85,15 +85,12 @@ class Dict:
             All leaf values in traversal order.
         """
         if not (
-            isinstance(dct, (dict, DictClass, DictDataclass)) or
-            (
-                isinstance(dct, type) and 
-                issubclass(dct, (DictClass, DictDataclass))
-            )
+            isinstance(dct, (dict, DictClass, DictDataclass))
+            or (isinstance(dct, type) and issubclass(dct, (DictClass, DictDataclass)))
         ):
             return tuple(List.ensure(dct))
-        
-        def _extract(nested_dict:dict):
+
+        def _extract(nested_dict: dict):
             for value in nested_dict.values():
                 if isinstance(value, dict):
                     yield from _extract(value)

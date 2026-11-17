@@ -18,17 +18,15 @@ Usage
 from ..deps.common import Path, shutil
 from ..storage.folder import Folder
 
+_DIR = Path(__file__).parent / "files"
 
-_DIR = Path(__file__).parent / 'files'
 
 class UIPaths:
-    NTB = 'notebook'
-    CLI = 'console'
+    NTB = "notebook"
+    CLI = "console"
 
-_PATHS = {
-    UIPaths.NTB: 'aidflow.ipynb',
-    UIPaths.CLI: 'console.py'
-}
+
+_PATHS = {UIPaths.NTB: "aidflow.ipynb", UIPaths.CLI: "console.py"}
 
 
 class UIGetter:
@@ -41,7 +39,7 @@ class UIGetter:
     """
 
     @classmethod
-    def get_all(cls, target: str | Path = '') -> dict[str, Path]:
+    def get_all(cls, target: str | Path = "") -> dict[str, Path]:
         """
         Copy all bundled assets to the target directory.
 
@@ -59,9 +57,9 @@ class UIGetter:
         for k in _PATHS:
             path[k] = cls._copy(k, target)
         return path
-    
+
     @classmethod
-    def get_notebook(cls, target: str | Path = '') -> Path:
+    def get_notebook(cls, target: str | Path = "") -> Path:
         """
         Copy the bundled guide notebook to the target path.
 
@@ -78,7 +76,7 @@ class UIGetter:
         return cls._copy(UIPaths.NTB, target)
 
     @classmethod
-    def get_script(cls, target: str | Path = '') -> Path:
+    def get_script(cls, target: str | Path = "") -> Path:
         """
         Copy the bundled shell script to the target path.
 
@@ -93,7 +91,7 @@ class UIGetter:
             The written file path.
         """
         return cls._copy(UIPaths.CLI, target)
-    
+
     @classmethod
     def get_paths(cls) -> dict[str, Path]:
         """
@@ -104,10 +102,10 @@ class UIGetter:
         dict[str, Path]
             Mapping of asset key → absolute path within the package.
         """
-        return {k: _DIR / p for k,p in _PATHS.items()}
+        return {k: _DIR / p for k, p in _PATHS.items()}
 
     @classmethod
-    def _copy(cls, key:str, target: str | Path) -> Path:
+    def _copy(cls, key: str, target: str | Path) -> Path:
         """Copy a registered asset to the target path."""
         path = Folder.create(target)
         path = path / _PATHS[key]

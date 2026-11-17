@@ -58,71 +58,63 @@ Requires the following pipeline stages to be completed:
 - Data Encoder (full preprocessing chain for inference)
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM, 
-                                        AIGFLOW,
-                                        Parameters
-                                        )
-from ...core.registry           import  (
-                                        ProjectModelRegistry,
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister, 
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelEnvelope,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,
-                                        ModelUIBase
-                                        )
-from ...core.base.worker        import  WorkerBase
-from ...core.base.adapter       import  ModelAdapterBase
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import PRM, AIGFLOW, Parameters
+from ...core.registry import (
+    ProjectModelRegistry,
+    FitRegister,
+    FitRegOpt,
+    DashRegister,
+    RegGet,
+)
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelEnvelope,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    ModelUIBase,
+)
+from ...core.base.worker import WorkerBase
+from ...core.base.adapter import ModelAdapterBase
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from ...display.verbosity       import  Verbosity
+from ...display.verbosity import Verbosity
 
-from ..predict.adapter          import  PredictorAdapter
-from ..compare.processor        import  ComparatorStats
+from ..predict.adapter import PredictorAdapter
+from ..compare.processor import ComparatorStats
 
-from .processor                 import  (
-                                        SelectorProcessor,
-                                        SelectorParamsBase,
-                                        SelectorParamsCfg,
-                                        SelectorResult,
-                                        SelectorStats
-                                        )
-from .agent                     import  AgentPredictor
-from .utils_ui                  import  PanelUtilsUI
-
+from .processor import (
+    SelectorProcessor,
+    SelectorParamsBase,
+    SelectorParamsCfg,
+    SelectorResult,
+    SelectorStats,
+)
+from .agent import AgentPredictor
+from .utils_ui import PanelUtilsUI
 
 MODEL = AIGFLOW.Selection.selector
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG SELECTION STAGE ► AGENT CHOICE ► SELECTION OF THE FINAL AGENT AS PRODUCTION CANDIDATE'
-DEP1  = (
-        AIGFLOW.Training.agent1,
-        AIGFLOW.Training.agent2,
-        AIGFLOW.Training.agent3,
-        AIGFLOW.Training.agent4,
-        )
-DEP2  = AIGFLOW.Data.fe_cleaner
-DEP3  = AIGFLOW.Encoding.woe_encoder
-DEP4  = AIGFLOW.Selection.comparator
-DEP5  = AIGFLOW.Encoding.data_encoder
-DEPS  = DEP1 + (DEP2, DEP3, DEP4, DEP5)
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG SELECTION STAGE ► AGENT CHOICE ► SELECTION OF THE FINAL AGENT AS PRODUCTION CANDIDATE"
+DEP1 = (
+    AIGFLOW.Training.agent1,
+    AIGFLOW.Training.agent2,
+    AIGFLOW.Training.agent3,
+    AIGFLOW.Training.agent4,
+)
+DEP2 = AIGFLOW.Data.fe_cleaner
+DEP3 = AIGFLOW.Encoding.woe_encoder
+DEP4 = AIGFLOW.Selection.comparator
+DEP5 = AIGFLOW.Encoding.data_encoder
+DEPS = DEP1 + (DEP2, DEP3, DEP4, DEP5)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -130,9 +122,11 @@ DEPS  = DEP1 + (DEP2, DEP3, DEP4, DEP5)
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'AgentSelector'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    AIG = "AgentSelector"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -141,51 +135,58 @@ class REG(DictClass):
 @Dataclass.mapping
 class SelectorParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(SelectorParamsBase)
-    setup  = {
-        PRM.SELECT.select_alpha.param   : (params.alpha,        'Test alpha'                 ),
-        PRM.SELECT.select_bins.param    : (params.proba_bins,   'Probability Discretization' ),
-        PRM.SELECT.select_choice.param  : (params.agent_choice, 'Agent Selection'            )
-    }  
+    setup = {
+        PRM.SELECT.select_alpha.param: (params.alpha, "Test alpha"),
+        PRM.SELECT.select_bins.param: (params.proba_bins, "Probability Discretization"),
+        PRM.SELECT.select_choice.param: (params.agent_choice, "Agent Selection"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """       
-    
+    """
+
     @FREG.register(REG.AIG)
     class AgentSelectorFitter(SelectorParamsBase):
-        
-        config: dict|SelectorParamsCfg = SelectorParamsCfg(
-            predictors  = None,
-            fe_cleaner  = None,
-            woe_encoder = None,
-            comparator  = None,
-            predictor   = None,
-            target      = None,
-            verbose     = True
+
+        config: dict | SelectorParamsCfg = SelectorParamsCfg(
+            predictors=None,
+            fe_cleaner=None,
+            woe_encoder=None,
+            comparator=None,
+            predictor=None,
+            target=None,
+            verbose=True,
         )
 
-        def _build(self, params:SelectorParamsBase, config:dict) -> SelectorProcessor:            
-            setup  = dict(params) | config
+        def _build(self, params: SelectorParamsBase, config: dict) -> SelectorProcessor:
+            setup = dict(params) | config
             return SelectorProcessor(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterBase[SelectorParamsBase]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """       
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
-    
-    def fit(self, test_set:pDF, train_set:pDF=None): 
+
+    def fit(self, test_set: pDF, train_set: pDF = None):
         """
         Execute the selection pipeline: evaluate agents and fit champion.
 
@@ -202,19 +203,19 @@ class Fitter(FitterBase[SelectorParamsBase]):
         Returns
         -------
         self
-        """    
-        self.result: SelectorResult = self.model.process(test_set, train_set = train_set)
-        self.stats:  SelectorStats  = self.model.get_stats()
-        
+        """
+        self.result: SelectorResult = self.model.process(test_set, train_set=train_set)
+        self.stats: SelectorStats = self.model.get_stats()
+
         is_info = Verbosity.normalize(self.verbose) == Verbosity.INFO
-        
+
         self._init_dash(
-            verbose = self.verbose if is_info else False,
-            build_dash_after_init = self.verbose            
+            verbose=self.verbose if is_info else False,
+            build_dash_after_init=self.verbose,
         )
         return self
-    
-    def transfrom(self, data:pDF) -> SelectorResult:
+
+    def transfrom(self, data: pDF) -> SelectorResult:
         """
         Generate a fresh selection audit report on new data.
 
@@ -229,8 +230,9 @@ class Fitter(FitterBase[SelectorParamsBase]):
             Updated performance and SHAP diagnostics.
         """
         return self.model.process(data)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬        
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -239,33 +241,35 @@ class Fitter(FitterBase[SelectorParamsBase]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
+
     pass
+
 
 @Dataclass.base
 class TransResData(SelectorResult):
     """Transfomer data output design."""
 
+
 class Transformer(TransformerBase[Fitter, SelectorStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
-    
+
     ModelFitter = Fitter
 
     def _fit_data(self, inputs: "AgentSelectorInput", train_data: pDF):
         return inputs.data, train_data
-    
-    def transform(self, data:pDF) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            **self.fitter.transfrom(data)
-        )   
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    def transform(self, data: pDF) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(**self.fitter.transfrom(data))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -274,53 +278,57 @@ class Transformer(TransformerBase[Fitter, SelectorStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
-    Transformer - Fitter before execution begins.
-    """  
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = SelectorParamsCfg
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
+    Transformer - Fitter before execution begins.
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = SelectorParamsCfg
     Mapping = SelectorParamsMapping
 
-    ModelTransformer  = Transformer
+    ModelTransformer = Transformer
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"AgentSelectorInput"):
-        agents   = self.get_model_dependecy(DEP1, is_req=False)
-        cleaner  = self.get_model_dependecy(DEP2)
-        encoder  = self.get_model_dependecy(DEP3)
-        compare  = self.get_model_dependecy(DEP4)
+    def get_choice(self, fx_choice: str, inputs: "AgentSelectorInput"):
+        agents = self.get_model_dependecy(DEP1, is_req=False)
+        cleaner = self.get_model_dependecy(DEP2)
+        encoder = self.get_model_dependecy(DEP3)
+        compare = self.get_model_dependecy(DEP4)
 
         defaults = self.Config(
-            predictors  = PredictorAdapter(agents),
-            fe_cleaner  = ModelAdapterBase(cleaner),
-            woe_encoder = ModelAdapterBase(encoder),
-            comparator  = ModelAdapterBase(compare),
-            predictor   = ModelAdapterBase(inputs.predictor),
-            target      = AigParam.di(inputs.target, self.setup.target),
-            verbose     = AigParam.di(inputs.verbose, self.setup.verbose),
-        )  
+            predictors=PredictorAdapter(agents),
+            fe_cleaner=ModelAdapterBase(cleaner),
+            woe_encoder=ModelAdapterBase(encoder),
+            comparator=ModelAdapterBase(compare),
+            predictor=ModelAdapterBase(inputs.predictor),
+            target=AigParam.di(inputs.target, self.setup.target),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)   
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-        
-    def get_params(self, fx_choice:str, inputs:"AgentSelectorInput", params:dict):
-        params: SelectorParamsBase = self.get_fit_params(fx_choice, inputs.fx_params, params) 
-        
+        return RegGet.choice(fx_choice, fx_config)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "AgentSelectorInput", params: dict):
+        params: SelectorParamsBase = self.get_fit_params(
+            fx_choice, inputs.fx_params, params
+        )
+
         # Switch of Static Performance Overview Creation
-        schema  = Dataclass.schema(SelectorParamsBase)
-        p_html  = schema.create_html_overview
+        schema = Dataclass.schema(SelectorParamsBase)
+        p_html = schema.create_html_overview
         verbose = AigParam.di(inputs.verbose, self.setup.verbose) == Verbosity.GUI
         is_init = True if isinstance(params.agent_choice, int) and verbose else False
-        params_ = SelectorParamsBase(**( dict(params) | {p_html: is_init} )) 
-        
-        return params_, self.setup
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        params_ = SelectorParamsBase(**(dict(params) | {p_html: is_init}))
 
+        return params_, self.setup
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -359,8 +367,10 @@ class AgentSelectorInput(ModelInput):
     field carries that selection. In a programmatic flow, the
     user can pass a pre-fitted `AgentPredictor` directly.
     """
+
     data: pDF
     predictor: WorkerBase | AgentPredictor
+
 
 @Dataclass.base(dynamic_params=True)
 class AgentSelectorEnvelopeCfg:
@@ -373,8 +383,10 @@ class AgentSelectorEnvelopeCfg:
         Training data (ML-ready) for SHAP drift comparison and
         champion fitting. Resolved from the data encoder if not
         provided directly.
-    """    
-    train_ml:  pDF
+    """
+
+    train_ml: pDF
+
 
 @Dataclass.base(dynamic_params=True)
 class AgentSelectorEnvelope(ModelEnvelope):
@@ -391,8 +403,10 @@ class AgentSelectorEnvelope(ModelEnvelope):
     config : AgentSelectorEnvelopeCfg
         Additional configuration (train_ml).
     """
-    inputs: AgentSelectorInput 
+
+    inputs: AgentSelectorInput
     config: AgentSelectorEnvelopeCfg
+
 
 @Dataclass.base
 class AgentSelectorResult(ModelResult):
@@ -442,12 +456,16 @@ class AgentSelectorResult(ModelResult):
     the champion (possibly a subset). The difference quantifies
     the cost/benefit of the user's feature curation decision.
     """
+
     agent_predictor: AgentPredictor
-    performance:     dict
-    shap:            dict
+    performance: dict
+    shap: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class AgentSelector(Processor, ModelBase):   
+
+class AgentSelector(Processor, ModelBase):
     """
     Agent Selector — Champion Selection & Deployment Decision.
 
@@ -511,7 +529,7 @@ class AgentSelector(Processor, ModelBase):
     >>> selector.fit(AgentSelectorInput(
     ...     data = oot_data,
     ...     predictor = champion_worker
-    ... ))    
+    ... ))
     >>> selector.fitted     # View to model result
     >>> selector.stats      # View to model stats
     >>>
@@ -525,11 +543,14 @@ class AgentSelector(Processor, ModelBase):
     """
 
     def _save(self, save_path) -> None:
-        ModelIO(self.setup).save(MODEL, self, custom_path = save_path)
+        ModelIO(self.setup).save(MODEL, self, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _get_inputs(inputs: AgentSelectorEnvelope | AgentSelectorInput) -> AgentSelectorInput:
+    def _get_inputs(
+        inputs: AgentSelectorEnvelope | AgentSelectorInput,
+    ) -> AgentSelectorInput:
         if isinstance(inputs, AgentSelectorEnvelope):
             return inputs.inputs
         return inputs
@@ -539,15 +560,16 @@ class AgentSelector(Processor, ModelBase):
             return inputs.config.train_ml
         enc = self.get_model_dependecy(DEP5)
         return enc.transform(inputs.data).data
-        
+
     def _get_result(self, res: TransResData):
         return AgentSelectorResult(
-            agent_predictor = res.agent_predictor,
-            performance = res.performance,
-            shap = res.shap,
+            agent_predictor=res.agent_predictor,
+            performance=res.performance,
+            shap=res.shap,
         )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-            
+
     def fit(self, inputs: AgentSelectorInput, fx_choice: str = REG.AIG, **params):
         """
         Execute the full champion selection pipeline.
@@ -566,7 +588,7 @@ class AgentSelector(Processor, ModelBase):
             Fitter choice key.
         **params : dict
             Runtime parameter overrides, passed to the internal fitter
-            (select_alpha, select_bins, select_choice). 
+            (select_alpha, select_bins, select_choice).
 
         Returns
         -------
@@ -581,21 +603,23 @@ class AgentSelector(Processor, ModelBase):
         The result is a self-contained deployment artifact.
         """
         inputs_ = self._get_inputs(inputs)
-        verify  = len(inputs_.data)
-        
+        verify = len(inputs_.data)
+
         self.choice = self.get_choice(fx_choice, inputs_)
         self.params = self.get_params(fx_choice, inputs_, params)
-        
+
         self.processor.fit(
-            inputs_, self._get_train_ml(inputs),
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs_,
+            self._get_train_ml(inputs),
+            fx_choice=self.choice,
+            params=self.params,
+            verify=verify,
         )
         self._save(inputs_.save_path)
-        return self    
+        return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def transform(self, data: pDF) -> AgentSelectorResult:
         """
         Generate a fresh selection audit report on any dataset.
@@ -630,25 +654,27 @@ class AgentSelector(Processor, ModelBase):
         month's data), call `transform` on the new sample to
         verify that the champion's feature behavior remains
         stable. If SHAP drift increases, consider re-selecting.
-        """ 
-        res = self.processor.transform(data)    
+        """
+        res = self.processor.transform(data)
         return self._get_result(res)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # SELECTION → AGENT CHOICE → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-class OptionUI:    
+class OptionUI:
     """UI Dynamic Parameters Panel."""
 
     def __init__(self, setup: Parameters, inputs: AgentSelectorInput):
-        prm     = SelectorParamsMapping(setup, default=True)
-        sig     = setup.project_signature
-        order   = self._get_order(sig)
+        prm = SelectorParamsMapping(setup, default=True)
+        sig = setup.project_signature
+        order = self._get_order(sig)
         verbose = AigParam.di(inputs.verbose, setup.verbose)
-        self.wg = PanelUtilsUI(prm, inputs.fx_params, order, sig, verbose) 
+        self.wg = PanelUtilsUI(prm, inputs.fx_params, order, sig, verbose)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
@@ -656,17 +682,20 @@ class OptionUI:
         compare: ModelBase = ProjectModelRegistry.get_model(project_sig, DEP4)
         stats: ComparatorStats = compare.stats
         return stats.ordered
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def panel(self, stats:SelectorStats):
-        """Shows Main UI Options for ML fx fit."""        
+    def panel(self, stats: SelectorStats):
+        """Shows Main UI Options for ML fx fit."""
         self.wg.panel(stats)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def get_ui_setting(self) -> list:
-        return self.wg.get_ui_setting()               
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_ui_setting(self) -> list:
+        return self.wg.get_ui_setting()
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -676,48 +705,51 @@ class AgentSelectorUI(ModelUIBase[AgentSelector, OptionUI]):
     """
     Champion Agent Selector.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    The 'Final Authority' of the AIDflow pipeline. This model aggregates 
-    all evidence from previous selection steps (Prediction, Comparison, and Transition) 
-    to officially designate a Champion Agent for production deployment.     
+
+    The 'Final Authority' of the AIDflow pipeline. This model aggregates
+    all evidence from previous selection steps (Prediction, Comparison, and Transition)
+    to officially designate a Champion Agent for production deployment.
     """
 
-    Model  = AgentSelector
+    Model = AgentSelector
     Option = OptionUI
-    
+
     def custom_confirm(self, fx):
         """Confirm Button of Selected Agent."""
-        return self.option_ui.wg.confirm_button.on_click(fx)    
+        return self.option_ui.wg.confirm_button.on_click(fx)
 
     def static_panel(self, *args, **kwargs):
         """Update Panel with Agents Features Tuning."""
         self.option_ui.panel(self.model.stats)
-    
+
     def dynamic_overview(self, *args, **kwargs):
         """Selected Agent Overivew by Champion vs. Training version."""
         self.model.fx.dashboard._show_without_sig()
-    
+
     @wraps(AgentSelector.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
         self.model_ui.fit(
-            *args, 
-            ui_params = self.model_ui.UIParams(
-                fit_transform_pipeline      = False,
-                dynamic_to_args_kwargs_FX_4 = self.inject_to_params,    
-                gui_static_w_fitted_5       = self.static_panel,
-                gui_dynamic_w_fitted_6      = self.dynamic_overview,
-                custom_control_widget       = self.custom_confirm,
-                is_button_last              = True, 
-                output_wait                 = True, 
+            *args,
+            ui_params=self.model_ui.UIParams(
+                fit_transform_pipeline=False,
+                dynamic_to_args_kwargs_FX_4=self.inject_to_params,
+                gui_static_w_fitted_5=self.static_panel,
+                gui_dynamic_w_fitted_6=self.dynamic_overview,
+                custom_control_widget=self.custom_confirm,
+                is_button_last=True,
+                output_wait=True,
             ),
-            **kwargs
-        ) 
-    
+            **kwargs,
+        )
+
     @wraps(AgentSelector.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> AgentSelectorResult: return self.model_ui.fitted
+    def fitted(self) -> AgentSelectorResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

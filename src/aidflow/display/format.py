@@ -28,25 +28,18 @@ Key Architectural Pillars
    hierarchy in complex ML output logs.
 """
 
-from ..deps.common      import  (
-                                ABC, 
-                                abstractmethod,
-                                )
-from ..deps.data        import  pDF, pd_Styler
-from ..deps.display     import  HTML, display
-from ..deps.types       import  (
-                                Literal, 
-                                FuncType
-                                )
-from ..core.factory     import  Dataclass
-from ..core.logging     import  LOG, Logger
-from .rgb               import  (
-                                RgbANSI, 
-                                ANSIToHTML,
-                                HTMLToANSI
-                                )
+from ..deps.common import (
+    ABC,
+    abstractmethod,
+)
+from ..deps.data import pDF, pd_Styler
+from ..deps.display import HTML, display
+from ..deps.types import Literal, FuncType
+from ..core.factory import Dataclass
+from ..core.logging import LOG, Logger
+from .rgb import RgbANSI, ANSIToHTML, HTMLToANSI
 
-DIV = ['solid','double','dashed','gradient']
+DIV = ["solid", "double", "dashed", "gradient"]
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -58,7 +51,7 @@ class Style:
     Base design token — the full set of visual attributes for a
     rendered element.
 
-    Variantion of default values by application 
+    Variantion of default values by application
     - Title / Stats / Splitter
 
     Encapsulates every possible CSS/ANSI styling property
@@ -103,27 +96,28 @@ class Style:
     div : str, default='solid'
         Divider style: `'solid'`, `'double'`, `'dashed'`,
         `'gradient'`, or a custom character (e.g., `'•'`).
-    """    
-    size:      float|int = 13
-    formatted:  list|int = None
-    color:           str = 'black'
-    color2:          str = None
-    background:      str = 'none' 
-    border_color:    str = 'none'
-    gradient_kind:   str = 'bottom'
-    font:            str = "'Segoe UI', system-ui, sans-serif"
-    line_height:   float = 1.5
-    display:         str = 'block'
-    padding:         str = 'none' 
-    margin_t:  float|int = 0
-    margin_b:  float|int = 0
-    margin_r:  float|int = 0
-    margin_l:  float|int = 0
-    bold:           bool = False
-    center:         bool = False 
-    to_html:        bool = True
-    div_px:    float|int = 1.0  
-    div: Literal['solid','double','dashed','gradient'] = 'solid'
+    """
+
+    size: float | int = 13
+    formatted: list | int = None
+    color: str = "black"
+    color2: str = None
+    background: str = "none"
+    border_color: str = "none"
+    gradient_kind: str = "bottom"
+    font: str = "'Segoe UI', system-ui, sans-serif"
+    line_height: float = 1.5
+    display: str = "block"
+    padding: str = "none"
+    margin_t: float | int = 0
+    margin_b: float | int = 0
+    margin_r: float | int = 0
+    margin_l: float | int = 0
+    bold: bool = False
+    center: bool = False
+    to_html: bool = True
+    div_px: float | int = 1.0
+    div: Literal["solid", "double", "dashed", "gradient"] = "solid"
 
     def update(self, **kwargs) -> "Style":
         """
@@ -138,50 +132,57 @@ class Style:
         -------
         Style
             A new Style instance with the merged values.
-        """        
-        return Style( **(dict(self) | kwargs) )
+        """
+        return Style(**(dict(self) | kwargs))
+
 
 @Dataclass.base
 class StyleTitle(Style):
-    color:           str = '#000000'
-    color2:          str = "#C4C9DB"
-    background:      str = "#E0E6EE"
-    border_color:    str = "none"
-    padding:         str = "8px 8px"  
-    bold:           bool = True
-    center:         bool = True
+    color: str = "#000000"
+    color2: str = "#C4C9DB"
+    background: str = "#E0E6EE"
+    border_color: str = "none"
+    padding: str = "8px 8px"
+    bold: bool = True
+    center: bool = True
+
 
 @Dataclass.base
 class StyleStats(Style):
-    color2:          str = "#E5E5E5"
-    background:      str = "#F7F7F7"
-    border_color:    str = "#E8E8E8"
-    padding:         str = "7px 8px"  
-    bold:           bool = True
-    center:         bool = True
-    margin_t:       int = 24
-    margin_b:       int = 10
-    div_px:    float|int = .5
+    color2: str = "#E5E5E5"
+    background: str = "#F7F7F7"
+    border_color: str = "#E8E8E8"
+    padding: str = "7px 8px"
+    bold: bool = True
+    center: bool = True
+    margin_t: int = 24
+    margin_b: int = 10
+    div_px: float | int = 0.5
+
 
 @Dataclass.base
 class StyleSplitter(Style):
-    color:          str = "#A8AAB3"
-    color2:         str = "#313983"
-    margin_t:       int = 4
-    margin_b:       int = 8
-    margin_l:       int = 0
-    margin_r:       int = 0
-    padding:        str = 'none'
-    div_px:   float|int = .5
+    color: str = "#A8AAB3"
+    color2: str = "#313983"
+    margin_t: int = 4
+    margin_b: int = 8
+    margin_l: int = 0
+    margin_r: int = 0
+    padding: str = "none"
+    div_px: float | int = 0.5
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-class FormatBase(ABC):    
+
+class FormatBase(ABC):
     """
     Abstract Base Class defining the mandatory interface for all formatting backends.
-    
-    Ensures that any visual output (Title, Point, Splitter) has a 
+
+    Ensures that any visual output (Title, Point, Splitter) has a
     consistent API regardless of whether it is rendered in HTML or ANSI.
-    """    
+    """
+
     @Dataclass.base
     class Style(Style):
         pass
@@ -200,32 +201,29 @@ class FormatBase(ABC):
 
     @staticmethod
     def _sp(
-        x: int | list | tuple | dict, 
-        s: str = '', 
-        h: tuple = ('has','have'), 
-        *args
-    ) -> tuple[str, str]:        
+        x: int | list | tuple | dict, s: str = "", h: tuple = ("has", "have"), *args
+    ) -> tuple[str, str]:
         """
         Resolve singular/plural grammatical forms based on quantity.
-        - s: "s" or none 
+        - s: "s" or none
         - h: has or have
         - args: any custom pairs as [singular, plural]
         """
-        if not isinstance(x,int): 
+        if not isinstance(x, int):
             x = len(x)
 
-        if x <= 1: 
-            h_    = h[0]
+        if x <= 1:
+            h_ = h[0]
             args_ = [a[0] for a in args]
 
-        else: 
-            s, h_ = 's', h[1]
+        else:
+            s, h_ = "s", h[1]
             args_ = [a[1] for a in args]
 
         return s, h_, *args_
-    
+
     @classmethod
-    def sync_s(cls, message: str|FuncType, *args, **kwargs) -> str:
+    def sync_s(cls, message: str | FuncType, *args, **kwargs) -> str:
         """
         Resolve a deferred message template with correct
         singular/plural endings.
@@ -251,12 +249,13 @@ class FormatBase(ABC):
             return message
         s = []
         for v in list(args) + list(kwargs.values()):
-            if ( v is None ) or isinstance(v,bool):
+            if (v is None) or isinstance(v, bool):
                 continue
             s.append(cls._sp(v)[0])
         return message(*s)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-        
+
     @staticmethod
     def pdf_width(df: pDF | pd_Styler, padding: int = 1) -> int:
         """
@@ -274,30 +273,31 @@ class FormatBase(ABC):
         -------
         int
             Total width in characters.
-        """        
+        """
         col_widths = []
         cols = df.columns
         lc = len(cols)
         if lc:
-            if isinstance(df, pd_Styler): 
+            if isinstance(df, pd_Styler):
                 df = df.data
             df = df.reset_index()
             cols = df.columns
         for col in cols:
             d = df[col]
-            if isinstance(d.iloc[0], float): 
+            if isinstance(d.iloc[0], float):
                 d = d.astype(str).str[:8]  # 8 is native pandas float display
             max_len = max(d.astype(str).apply(len).max(), len(str(col)))
             col_width = int(max_len + padding)
             col_widths.append(col_width)
 
         total_width = sum(col_widths)
-        
+
         return total_width
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
-    def div_print(cls, message:str) -> None:
+    def div_print(cls, message: str) -> None:
         """
         Print a message flanked by horizontal dividers above
         and below (emphasized block).
@@ -306,13 +306,13 @@ class FormatBase(ABC):
         ----------
         message : str
             The text to display.
-        """        
+        """
         cls.splitter()
         print(message)
         cls.splitter()
 
     @staticmethod
-    def sync_ansi_html(message:str) -> str:
+    def sync_ansi_html(message: str) -> str:
         """
         Convert embedded ANSI escape codes to HTML equivalents
         (base implementation: passthrough).
@@ -326,30 +326,30 @@ class FormatBase(ABC):
         -------
         str
             Converted text.
-        """        
-        return message        
+        """
+        return message
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    @staticmethod
-    @abstractmethod
-    def display():
-        ...
-    
-    @staticmethod
-    @abstractmethod
-    def point():
-        ...
 
     @staticmethod
     @abstractmethod
-    def splitter():
-        ...
+    def display(): ...
+
+    @staticmethod
+    @abstractmethod
+    def point(): ...
+
+    @staticmethod
+    @abstractmethod
+    def splitter(): ...
 
     @classmethod
     @abstractmethod
-    def title():
-        ...
+    def title(): ...
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ReportLogger:
     """
@@ -362,7 +362,7 @@ class ReportLogger:
     """
 
     @staticmethod
-    def _logger(t:str, instance: type | None) -> None:
+    def _logger(t: str, instance: type | None) -> None:
         """
         Forward a rendered title to the report logger (if
         a logger instance is available).
@@ -373,7 +373,7 @@ class ReportLogger:
             The rendered title text.
         instance : type | None
             The logger target class (None = no logging).
-        """        
+        """
         if not instance:
             return
         Logger(instance).info(HTMLToANSI.strip(t))
@@ -393,15 +393,18 @@ class ReportLogger:
         -------
         FuncType
             Wrapped method that logs and returns the title.
-        """        
+        """
+
         def wrapper(*args, **kwargs):
             l = kwargs.pop(LOG.R, None)
             t = title(*args, **kwargs)
             ReportLogger._logger(t, l)
             return t
-        return wrapper     
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+        return wrapper
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -410,27 +413,27 @@ class ReportLogger:
 class FormatHTML(FormatBase):
     """
     Rich-text rendering backend for Jupyter and Web environments.
-    
-    Translates `Style` tokens into inline CSS, supporting complex visual 
+
+    Translates `Style` tokens into inline CSS, supporting complex visual
     effects like linear gradients, flexbox alignment, and custom fonts.
     """
 
     @staticmethod
-    def sync_ansi_html(message:str) -> str:
+    def sync_ansi_html(message: str) -> str:
         """Convert ANSI escape codes to HTML color spans."""
         return ANSIToHTML.convert(message)
-    
-    def _background(style:Style) -> str:
+
+    def _background(style: Style) -> str:
         """
         Generate the CSS background value — either a solid color
-        or a linear gradient (if `color2` is set).        
+        or a linear gradient (if `color2` is set).
         """
         if style.color2 is not None:
-            return f'linear-gradient(to {style.gradient_kind}, {style.background}, {style.color2})'
+            return f"linear-gradient(to {style.gradient_kind}, {style.background}, {style.color2})"
         return style.background
-    
+
     @classmethod
-    def _html_text(cls, value:str, style:Style = Style()) -> HTML|str:
+    def _html_text(cls, value: str, style: Style = Style()) -> HTML | str:
         """
         Render a text value as a styled HTML `<div>`.
 
@@ -449,13 +452,15 @@ class FormatHTML(FormatBase):
         HTML | str
             The rendered element (wrapped in `HTML()` if
             `style.to_html` is True, else raw string).
-        """        
-        weight = 'normal'
-        align  = 'left' 
-        if style.bold: weight = 600
-        if style.center: align  = 'center'
+        """
+        weight = "normal"
+        align = "left"
+        if style.bold:
+            weight = 600
+        if style.center:
+            align = "center"
 
-        html = (f'''
+        html = f"""
         <div style="
             display:        {style.display};
             font-family:    {style.font}; 
@@ -474,14 +479,14 @@ class FormatHTML(FormatBase):
             margin-right:   {style.margin_r}px;
         ">
             {cls.sync_ansi_html(value)}
-        </div>''')
+        </div>"""
 
         if style.to_html:
             return HTML(html)
         return html
-    
+
     @staticmethod
-    def _formatted(value:list[str]|tuple[str], formatted:list[int]|int) -> str:
+    def _formatted(value: list[str] | tuple[str], formatted: list[int] | int) -> str:
         """
         Render a multi-column text layout using flexbox.
 
@@ -497,22 +502,22 @@ class FormatHTML(FormatBase):
         -------
         str
             HTML spans with flex layout.
-        """        
-        h = ''
+        """
+        h = ""
         if isinstance(formatted, int):
             formatted = [formatted]
-        for i,v in enumerate(value):
-            if i == len(value)-1:
+        for i, v in enumerate(value):
+            if i == len(value) - 1:
                 h += f'<span style="flex: 1; word-break: break-all;">{v}</span>'
                 break
             if i < len(formatted):
                 h += f'<span style="flex: 0 0 {formatted[i]}px; overflow: hidden; text-overflow: ellipsis;">{v}</span>'
-            else:  
-                h += f'<span>{v}</span>'
+            else:
+                h += f"<span>{v}</span>"
         return h
-    
+
     @classmethod
-    def display(cls, *values, style:Style = Style(), **kwargs) -> None:  
+    def display(cls, *values, style: Style = Style(), **kwargs) -> None:
         """
         Render one or more values using the HTML backend.
 
@@ -530,31 +535,31 @@ class FormatHTML(FormatBase):
             Visual attributes.
         **kwargs
             Forwarded to `sync_s` for plural resolution.
-        """              
-        if all([isinstance(v,HTML) for v in values]):
+        """
+        if all([isinstance(v, HTML) for v in values]):
             display(*values)
             return
 
-        if all([isinstance(v,str) for v in values]):
-            content = ' '.join(str(v) for v in values)
-            display( cls._html_text(content, style) )
+        if all([isinstance(v, str) for v in values]):
+            content = " ".join(str(v) for v in values)
+            display(cls._html_text(content, style))
             return
-        
+
         for v in values:
             v = cls.sync_s(v, **kwargs)
             if style.formatted is not None:
-                if isinstance(v, (list,tuple)):
+                if isinstance(v, (list, tuple)):
                     v = cls._formatted(v, style.formatted)
-                    s = style.update(display='flex')
-                    display( cls._html_text(v, s) )
+                    s = style.update(display="flex")
+                    display(cls._html_text(v, s))
                     continue
             if isinstance(v, str):
-                display( cls._html_text(v, style) )
+                display(cls._html_text(v, style))
             else:
                 display(v)
 
     @classmethod
-    def point(cls, *values, style=Style(formatted=[10,15], div='•')) -> None:
+    def point(cls, *values, style=Style(formatted=[10, 15], div="•")) -> None:
         """
         Render bullet-point list items.
 
@@ -564,15 +569,14 @@ class FormatHTML(FormatBase):
             The bullet content.
         style : Style
             Bullet character and column widths.
-        """        
+        """
         for v in values:
-            cls.display(['', style.div, v], style=style)
-    
+            cls.display(["", style.div, v], style=style)
+
     @staticmethod
     def splitter(
-        style: StyleSplitter = StyleSplitter(),
-        show: bool = True
-    ) -> str|HTML|None:
+        style: StyleSplitter = StyleSplitter(), show: bool = True
+    ) -> str | HTML | None:
         """
         Render a horizontal divider line.
 
@@ -590,34 +594,35 @@ class FormatHTML(FormatBase):
         -------
         str | HTML | None
             The divider element (when `show=False`).
-        """        
+        """
         margin_padding = (
             f"margin-top:  {style.margin_t}px; margin-bottom: {style.margin_b}px;"
             f"margin-left: {style.margin_l}px; margin-right:  {style.margin_r}px;"
             f"padding: {style.padding};"
         )
-        if style.div == 'gradient':
+        if style.div == "gradient":
             fs = (
                 f'<hr style="background: linear-gradient(to {style.gradient_kind}, {style.color}, {style.color2});'
                 f'height: {style.div_px}px; border: none; {margin_padding}">'
             )
-        else: 
+        else:
             fs = f'<hr style="border: {style.div_px}px {style.div} {style.color}; {margin_padding}">'
-        if style.to_html: 
+        if style.to_html:
             fs = HTML(fs)
-        if not show: 
+        if not show:
             return fs
-        display(fs) 
+        display(fs)
 
     @classmethod
     @ReportLogger.log
-    def title(cls,
-        title: str, 
+    def title(
+        cls,
+        title: str,
         *args,
-        style: StyleTitle = StyleTitle(),        
-        show:  bool = True,
-        **kwargs
-    ) -> str|HTML:
+        style: StyleTitle = StyleTitle(),
+        show: bool = True,
+        **kwargs,
+    ) -> str | HTML:
         """
         Render a section title with decorative background bar.
 
@@ -638,14 +643,15 @@ class FormatHTML(FormatBase):
         -------
         str | HTML
             The rendered title.
-        """        
-        t = cls.sync_s(title, *args, **kwargs)        
+        """
+        t = cls.sync_s(title, *args, **kwargs)
         if not show:
-            return cls._html_text(t, style) 
+            return cls._html_text(t, style)
         cls.display(t, style=style)
         return t
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -654,43 +660,44 @@ class FormatHTML(FormatBase):
 class FormatANSI(FormatBase):
     """
     Terminal-optimized rendering backend for Console/SSH environments.
-    
-    Translates `Style` tokens into ANSI escape sequences, providing 
-    bolding, centering, and character-based dividers (e.g., '─') to 
+
+    Translates `Style` tokens into ANSI escape sequences, providing
+    bolding, centering, and character-based dividers (e.g., '─') to
     maintain structural clarity in text-only interfaces.
     """
+
     px = 149
-    
+
     @staticmethod
-    def _print_center(t:str, style:Style=Style(), show:bool=True) -> str|None:
+    def _print_center(t: str, style: Style = Style(), show: bool = True) -> str | None:
         """ANSI middle text → JN average text width is ~150"""
-        l  = style.div_px
+        l = style.div_px
         tl = RgbANSI.ansi_text_len(t)
-        fc = ' '*int(l/2-tl/2)
-        fc = ' '*int((l-tl)/2) if len(fc) + tl > l else fc
-        fc = fc + ( RgbANSI.bold(t) if style.bold else t )
+        fc = " " * int(l / 2 - tl / 2)
+        fc = " " * int((l - tl) / 2) if len(fc) + tl > l else fc
+        fc = fc + (RgbANSI.bold(t) if style.bold else t)
         if not show:
             return fc
         print(fc)
 
     @classmethod
-    def _align_px(cls, style:Style) -> int:
+    def _align_px(cls, style: Style) -> int:
         """
         Resolve the divider width in characters.
 
         Uses the default terminal width (`px`) unless the style
-        specifies a custom `div_px` ≥ 20.        
-        """        
+        specifies a custom `div_px` ≥ 20.
+        """
         return cls.px if not style.div_px or style.div_px < 20 else style.div_px
 
     @staticmethod
-    def _align_div(style:Style) -> str | None:
+    def _align_div(style: Style) -> str | None:
         if style.div is None:
             return
-        return '─' if style.div in DIV else str(style.div)
+        return "─" if style.div in DIV else str(style.div)
 
     @classmethod
-    def display(cls, *values, style:Style=None, **kwargs) -> None:
+    def display(cls, *values, style: Style = None, **kwargs) -> None:
         """
         Render values to the terminal.
 
@@ -702,13 +709,13 @@ class FormatANSI(FormatBase):
             Style (used for sync_s resolution).
         **kwargs
             Forwarded to `sync_s`.
-        """        
-        val = [cls.sync_s(v, **kwargs) for v in values]        
-        val = [v if isinstance(v, str) else ' '.join(v) for v in val]
+        """
+        val = [cls.sync_s(v, **kwargs) for v in values]
+        val = [v if isinstance(v, str) else " ".join(v) for v in val]
         print(*val)
-    
+
     @classmethod
-    def point(cls, *values, style=Style(div='•')) -> None:
+    def point(cls, *values, style=Style(div="•")) -> None:
         """
         Render bullet-point list items in the terminal.
 
@@ -718,16 +725,17 @@ class FormatANSI(FormatBase):
             The bullet content.
         style : Style
             Bullet character.
-        """        
+        """
         for v in values:
-            cls.display(['', style.div, v], style=style)
+            cls.display(["", style.div, v], style=style)
 
     @classmethod
-    def splitter(cls, 
-        style: StyleSplitter = StyleSplitter(div='─', div_px=None), 
-        show:  bool = True, 
-        **kwargs
-    ) -> str|None:
+    def splitter(
+        cls,
+        style: StyleSplitter = StyleSplitter(div="─", div_px=None),
+        show: bool = True,
+        **kwargs,
+    ) -> str | None:
         """
         Render a horizontal divider line (character-based).
 
@@ -744,25 +752,26 @@ class FormatANSI(FormatBase):
         -------
         str | None
             The divider line (when `show=False`).
-        """          
-        px  = cls._align_px(style)
+        """
+        px = cls._align_px(style)
         div = cls._align_div(style)
         if not div:
             return
-        fs  = div*px
+        fs = div * px
         if not show:
             return fs
         print(fs)
 
     @classmethod
     @ReportLogger.log
-    def title(cls, 
-        title: str, 
-        *args, 
-        style: StyleTitle = StyleTitle(div='─', div_px=None), 
-        show:  bool = True,
-        **kwargs
-    ) -> str:    
+    def title(
+        cls,
+        title: str,
+        *args,
+        style: StyleTitle = StyleTitle(div="─", div_px=None),
+        show: bool = True,
+        **kwargs,
+    ) -> str:
         """
         Render a section title with character-based borders.
 
@@ -789,26 +798,29 @@ class FormatANSI(FormatBase):
         -------
         str
             The rendered title block.
-        """  
-        t   = cls.sync_s(title, *args, **kwargs)
-        s_  = style.update(div = cls._align_div(style), div_px = cls._align_px(style))
+        """
+        t = cls.sync_s(title, *args, **kwargs)
+        s_ = style.update(div=cls._align_div(style), div_px=cls._align_px(style))
         div = cls.splitter(s_, False)
-        
-        if style.center: t = cls._print_center(t, s_, False)
-        if style.bold:   t = RgbANSI.bold(t)
+
+        if style.center:
+            t = cls._print_center(t, s_, False)
+        if style.bold:
+            t = RgbANSI.bold(t)
 
         if not div:
             dt = t
         else:
-            dt = div + '\n' + t + '\n' + div
-        
+            dt = div + "\n" + t + "\n" + div
+
         if not show:
             return dt
-        
+
         print(dt)
         return dt
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -822,9 +834,9 @@ class FormatUI(FormatBase):
     appropriate backend class (`FormatHTML` or `FormatANSI`)
     based on the execution environment.
     """
-    
+
     @staticmethod
-    def get_formatter(UI: Literal['html', 'ansi']='html'):
+    def get_formatter(UI: Literal["html", "ansi"] = "html"):
         """
         Return the formatting backend class for the specified
         environment.
@@ -839,7 +851,11 @@ class FormatUI(FormatBase):
         type[FormatHTML] | type[FormatANSI]
             The backend class (not an instance — methods are
             called as classmethods/staticmethods).
-        """        
-        if UI == 'html': return FormatHTML
-        if UI == 'ansi': return FormatANSI
+        """
+        if UI == "html":
+            return FormatHTML
+        if UI == "ansi":
+            return FormatANSI
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

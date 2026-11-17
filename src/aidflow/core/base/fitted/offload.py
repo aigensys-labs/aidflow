@@ -16,9 +16,9 @@ partial offload states where some data remains in RAM while other data
 has been written to disk.
 """
 
-from .fitted    import  FittedResult
-from .result    import  ModelDataResult
-from .relay     import  FitterDataRelay
+from .fitted import FittedResult
+from .result import ModelDataResult
+from .relay import FitterDataRelay
 
 
 class FittedOffload:
@@ -45,10 +45,10 @@ class FittedOffload:
 
     Example:
         >>> offloader = FittedOffload(setup.project_signature)
-        >>> 
+        >>>
         >>> # Free RAM for a single step after inspecting its results:
         >>> offloader.offload_to_disk('AIGFLOW.Data.fe_cleaner')
-        >>> 
+        >>>
         >>> # Free RAM for all data-phase steps:
         >>> offloader.offload_to_disk([
         ...     'AIGFLOW.Data.loader',
@@ -94,7 +94,7 @@ class FittedOffload:
             This operation is **reversible**. Offloaded data is not destroyed;
             it is persisted to disk and will be automatically re-hydrated
             when the user or pipeline accesses the result again.
-        """        
+        """
         arg = (model, self.p_sig)
         FitterDataRelay.offload(*arg)
         ModelDataResult.offload(*arg)

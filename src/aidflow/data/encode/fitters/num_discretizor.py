@@ -41,62 +41,51 @@ Per feature:
 - A binary verdict (kept / dropped) with reason.
 """
 
-from ....deps.struct                import  dataclass
-from ....deps.data                  import  np, pDF, pSe
-from ....deps.types                 import  Literal
+from ....deps.struct import dataclass
+from ....deps.data import np, pDF, pSe
+from ....deps.types import Literal
 
-from ....core.base                  import  (
-                                            FitterDataBase, 
-                                            FitterModelBase,
-                                            )
-from ....core.factory               import  (
-                                            Dataclass,
-                                            DictClass
-                                            )
-from ....core.foundation            import  AigParam
-from ....core.accessor              import  Parallel
-from ....core.interop               import  (
-                                            Pd,
-                                            Arrow,
-                                            TypeStandard
-                                            )
-from ....core.standard              import  (
-                                            VarType, 
-                                            VarStd
-                                            )
-from ....core.display               import  Display
+from ....core.base import (
+    FitterDataBase,
+    FitterModelBase,
+)
+from ....core.factory import Dataclass, DictClass
+from ....core.foundation import AigParam
+from ....core.accessor import Parallel
+from ....core.interop import Pd, Arrow, TypeStandard
+from ....core.standard import VarType, VarStd
+from ....core.display import Display
 
-from ....ml.features                import  (
-                                            Binning, 
-                                            MinBinResult,
-                                            Encoding,
-                                            EncodingMap
-                                            )
-from ....ml.metrics                 import  SeparationMetrics
-from ....ml.sampling                import  Subsampling
-from ....display.verbosity          import  Verbosity
-
+from ....ml.features import Binning, MinBinResult, Encoding, EncodingMap
+from ....ml.metrics import SeparationMetrics
+from ....ml.sampling import Subsampling
+from ....display.verbosity import Verbosity
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # LOCAL CONSTANTS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class LBL(DictClass):
-    """Output column labels for binning stats and verdicts."""    
-    V   = 'VAR'
-    R   = 'Reason'
-    M   = VarStd.MISSING
-    B   = 'Bins'
-    GF  = 'Gini_TF'
-    GT  = 'Gini_T'
-    GO  = 'Gini_O'
-    IVF = 'IV_TF'
-    IVT = 'IV_T'
-    S   = 'Bin_Search'
+    """Output column labels for binning stats and verdicts."""
+
+    V = "VAR"
+    R = "Reason"
+    M = VarStd.MISSING
+    B = "Bins"
+    GF = "Gini_TF"
+    GT = "Gini_T"
+    GO = "Gini_O"
+    IVF = "IV_TF"
+    IVT = "IV_T"
+    S = "Bin_Search"
+
 
 class STAT(DictClass):
     """Dash-Fitter vars connection design."""
-    out = lambda x: f'stats_out_{x}'
+
+    out = lambda x: f"stats_out_{x}"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -130,11 +119,13 @@ class FitParamsBase:
         threshold are merged with their neighbour to ensure statistical
         reliability in production (avoids bins with too few samples
         for stable WOE computation).
-    """     
-    max_num_bins:   int   = 20
-    gini_cutoff:    float = 0.02
-    alpha:          float = 0.003
-    min_bin_share:  int|float = 0.03
+    """
+
+    max_num_bins: int = 20
+    gini_cutoff: float = 0.02
+    alpha: float = 0.003
+    min_bin_share: int | float = 0.03
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -152,14 +143,17 @@ class FitParamsCfg:
         numerical columns (e.g., age groups, counts).
     verbose : bool | Verbosity, default=True
         Enable progress display and stats output.
-    """     
-    target:   str
+    """
+
+    target: str
     discrete: int = 10
-    verbose:  bool|Verbosity = True
+    verbose: bool | Verbosity = True
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -182,11 +176,13 @@ class FitResult:
         Per-feature bin search diagnostics (or 'No Binning Search'
         for discrete variables).
     """
-    encoding:       dict    # Fitted Encoding
-    vars_num:       list    # Encoded num vars
-    vars_dropped:   list    # Removed num vars
-    vars_map:       dict    # Map org num var - num fe
-    bin_search:     dict    # Binning Optim Search
+
+    encoding: dict  # Fitted Encoding
+    vars_num: list  # Encoded num vars
+    vars_dropped: list  # Removed num vars
+    vars_map: dict  # Map org num var - num fe
+    bin_search: dict  # Binning Optim Search
+
 
 @Dataclass.base
 class FitStats:
@@ -205,10 +201,12 @@ class FitStats:
     stats_out_a : list
         Features DROPPED at the after gate (encoding destroyed signal).
     """
-    fit_worker:  dict
-    stats_in:    list
-    stats_out_p: list   # out prior encoding
-    stats_out_a: list   # out after encoding
+
+    fit_worker: dict
+    stats_in: list
+    stats_out_p: list  # out prior encoding
+    stats_out_a: list  # out after encoding
+
 
 @Dataclass.base
 class WorkerResult:
@@ -226,11 +224,15 @@ class WorkerResult:
     stats : pDF | None
         Bin search diagnostics (per-candidate-bin performance).
     """
-    encoding: pDF    # Encoding Join 
-    encoded:  pDF    # Encoded
-    original: pDF    # Original 
-    stats:    pDF|None = None # Encoding Stats
+
+    encoding: pDF  # Encoding Join
+    encoded: pDF  # Encoded
+    original: pDF  # Original
+    stats: pDF | None = None  # Encoding Stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class FitWorker:
@@ -263,45 +265,49 @@ class FitWorker:
     excellent train Gini but poor OOT performance.
     """
 
-    def __init__(self, params:FitParams):
-        self.prm        = params
-        self.target     = params.target
-        self.max_bins   = params.max_num_bins
-        self.cutoff     = params.gini_cutoff
-        self.alpha      = params.alpha
-        self.min_share  = params.min_bin_share
-        self.verbose    = params.verbose
-        self.discrete   = params.discrete
+    def __init__(self, params: FitParams):
+        self.prm = params
+        self.target = params.target
+        self.max_bins = params.max_num_bins
+        self.cutoff = params.gini_cutoff
+        self.alpha = params.alpha
+        self.min_share = params.min_bin_share
+        self.verbose = params.verbose
+        self.discrete = params.discrete
 
         self.result: FitResult = Dataclass.create_default_instance(FitResult)
-        self.stats:  FitStats  = Dataclass.create_default_instance(FitStats)
+        self.stats: FitStats = Dataclass.create_default_instance(FitStats)
 
-        self._diag  = SeparationMetrics(incl_miss=True)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        self._diag = SeparationMetrics(incl_miss=True)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @dataclass(slots=True)
     class VarData:
         """Per-feature working state during the binning pipeline."""
-        x:     str      # var in processing
-        xT:    str      # var in processing naming standard Encoded
-        xG:    str      # var in processing naming standard Min Share Grouped
-        x_t:   list     # target-var names
-        df:    pDF      # data of x_t full length
-        ds:    pDF      # data of non missing d_xt space
-        miss:  float    # missing rate of d_xt
+
+        x: str  # var in processing
+        xT: str  # var in processing naming standard Encoded
+        xG: str  # var in processing naming standard Min Share Grouped
+        x_t: list  # target-var names
+        df: pDF  # data of x_t full length
+        ds: pDF  # data of non missing d_xt space
+        miss: float  # missing rate of d_xt
 
     @dataclass(slots=True)
     class BinSpace:
         """Bin strategy determination for the current feature."""
-        unique: int     # Number of unique values in the feature
-        cross:  bool    # True if discrete (use value-based cut, not qcut)
-    
+
+        unique: int  # Number of unique values in the feature
+        cross: bool  # True if discrete (use value-based cut, not qcut)
+
     @dataclass(slots=True)
     class SearchSpace:
         """Result of the non-greedy bin count search."""
-        bins:   int = 0     # Optimal bin count found
-        gini: float = 0     # Gini at the optimal bin count
-        stats:  pDF = None  # Per-candidate-bin diagnostics
+
+        bins: int = 0  # Optimal bin count found
+        gini: float = 0  # Gini at the optimal bin count
+        stats: pDF = None  # Per-candidate-bin diagnostics
 
     @Dataclass.base
     class Performance:
@@ -324,17 +330,19 @@ class FitWorker:
             Encoded feature IV (non-missing only).
         iv_enc_f : float
             Encoded feature IV (full data).
-        """        
-        gini_org:   float|int
-        gini_full:  float|int
-        iv_full:    float|int
-        gini_enc_o: float|int = 0
-        gini_enc_f: float|int = 0
-        iv_enc_o:   float|int = 0
-        iv_enc_f:   float|int = 0
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        """
 
-    def create_var(self, data:pDF, x:str) -> VarData:
+        gini_org: float | int
+        gini_full: float | int
+        iv_full: float | int
+        gini_enc_o: float | int = 0
+        gini_enc_f: float | int = 0
+        iv_enc_o: float | int = 0
+        iv_enc_f: float | int = 0
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def create_var(self, data: pDF, x: str) -> VarData:
         """
         Initialize the working state for a feature.
 
@@ -352,23 +360,25 @@ class FitWorker:
         -------
         VarData
             Working state with data subsets and naming.
-        """        
-        xT    = VarStd.fe_t(x)
-        xG    = VarStd.fe_g(x)
-        x_t   = [x, self.target]
-        d_xt  = data.loc[:, x_t].copy()             # Including Missing
-        space = d_xt.loc[d_xt[x].notnull()].copy()  # Excluding Missing → bin-search space
+        """
+        xT = VarStd.fe_t(x)
+        xG = VarStd.fe_g(x)
+        x_t = [x, self.target]
+        d_xt = data.loc[:, x_t].copy()  # Including Missing
+        space = d_xt.loc[
+            d_xt[x].notnull()
+        ].copy()  # Excluding Missing → bin-search space
         return self.VarData(
-            x    = x,
-            xT   = xT,
-            xG   = xG,
-            x_t  = x_t,
-            df   = d_xt,
-            ds   = space,
-            miss = 1 - ( len(space) / len(d_xt) )
+            x=x,
+            xT=xT,
+            xG=xG,
+            x_t=x_t,
+            df=d_xt,
+            ds=space,
+            miss=1 - (len(space) / len(d_xt)),
         )
-    
-    def update_var_set_dxT(self, var:VarData, dt:pDF) -> None:
+
+    def update_var_set_dxT(self, var: VarData, dt: pDF) -> None:
         """Set the binned values (xT) on both the non-missing and full data subsets."""
         xT = var.xT
         ds = var.ds
@@ -376,13 +386,13 @@ class FitWorker:
         ds[xT] = dt
         df[xT] = dt
 
-    def update_var_dxT_missing(self, var:VarData) -> None:
+    def update_var_dxT_missing(self, var: VarData) -> None:
         """Add a 'Missing' category to xT and impute NaN rows in the full data."""
         xT = var.xT
         df = var.df
         df[xT] = TypeStandard.cat_fill_missing(df[xT])
-  
-    def bin_space(self, var:VarData) -> BinSpace:
+
+    def bin_space(self, var: VarData) -> BinSpace:
         """
         Determine the binning strategy for this feature.
 
@@ -400,15 +410,12 @@ class FitWorker:
         -------
         BinSpace
             Strategy: unique count and whether to use discrete mode.
-        """                    
+        """
         unique = len(var.ds[var.x].unique())
-        cross  = ( self.max_bins >= unique ) or ( unique <= self.discrete )
-        return self.BinSpace(
-            unique = unique,
-            cross  = cross  # Discrete num variables
-        )
+        cross = (self.max_bins >= unique) or (unique <= self.discrete)
+        return self.BinSpace(unique=unique, cross=cross)  # Discrete num variables
 
-    def run_bin_search(self, var:VarData, bins:BinSpace) -> SearchSpace:
+    def run_bin_search(self, var: VarData, bins: BinSpace) -> SearchSpace:
         """
         Execute the non-greedy bin count search.
 
@@ -429,50 +436,47 @@ class FitWorker:
         -------
         SearchSpace
             Optimal bin count, Gini at optimum, and diagnostics.
-        """        
+        """
         search = self.SearchSpace()
         if bins.cross:
             return search
         try:
-            t, x   = var.ds[self.target], var.ds[var.x]
-            b,g,s  = Binning.num_bin_search(t, x, self.max_bins, self.alpha)
-            search = self.SearchSpace(bins = b, gini = g, stats = s)
+            t, x = var.ds[self.target], var.ds[var.x]
+            b, g, s = Binning.num_bin_search(t, x, self.max_bins, self.alpha)
+            search = self.SearchSpace(bins=b, gini=g, stats=s)
         except:
             pass
         return search
-    
-    def get_enc_data(self, d: tuple[pDF,pSe] | pDF, x: str|None) -> tuple[pSe,pSe]:
+
+    def get_enc_data(self, d: tuple[pDF, pSe] | pDF, x: str | None) -> tuple[pSe, pSe]:
         """
         Normalize the data input to (target, feature) pair.
 
         Accepts either a pre-split tuple or a DataFrame with column
         selection, returning a consistent (target, x) pair.
-        """        
+        """
         if isinstance(d, tuple):
             d_, x_ = d
             return d_[self.target], x_
-        return d[self.target], d[x]  
-    
-    def encode_x(self, target:pSe, x:pSe) -> tuple[pSe, float]:
+        return d[self.target], d[x]
+
+    def encode_x(self, target: pSe, x: pSe) -> tuple[pSe, float]:
         """
         Normalize the data input to (target, feature) pair.
 
         Accepts either a pre-split tuple or a DataFrame with column
         selection, returning a consistent (target, x) pair.
-        """        
+        """
         x_, woe, _ = Encoding(
-            transform   = True,
-            ensure_enc  = True, 
-            add_iv      = True,
-            incl_miss   = True
+            transform=True, ensure_enc=True, add_iv=True, incl_miss=True
         ).process(target, x)
         return x_, self._diag.iv_total(woe)
 
-    def calc_gini(self, target:pSe, x:pSe|None) -> float:
-        """Compute the Gini coefficient of target separation by feature groups."""        
+    def calc_gini(self, target: pSe, x: pSe | None) -> float:
+        """Compute the Gini coefficient of target separation by feature groups."""
         return self._diag.gini(target, x)
-    
-    def calc_perf(self, *dx, x:str=None) -> list[dict[str, float]]:
+
+    def calc_perf(self, *dx, x: str = None) -> list[dict[str, float]]:
         """
         Compute Gini and IV for one or more data subsets.
 
@@ -487,16 +491,16 @@ class FitWorker:
         -------
         list[dict]
             One {'gini': ..., 'iv': ...} per input.
-        """        
+        """
         r = []
         for d in dx:
-            t,  x_ = self.get_enc_data(d, x)
+            t, x_ = self.get_enc_data(d, x)
             xe, iv = self.encode_x(t, x_)
-            gini   = self.calc_gini(t, xe)
-            r.append({'gini':gini, 'iv':iv})
+            gini = self.calc_gini(t, xe)
+            r.append({"gini": gini, "iv": iv})
         return r
-    
-    def org_perf(self, var:VarData) -> Performance:
+
+    def org_perf(self, var: VarData) -> Performance:
         """
         Measure the original (unencoded) feature performance.
 
@@ -507,18 +511,16 @@ class FitWorker:
         -------
         Performance
             Original feature metrics (gini_org, gini_full, iv_full).
-        """        
+        """
         po = self.calc_gini(var.ds[self.target], var.ds[var.x])
-        pf = self.calc_perf(var.df, x = var.x)[0]
-        # NOTE abs has to be present at this step 
+        pf = self.calc_perf(var.df, x=var.x)[0]
+        # NOTE abs has to be present at this step
         # once encoded, Gini is always positive value by Encoding woe design
         return self.Performance(
-            gini_org  = abs(po),
-            gini_full = abs(pf['gini']),
-            iv_full   = pf['iv']
+            gini_org=abs(po), gini_full=abs(pf["gini"]), iv_full=pf["iv"]
         )
-    
-    def update_perf(self, var:VarData, perf:Performance, xg:pSe) -> Performance:
+
+    def update_perf(self, var: VarData, perf: Performance, xg: pSe) -> Performance:
         """
         Update performance with encoded (binned + MBS) metrics.
 
@@ -538,21 +540,24 @@ class FitWorker:
         -------
         Performance
             Full performance record (original + encoded).
-        """        
-        pf, po = self.calc_perf( (var.df, xg), (var.ds, xg[xg != VarStd.MISSING]) )
+        """
+        pf, po = self.calc_perf((var.df, xg), (var.ds, xg[xg != VarStd.MISSING]))
 
         return self.Performance(
-            gini_org    = perf.gini_org,
-            gini_full   = perf.gini_full,
-            iv_full     = perf.iv_full,
-            gini_enc_o  = po['gini'],
-            gini_enc_f  = pf['gini'],
-            iv_enc_o    = po['iv'],
-            iv_enc_f    = pf['iv']
+            gini_org=perf.gini_org,
+            gini_full=perf.gini_full,
+            iv_full=perf.iv_full,
+            gini_enc_o=po["gini"],
+            gini_enc_f=pf["gini"],
+            iv_enc_o=po["iv"],
+            iv_enc_f=pf["iv"],
         )
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
-    def is_predictive(self, var:VarData, perf:Performance, step:Literal['p','a']='p') -> bool:
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def is_predictive(
+        self, var: VarData, perf: Performance, step: Literal["p", "a"] = "p"
+    ) -> bool:
         """
         Gate: check if the feature (or its encoding) meets the Gini threshold.
 
@@ -571,21 +576,23 @@ class FitWorker:
         bool
             True if the feature passes the threshold. If False, the
             feature is registered as dropped with the reason.
-        """        
-        if step == 'p':
+        """
+        if step == "p":
             g = perf.gini_full
-        else: 
+        else:
             g = perf.gini_enc_f
-        if ( g > self.cutoff ):
+        if g > self.cutoff:
             return True
-        if step=='p':
-            reason = f'Gini of Original Values < TH {self.cutoff}'
-        else: 
-            reason = f'Transformation < TH {self.cutoff}'
-        self.set_res_vars_out(var, perf, step, reason)        
-        return False    
+        if step == "p":
+            reason = f"Gini of Original Values < TH {self.cutoff}"
+        else:
+            reason = f"Transformation < TH {self.cutoff}"
+        self.set_res_vars_out(var, perf, step, reason)
+        return False
 
-    def has_transformation(self, var:VarData, perf:Performance, bins:BinSpace, search:SearchSpace) -> bool: 
+    def has_transformation(
+        self, var: VarData, perf: Performance, bins: BinSpace, search: SearchSpace
+    ) -> bool:
         """
         Gate: verify that a valid bin structure was found.
 
@@ -596,14 +603,15 @@ class FitWorker:
         -------
         bool
             True if a valid bin structure exists.
-        """        
+        """
         if search.bins or bins.cross:
             return True
-        self.set_res_vars_out(var, perf, 'p', 'No Transformation Found')  
+        self.set_res_vars_out(var, perf, "p", "No Transformation Found")
         return False
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
 
-    def apply_binning(self, var:VarData, bins:BinSpace, search:SearchSpace) -> None:
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def apply_binning(self, var: VarData, bins: BinSpace, search: SearchSpace) -> None:
         """
         Apply the binning cut to the feature.
 
@@ -621,16 +629,23 @@ class FitWorker:
         search : SearchSpace
             Optimal bin count (for continuous features).
         """
-        x  = var.x
+        x = var.x
         ds = var.ds
 
-        if bins.cross: # for var with low unique values and transformation decrement is higher than TH → use orig var
-              dt = Pd.cut( ds[x], bins.unique, duplicates='drop')   # pd.cut →  focus to have similar length between bins (orig values) → ideal for discrete num variables                
-        else: dt = Pd.qcut(ds[x], search.bins, duplicates='drop')   # Use Transformation to bins | note: uniq_org +2 → ensures that for high value concentration interval is not merged to another
+        if (
+            bins.cross
+        ):  # for var with low unique values and transformation decrement is higher than TH → use orig var
+            dt = Pd.cut(
+                ds[x], bins.unique, duplicates="drop"
+            )  # pd.cut →  focus to have similar length between bins (orig values) → ideal for discrete num variables
+        else:
+            dt = Pd.qcut(
+                ds[x], search.bins, duplicates="drop"
+            )  # Use Transformation to bins | note: uniq_org +2 → ensures that for high value concentration interval is not merged to another
         self.update_var_set_dxT(var, dt)
         self.res_bin_search(var, bins, search)
 
-    def add_missing(self, var:VarData) -> None:
+    def add_missing(self, var: VarData) -> None:
         """
         Add a 'Missing' category to the full data.
 
@@ -640,7 +655,7 @@ class FitWorker:
         """
         self.update_var_dxT_missing(var)
 
-    def encode(self, var:VarData, perf:Performance) -> None:
+    def encode(self, var: VarData, perf: Performance) -> None:
         """
         Apply min-bin-share merging and register the final encoding.
 
@@ -662,21 +677,26 @@ class FitWorker:
         xG = var.xG
         df = var.df
 
-        th  = self.min_share
-        mbs = Binning.min_bin_share(df, self.target, xT, th, xG=xG) # MBS Fx to Optimize minimal share of bins
-        map = mbs.mapping[[xT, xG]]                                 # Final encoded Var with MBS Treatment
-        
-        xg   = Binning.data_mapping(df, map, xT, xG)
+        th = self.min_share
+        mbs = Binning.min_bin_share(
+            df, self.target, xT, th, xG=xG
+        )  # MBS Fx to Optimize minimal share of bins
+        map = mbs.mapping[[xT, xG]]  # Final encoded Var with MBS Treatment
+
+        xg = Binning.data_mapping(df, map, xT, xG)
         perf = self.update_perf(var, perf, xg)
 
-        if not self.is_predictive(var, perf, 'a'):
+        if not self.is_predictive(var, perf, "a"):
             return
 
         self.set_res_vars_in(var, perf, mbs)
-        self.set_res_encoding(var, perf, map, mbs)        
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        self.set_res_encoding(var, perf, map, mbs)
 
-    def set_res_encoding(self, var:VarData, perf:Performance, map:pDF, mbs:MinBinResult) -> None:
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def set_res_encoding(
+        self, var: VarData, perf: Performance, map: pDF, mbs: MinBinResult
+    ) -> None:
         """
         Register the final encoding for a passed feature.
 
@@ -684,69 +704,77 @@ class FitWorker:
         - The encoding map in `result.encoding`.
         - The final feature name in `result.vars_map`.
         - The worker diagnostics in `stats.fit_worker`.
-        """                 
+        """
         self.result.vars_map[var.x] = var.xG
-        self.result.encoding[var.x]  = EncodingMap(
-            vars  = [var.xT, var.xG],
-            type  = VarType.N,
-            map   = map, 
-            stats = perf
+        self.result.encoding[var.x] = EncodingMap(
+            vars=[var.xT, var.xG], type=VarType.N, map=map, stats=perf
         )
         self.stats.fit_worker[var.x] = WorkerResult(
-                encoding = mbs.mapping,
-                encoded  = mbs.dt,
-                original = mbs.do,
-                stats    = self.result.bin_search[var.x]
+            encoding=mbs.mapping,
+            encoded=mbs.dt,
+            original=mbs.do,
+            stats=self.result.bin_search[var.x],
         )
 
-    def res_bin_search(self, var:VarData, bins:BinSpace, search:SearchSpace):
-        """Record bin search diagnostics (or 'No Search' for discrete)."""                
-        na = 'No Binning Search - Discreate Values' 
+    def res_bin_search(self, var: VarData, bins: BinSpace, search: SearchSpace):
+        """Record bin search diagnostics (or 'No Search' for discrete)."""
+        na = "No Binning Search - Discreate Values"
         self.result.bin_search[var.x] = na if bins.cross else search.stats
-    
-    def get_res_bins(self, var:VarData, mbs:MinBinResult) -> int:
+
+    def get_res_bins(self, var: VarData, mbs: MinBinResult) -> int:
         """
         Count final bins after MBS.
 
         Includes the 'Missing' category if the feature has any missing
         values (it counts as a bin for WOE purposes).
-        """        
-        miss = 0 if var.miss else -1    # non-Missing present on Train should be considered
-        return len(mbs.dt) + miss       # number of Bins after MBS by default w Missing Category        
+        """
+        miss = (
+            0 if var.miss else -1
+        )  # non-Missing present on Train should be considered
+        return (
+            len(mbs.dt) + miss
+        )  # number of Bins after MBS by default w Missing Category
 
-    def stats_io(self, IO:list, x:str, miss:float, bins:int, reason:str, perf:Performance) -> None: 
+    def stats_io(
+        self, IO: list, x: str, miss: float, bins: int, reason: str, perf: Performance
+    ) -> None:
         """Append a feature's verdict record to the stats output list."""
-        IO.append({
-            LBL.V:   x,
-            LBL.R:   reason,
-            LBL.B:   bins,
-            LBL.M:   miss,
-            LBL.IVF: perf.iv_enc_f,
-            LBL.IVT: perf.iv_enc_o,
-            LBL.GF:  perf.gini_enc_f,
-            LBL.GT:  perf.gini_enc_o,
-            LBL.GO:  perf.gini_org,
-        })
+        IO.append(
+            {
+                LBL.V: x,
+                LBL.R: reason,
+                LBL.B: bins,
+                LBL.M: miss,
+                LBL.IVF: perf.iv_enc_f,
+                LBL.IVT: perf.iv_enc_o,
+                LBL.GF: perf.gini_enc_f,
+                LBL.GT: perf.gini_enc_o,
+                LBL.GO: perf.gini_org,
+            }
+        )
 
-    def set_res_vars_in(self, var:VarData, perf:Performance, mbs:MinBinResult) -> None: 
+    def set_res_vars_in(
+        self, var: VarData, perf: Performance, mbs: MinBinResult
+    ) -> None:
         """Register a feature as PASSED (encoded and kept)."""
         self.result.vars_num.append(var.xG)
-        io      = self.stats.stats_in
-        bins    = self.get_res_bins(var, mbs)
-        reason  = f'Passed TH {self.cutoff}'
+        io = self.stats.stats_in
+        bins = self.get_res_bins(var, mbs)
+        reason = f"Passed TH {self.cutoff}"
         self.stats_io(io, var.xG, var.miss, bins, reason, perf)
 
-    def set_res_vars_out(self, 
-        var:VarData, perf:Performance, step:Literal['p','a'], reason:str
-    ) -> None: 
+    def set_res_vars_out(
+        self, var: VarData, perf: Performance, step: Literal["p", "a"], reason: str
+    ) -> None:
         """Register a feature as DROPPED (failed a gate)."""
         self.result.vars_dropped.append(var.x)
-        io      = self.stats[STAT.out(step)]
-        reason  = 'Unpredictive → ' + reason
+        io = self.stats[STAT.out(step)]
+        reason = "Unpredictive → " + reason
         self.stats_io(io, var.x, var.miss, 0, reason, perf)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
 
-    def pipeline(self, data:pDF, num:list, **kwargs) -> None:     
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def pipeline(self, data: pDF, num: list, **kwargs) -> None:
         """
         Execute the full per-feature binning pipeline for all features.
 
@@ -772,12 +800,12 @@ class FitWorker:
             Forwarded to progress display.
         """
         Nloop, progress = Display.processing_progress(
-            num, kwargs, self.verbose, desc='Numerical Features Transformation'
+            num, kwargs, self.verbose, desc="Numerical Features Transformation"
         )
         for x in Nloop:
             Display.update_progress(progress)
 
-            var  = self.create_var(data, x)
+            var = self.create_var(data, x)
             perf = self.org_perf(var)
             bins = self.bin_space(var)
 
@@ -786,15 +814,16 @@ class FitWorker:
 
             search = self.run_bin_search(var, bins)
 
-            if not self.has_transformation(var, perf, bins, search): 
+            if not self.has_transformation(var, perf, bins, search):
                 continue
-    
+
             self.apply_binning(var, bins, search)
             self.add_missing(var)
             self.encode(var, perf)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-        
-    def process(self, data:pDF, num:list, **kwargs) -> tuple[FitResult, FitStats]:
+
+    def process(self, data: pDF, num: list, **kwargs) -> tuple[FitResult, FitStats]:
         """
         Entry point: execute the binning pipeline and return results.
 
@@ -811,10 +840,13 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Encoding maps + diagnostic stats.
-        """        
+        """
         self.pipeline(data, num, **kwargs)
         return self.result, self.stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterDataBase):
     """
@@ -833,17 +865,16 @@ class Fitter(FitterDataBase):
         Binning thresholds and pipeline configuration.
     """
 
-    def __init__(self, params:FitParams):
-        self.prm = params 
+    def __init__(self, params: FitParams):
+        self.prm = params
 
-    def _parallel_th(self, data: pDF, num:list):
-        p_th = (
-            ( len(data) > 5e4 and len(num) > 5 ) or 
-            ( len(num)*(self.prm.max_num_bins) > 1e3 )
+    def _parallel_th(self, data: pDF, num: list):
+        p_th = (len(data) > 5e4 and len(num) > 5) or (
+            len(num) * (self.prm.max_num_bins) > 1e3
         )
         return 0 if p_th else np.inf
 
-    def fit(self, data:pDF, num:list):
+    def fit(self, data: pDF, num: list):
         """
         Fit the binning model on all numerical features.
 
@@ -864,27 +895,27 @@ class Fitter(FitterDataBase):
         self
             Fitted instance with `encoding` and `features` set.
         """
-        p_th   = self._parallel_th(data, num)
+        p_th = self._parallel_th(data, num)
         worker = FitWorker(self.prm)
-        p_fit  = Parallel(
-            data_and_fe = 1, 
-            th          = p_th, 
-            kwargs_pos  = True, 
-            verbose     = self.prm.verbose,
-            spin_title  = 'Numerical transformation in progress'        
+        p_fit = Parallel(
+            data_and_fe=1,
+            th=p_th,
+            kwargs_pos=True,
+            verbose=self.prm.verbose,
+            spin_title="Numerical transformation in progress",
         ).process(worker.process)
         result, stats = p_fit(data, num)
-        
+
         self.result: FitResult = result
-        self.stats:   FitStats = stats
+        self.stats: FitStats = stats
 
         self.encoding = self.result.encoding
         self.features = self.result.vars_num
 
         return self
-   
-    @Arrow.transition(contract = Arrow.Contract(safe_conversion=True))
-    def transform(self, data:pDF) -> pDF:
+
+    @Arrow.transition(contract=Arrow.Contract(safe_conversion=True))
+    def transform(self, data: pDF) -> pDF:
         """
         Apply fitted bin encodings to new data.
 
@@ -901,22 +932,23 @@ class Fitter(FitterDataBase):
         pDF
             DataFrame with one column per encoded feature (grouped
             bin values, including 'Missing' category where applicable).
-        """            
-        # NOTE Arrow → np.select has hard cond → if cond.dtype.type is not np.bool   
+        """
+        # NOTE Arrow → np.select has hard cond → if cond.dtype.type is not np.bool
         dt = {}
         for num in data.columns:
             if num not in self.encoding:
-                continue                            
-            fitted: EncodingMap  = self.encoding[num]
-            xT, xG  = fitted.vars
+                continue
+            fitted: EncodingMap = self.encoding[num]
+            xT, xG = fitted.vars
             mapping = fitted.map
             XT = Binning.transform_numerical_data(data, mapping, num, xT)
-            XG = Binning.data_mapping(XT, mapping, xT, xG) 
-            dt.update( {xG: XG} )
+            XG = Binning.data_mapping(XT, mapping, xT, xG)
+            dt.update({xG: XG})
 
-        return pDF(dt)        
+        return pDF(dt)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -983,25 +1015,25 @@ class NumericalDiscretizor(FitterModelBase[Fitter]):
     >>> encoded.columns  # ['revenue_G', 'tenure_G', 'interactions_G', ...]
     """
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
 
-    def _get_num(self, data:pDF, num:list|None) -> list:
+    def _get_num(self, data: pDF, num: list | None) -> list:
         if num is not None:
             return num
-        return [x for x in data.columns if x!=self._params.target]
-        
-    def _subsample(self, data:pDF, num:list) -> pDF:
+        return [x for x in data.columns if x != self._params.target]
+
+    def _subsample(self, data: pDF, num: list) -> pDF:
         """
         Stratified subsample for efficient bin search.
 
         Reduces computation cost for large datasets while preserving
         the target distribution (stratified by target value).
-        """        
+        """
         t = self._params.target
         return Subsampling(data[num + [t]], data[t]).univar()[0]
-            
-    def fit(self, data:pDF, num_features:list|None = None):        
+
+    def fit(self, data: pDF, num_features: list | None = None):
         """
         Fit the binning model on all numerical features.
 
@@ -1017,14 +1049,14 @@ class NumericalDiscretizor(FitterModelBase[Fitter]):
         -------
         self
             Fitted instance ready for `transform`.
-        """      
-        num   = self._get_num(data, num_features)
+        """
+        num = self._get_num(data, num_features)
         data_ = self._subsample(data, num)
         self._fitter = Fitter(self._params)
         self._fitter.fit(data_, num)
         return self
-    
-    def transform(self, data:pDF) -> pDF:
+
+    def transform(self, data: pDF) -> pDF:
         """
         Apply fitted bin encodings to new data.
 
@@ -1040,4 +1072,6 @@ class NumericalDiscretizor(FitterModelBase[Fitter]):
             WOE encoding.
         """
         return self.fitter.transform(data)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

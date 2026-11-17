@@ -1,5 +1,5 @@
-from .agents_predictor   import (
-    AgentsPredictorInput, 
+from .agents_predictor import (
+    AgentsPredictorInput,
     AgentsPredictorResult,
-    AgentsPredictor
+    AgentsPredictor,
 )

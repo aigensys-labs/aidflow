@@ -1,54 +1,51 @@
 """
 Domain Interface and Phase Orchestration Layer.
 
-This module serves as the primary API surface for end-users, providing a 
-semantic interface to the underlying AIDflow worker ecosystem. It transforms 
-the generic execution capabilities of the `core/worker` layer into domain-specific 
-pipeline phases (e.g., DataPhase, EncodingPhase), allowing users to interact 
-with the ML pipeline using meaningful business logic rather than technical 
+This module serves as the primary API surface for end-users, providing a
+semantic interface to the underlying AIDflow worker ecosystem. It transforms
+the generic execution capabilities of the `core/worker` layer into domain-specific
+pipeline phases (e.g., DataPhase, EncodingPhase), allowing users to interact
+with the ML pipeline using meaningful business logic rather than technical
 configurations.
 
 Key architectural roles provided by this module:
-1. Worker Registration: Acts as the local namespace where specific model implementations 
-are mapped to unique worker identifiers (e.g., `AIGFLOW.Data.data_loader`), enabling 
+1. Worker Registration: Acts as the local namespace where specific model implementations
+are mapped to unique worker identifiers (e.g., `AIGFLOW.Data.data_loader`), enabling
 a pluggable and extensible set of tools for each pipeline phase.
 
-2. State Lineage Management: Explicitly manages the flow of data between workers 
-   by defining how results from one step (e.g., `train.raw`) are linked as inputs 
+2. State Lineage Management: Explicitly manages the flow of data between workers
+   by defining how results from one step (e.g., `train.raw`) are linked as inputs
    to the next (e.g., `train.clean`), ensuring a strict and traceable data lineage.
-   
-3. Input/Output Schema Enforcement: Integrates specific Input and Result dataclasses 
-   for every worker, providing the user with IDE-assisted type hinting and 
+
+3. Input/Output Schema Enforcement: Integrates specific Input and Result dataclasses
+   for every worker, providing the user with IDE-assisted type hinting and
    guaranteeing that every pipeline step adheres to its required data contract.
 """
 
-from ..core.parameters      import  (
-                                    PRM, 
-                                    AIGFLOW
-                                    )
-from ..core.base.worker     import  (
-                                    WorkerConfig,
-                                    WorkerContract,
-                                    DatasetBinding,
-                                    WorkerBase,
-                                    WorkerPhaseBase,
-                                    )
-from ..core.protocol        import  ProjectContextProtocol
+from ..core.parameters import PRM, AIGFLOW
+from ..core.base.worker import (
+    WorkerConfig,
+    WorkerContract,
+    DatasetBinding,
+    WorkerBase,
+    WorkerPhaseBase,
+)
+from ..core.protocol import ProjectContextProtocol
 
-from .agents                import  (
-                                    Agent1Input,
-                                    Agent1Result,
-                                    Agent1PredictorUI,
-                                    Agent2Input,
-                                    Agent2Result,
-                                    Agent2PredictorUI,
-                                    Agent3Input,
-                                    Agent3Result,
-                                    Agent3PredictorUI,
-                                    Agent4Input,
-                                    Agent4Result,
-                                    Agent4PredictorUI,
-                                    )
+from .agents import (
+    Agent1Input,
+    Agent1Result,
+    Agent1PredictorUI,
+    Agent2Input,
+    Agent2Result,
+    Agent2PredictorUI,
+    Agent3Input,
+    Agent3Result,
+    Agent3PredictorUI,
+    Agent4Input,
+    Agent4Result,
+    Agent4PredictorUI,
+)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -211,32 +208,36 @@ class Agent1PredictorWorker(WorkerBase[Agent1Result]):
     agent1 = ctx.workers.agent1_predictor(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Training.agent1,
-        Model   = Agent1PredictorUI,
-        Input   = Agent1Input,
-        Result  = Agent1Result,
-        offload = AIGFLOW.Training.agent1,
-        title   = 'GLM SPARSE OPTIMIZATION'
+        model=AIGFLOW.Training.agent1,
+        Model=Agent1PredictorUI,
+        Input=Agent1Input,
+        Result=Agent1Result,
+        offload=AIGFLOW.Training.agent1,
+        title="GLM SPARSE OPTIMIZATION",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = Agent1Input(
-                train_set    = self.sets.get('train.ml'),
-                woe_features = self.sets.get('features.woe.stable'),
+            defaults=Agent1Input(
+                train_set=self.sets.get("train.ml"),
+                woe_features=self.sets.get("features.woe.stable"),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'predictions.train.agent1'  : self._result.data,
-                'features.agent1.predicted' : self._result.features,
-                'features.agent1.selected'  : self._result.selected,
-                'features.agent1.dropped'   : self._result.dropped,
-                'stats.agents.agent1'       : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "predictions.train.agent1": self._result.data,
+                    "features.agent1.predicted": self._result.features,
+                    "features.agent1.selected": self._result.selected,
+                    "features.agent1.dropped": self._result.dropped,
+                    "stats.agents.agent1": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Agent2PredictorWorker(WorkerBase[Agent2Result]):
     """
@@ -395,33 +396,37 @@ class Agent2PredictorWorker(WorkerBase[Agent2Result]):
     agent2 = ctx.workers.agent2_predictor(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Training.agent2,
-        choice  = PRM.TRAIN.glm_strategy.param,
-        Model   = Agent2PredictorUI,
-        Input   = Agent2Input,
-        Result  = Agent2Result,
-        offload = AIGFLOW.Training.agent2,
-        title   = 'GLM DENSE OPTIMIZATION'
+        model=AIGFLOW.Training.agent2,
+        choice=PRM.TRAIN.glm_strategy.param,
+        Model=Agent2PredictorUI,
+        Input=Agent2Input,
+        Result=Agent2Result,
+        offload=AIGFLOW.Training.agent2,
+        title="GLM DENSE OPTIMIZATION",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = Agent2Input(
-                train_set    = self.sets.get('train.ml'),
-                woe_features = self.sets.get('features.woe.stable'),
+            defaults=Agent2Input(
+                train_set=self.sets.get("train.ml"),
+                woe_features=self.sets.get("features.woe.stable"),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'predictions.train.agent2'  : self._result.data,
-                'features.agent2.predicted' : self._result.features,
-                'features.agent2.selected'  : self._result.selected,
-                'features.agent2.dropped'   : self._result.dropped,
-                'stats.agents.agent2'       : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "predictions.train.agent2": self._result.data,
+                    "features.agent2.predicted": self._result.features,
+                    "features.agent2.selected": self._result.selected,
+                    "features.agent2.dropped": self._result.dropped,
+                    "stats.agents.agent2": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Agent3PredictorWorker(WorkerBase[Agent3Result]):
     """
@@ -580,32 +585,36 @@ class Agent3PredictorWorker(WorkerBase[Agent3Result]):
     agent3 = ctx.workers.agent3_predictor(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Training.agent3,
-        Model   = Agent3PredictorUI,
-        Input   = Agent3Input,
-        Result  = Agent3Result,
-        offload = AIGFLOW.Training.agent3,
-        title   = 'GLM PLS OPTIMIZATION'
+        model=AIGFLOW.Training.agent3,
+        Model=Agent3PredictorUI,
+        Input=Agent3Input,
+        Result=Agent3Result,
+        offload=AIGFLOW.Training.agent3,
+        title="GLM PLS OPTIMIZATION",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = Agent3Input(
-                train_set    = self.sets.get('train.ml'),
-                woe_features = self.sets.get('features.woe.stable'),
+            defaults=Agent3Input(
+                train_set=self.sets.get("train.ml"),
+                woe_features=self.sets.get("features.woe.stable"),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'predictions.train.agent3'  : self._result.data,
-                'features.agent3.predicted' : self._result.features,
-                'features.agent3.selected'  : self._result.selected,
-                'features.agent3.dropped'   : self._result.dropped,
-                'stats.agents.agent3'       : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "predictions.train.agent3": self._result.data,
+                    "features.agent3.predicted": self._result.features,
+                    "features.agent3.selected": self._result.selected,
+                    "features.agent3.dropped": self._result.dropped,
+                    "stats.agents.agent3": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Agent4PredictorWorker(WorkerBase[Agent4Result]):
     """
@@ -765,52 +774,60 @@ class Agent4PredictorWorker(WorkerBase[Agent4Result]):
     agent4 = ctx.workers.agent4_predictor(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Training.agent4,
-        choice  = PRM.TRAIN.gb_strategy.param,
-        Model   = Agent4PredictorUI,
-        Input   = Agent4Input,
-        Result  = Agent4Result,
-        offload = AIGFLOW.Training.agent4,
-        title   = 'GBM OPTIMIZATION'
+        model=AIGFLOW.Training.agent4,
+        choice=PRM.TRAIN.gb_strategy.param,
+        Model=Agent4PredictorUI,
+        Input=Agent4Input,
+        Result=Agent4Result,
+        offload=AIGFLOW.Training.agent4,
+        title="GBM OPTIMIZATION",
     )
 
     def _get_contract(self, is_default: bool = True):
-        is_target  = self._processor.is_fitted(AIGFLOW.Encoding.woe_stabilizer)
-        dst_target = 'target' if is_target else 'dist'
+        is_target = self._processor.is_fitted(AIGFLOW.Encoding.woe_stabilizer)
+        dst_target = "target" if is_target else "dist"
         return WorkerContract(
-
-            defaults = Agent4Input(
-                train_set    = self.sets.get('train.ml'),
-                num_features = self.sets.get(f'features.num.stable.{dst_target}'),
-                cat_features = self.sets.get(f'features.cat.stable.{dst_target}'),
+            defaults=Agent4Input(
+                train_set=self.sets.get("train.ml"),
+                num_features=self.sets.get(f"features.num.stable.{dst_target}"),
+                cat_features=self.sets.get(f"features.cat.stable.{dst_target}"),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'predictions.train.agent4'  : self._result.data,
-                'features.agent4.predicted' : self._result.features,
-                'features.agent4.selected'  : self._result.selected,
-                'features.agent4.dropped'   : self._result.dropped,
-                'stats.agents.agent4'       : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "predictions.train.agent4": self._result.data,
+                    "features.agent4.predicted": self._result.features,
+                    "features.agent4.selected": self._result.selected,
+                    "features.agent4.dropped": self._result.dropped,
+                    "stats.agents.agent4": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class TrainingPhase(WorkerPhaseBase):
     """
     AIG Flow Training Phase Orchestrator.
-    
-    Manages the transition from encoded data to trained agents. It ensures 
-    that all agents are trained on the same synchronized 'ml' dataset produced 
+
+    Manages the transition from encoded data to trained agents. It ensures
+    that all agents are trained on the same synchronized 'ml' dataset produced
     by the DataEncoder.
     """
 
-    def __init__(self, ctx: ProjectContextProtocol):    
+    def __init__(self, ctx: ProjectContextProtocol):
         super().__init__(ctx)
-        self._register((
-            Agent1PredictorWorker,
-            Agent2PredictorWorker,
-            Agent3PredictorWorker,
-            Agent4PredictorWorker,
-        ))
+        self._register(
+            (
+                Agent1PredictorWorker,
+                Agent2PredictorWorker,
+                Agent3PredictorWorker,
+                Agent4PredictorWorker,
+            )
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

@@ -1,6 +1,6 @@
-from .agents_comparator import  (
+from .agents_comparator import (
     AgentsComparatorInput,
     AgentsComparatorResult,
     AgentsComparator,
-    AgentsComparatorUI
+    AgentsComparatorUI,
 )

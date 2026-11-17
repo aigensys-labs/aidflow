@@ -1,35 +1,35 @@
 """
 System resource orchestration and memory-aware data partitioning engine.
 
-This module implements the capacity planning logic for AIG, providing 
-predictive memory analysis to prevent Out-of-Memory (OOM) failures during 
-large-scale ML processing. By analyzing DataFrame schemas and system 
-availability in real-time, it enables the framework to automatically 
+This module implements the capacity planning logic for AIG, providing
+predictive memory analysis to prevent Out-of-Memory (OOM) failures during
+large-scale ML processing. By analyzing DataFrame schemas and system
+availability in real-time, it enables the framework to automatically
 determine optimal batch sizes for data fitting and transformation.
 
 Key resource management capabilities:
-1. Predictive Memory Profiling: Utilizes a granular dtype-to-byte mapping 
-   (`DTYPE_MEMORY`) to calculate the exact memory footprint of datasets 
+1. Predictive Memory Profiling: Utilizes a granular dtype-to-byte mapping
+   (`DTYPE_MEMORY`) to calculate the exact memory footprint of datasets
    before they are loaded or processed.
 
-2. Dynamic Batch Partitioning: Implements `fit_df_rows` and `fit_data_id_batch` 
-   to compute safe processing windows, automatically slicing data into batches 
+2. Dynamic Batch Partitioning: Implements `fit_df_rows` and `fit_data_id_batch`
+   to compute safe processing windows, automatically slicing data into batches
    that fit within available system RAM while maintaining a configurable safety buffer.
 
-3. Resource-Aware Orchestration: Integrates with `psutil` to monitor local server 
-   memory (RSS/USS/PSS), ensuring that the pipeline adapts its throughput based on 
+3. Resource-Aware Orchestration: Integrates with `psutil` to monitor local server
+   memory (RSS/USS/PSS), ensuring that the pipeline adapts its throughput based on
    the actual hardware constraints of the deployment environment.
 
-4. Adaptive ID-Based Slicing: Supports complex panel data structures by calculating 
-   weighted average row lengths per unique identifier, allowing for memory-safe 
+4. Adaptive ID-Based Slicing: Supports complex panel data structures by calculating
+   weighted average row lengths per unique identifier, allowing for memory-safe
    batching across grouped datasets.
 """
 
-from ..deps.common  import os, sys, gc, psutil, tracemalloc
-from ..deps.data    import pa, np, pDF, pSe
-from ..deps.struct  import dataclass, field
+from ..deps.common import os, sys, gc, psutil, tracemalloc
+from ..deps.data import pa, np, pDF, pSe
+from ..deps.struct import dataclass, field
 from ..deps.display import wg
-from ..deps.types   import Optional
+from ..deps.types import Optional
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -37,207 +37,242 @@ from ..deps.types   import Optional
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class Memory:
     """Utility for memory availability check and data adjustment."""
-    
+
     DTYPE_MEMORY = {
-        'int8':    1,
-        'int16':   2,
-        'int32':   4,
-        'int64':   8,
-        'float32': 4,
-        'float64': 8,
-        'bool':    1,
-        'object': 50,  # Exp. for average string length
-        '<m8':     8, 
-        '<m8[ns]': 8,
-        'datetime64[ns]':  8,
-        'timedelta64[ns]': 8,
+        "int8": 1,
+        "int16": 2,
+        "int32": 4,
+        "int64": 8,
+        "float32": 4,
+        "float64": 8,
+        "bool": 1,
+        "object": 50,  # Exp. for average string length
+        "<m8": 8,
+        "<m8[ns]": 8,
+        "datetime64[ns]": 8,
+        "timedelta64[ns]": 8,
     }
     # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def get_local_system(verbose=False):    
-        """Returns local available memory in bytes."""        
+    def get_local_system(verbose=False):
+        """Returns local available memory in bytes."""
         memory_in_bytes = psutil.virtual_memory().available
-        if verbose: 
-            print(f"Total Local Server Memory: {memory_in_bytes / (1024 * 1024):.2f} MB")
+        if verbose:
+            print(
+                f"Total Local Server Memory: {memory_in_bytes / (1024 * 1024):.2f} MB"
+            )
         return memory_in_bytes
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _flat_data_input_type(df:pDF|dict|list) -> list[pDF]:
-        if isinstance(df, dict):      
+    def _flat_data_input_type(df: pDF | dict | list) -> list[pDF]:
+        if isinstance(df, dict):
             return list(df.values())
-        if not isinstance(df, list): 
+        if not isinstance(df, list):
             return [df]
         return df
 
     @staticmethod
-    def _revert_data_input_type(T:pDF|dict|list, result:dict) -> dict|list:
-        if isinstance(T,dict): 
-            return {k:result[i] for i,k in enumerate(T)}
-        if not isinstance(T,list):
-            return result[0]    
+    def _revert_data_input_type(T: pDF | dict | list, result: dict) -> dict | list:
+        if isinstance(T, dict):
+            return {k: result[i] for i, k in enumerate(T)}
+        if not isinstance(T, list):
+            return result[0]
         return result
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
-    def fit_df_rows(cls, 
-        df:pDF|dict|list, 
-        *, 
-        mem_buffer:float = 0.3, 
-        total_worker_memory_gb:int = None, 
-        verbose:bool = False
+    def fit_df_rows(
+        cls,
+        df: pDF | dict | list,
+        *,
+        mem_buffer: float = 0.3,
+        total_worker_memory_gb: int = None,
+        verbose: bool = False,
     ) -> int:
-        """        
-        Screen all columns with respect to their type and expected memory needs 
-        across provided data (across all tables → df as dict). 
+        """
+        Screen all columns with respect to their type and expected memory needs
+        across provided data (across all tables → df as dict).
 
-        Returned value represents max rows which will fit into available memory 
+        Returned value represents max rows which will fit into available memory
         for all columns present in the input.
 
         NOTE that df as dict[str, pDF] → returned value acts as if data tables
         across dict is one dataframe → useful when batches of tables in the dict
         go to batch processing.
         Thus, each of the tables can be a returned rows subset for a batch run.
-        """        
+        """
         df_ = cls._flat_data_input_type(df)
 
         available_memory = cls.get_local_system(verbose)
         if total_worker_memory_gb is not None:
-            available_memory = min(available_memory, total_worker_memory_gb*(1024**3))
+            available_memory = min(available_memory, total_worker_memory_gb * (1024**3))
 
         memory_per_row = 0
-        for d in df_:                                
+        for d in df_:
             for dtype in d.dtypes:
-                dtype_str = str(dtype).lower()                                        
-                memory_per_col = cls.DTYPE_MEMORY.get(dtype_str, 50)                                        
+                dtype_str = str(dtype).lower()
+                memory_per_col = cls.DTYPE_MEMORY.get(dtype_str, 50)
                 memory_per_row += memory_per_col
-        
+
         if not memory_per_row:
             return 0
-        
-        buffer = max( 0.15, min(mem_buffer, 0.99) )          # Safety buffer of x% for data processing, operations, overhead
-        available_memory = available_memory * (1-buffer)     # Expected available purely for pDF
-                        
-        possible_rows = available_memory / memory_per_row    # Compute the number of rows that can fit within the worker memory
-            
-        if verbose: 
-            print(f'Total expected rows which can be safely processed is {int(possible_rows):,}'
-                  ' | given worker memory {total_worker_memory_mb//1024:,}GB')
+
+        buffer = max(
+            0.15, min(mem_buffer, 0.99)
+        )  # Safety buffer of x% for data processing, operations, overhead
+        available_memory = available_memory * (
+            1 - buffer
+        )  # Expected available purely for pDF
+
+        possible_rows = (
+            available_memory / memory_per_row
+        )  # Compute the number of rows that can fit within the worker memory
+
+        if verbose:
+            print(
+                f"Total expected rows which can be safely processed is {int(possible_rows):,}"
+                " | given worker memory {total_worker_memory_mb//1024:,}GB"
+            )
         return int(possible_rows)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
-    def _ids_len(ID:pSe|list=None, Group:str=None) -> tuple[int|None, str|None]:
+    def _ids_len(
+        ID: pSe | list = None, Group: str = None
+    ) -> tuple[int | None, str | None]:
         if ID is None:
-            return None, None        
+            return None, None
         if Group is None:
             if not isinstance(ID, pSe):
-                raise TypeError('When Group is None provided, ID vector must be pd.Series type to infer name.')
+                raise TypeError(
+                    "When Group is None provided, ID vector must be pd.Series type to infer name."
+                )
             Group = ID.name
         return len(np.unique(ID)), Group
-    
+
     @classmethod
-    def _data_len(cls, T:pDF|dict|list, group:str=None) -> int:
+    def _data_len(cls, T: pDF | dict | list, group: str = None) -> int:
         """
         Weighted expected data len across tables.
         For ID (panel) data returned value is expected rows per unique ID.
         For tabular data returned value is expected rows in data tables.
         """
         D = cls._flat_data_input_type(T)
-        avg_len = {'l':[],'w':[]}
+        avg_len = {"l": [], "w": []}
         for d in D:
-            l = len(d)               # total rows per d as length
-            if group is None:        
-                w = len(d.columns)   # total cols per d as weight
+            l = len(d)  # total rows per d as length
+            if group is None:
+                w = len(d.columns)  # total cols per d as weight
             else:
                 if group in d.columns:
                     x = d[group]
                 else:
-                    assert d.index.name == group, f"Index name '{d.index.name}' does not match expected group name '{group}'"
+                    assert (
+                        d.index.name == group
+                    ), f"Index name '{d.index.name}' does not match expected group name '{group}'"
                     x = d.index
                 w = len(x.unique())  # total ids per d as weight
-                l = l/w              # avg. rows per id
-            avg_len['l'].append(l)
-            avg_len['w'].append(w)
-        return int( np.average(avg_len['l'], weights=avg_len['w']) )
+                l = l / w  # avg. rows per id
+            avg_len["l"].append(l)
+            avg_len["w"].append(w)
+        return int(np.average(avg_len["l"], weights=avg_len["w"]))
 
     @staticmethod
-    def _per_partes(n_parts:float, batch_size:float, total_len:int) -> list:
+    def _per_partes(n_parts: float, batch_size: float, total_len: int) -> list:
         """Create data parts as batches of indicies."""
-        if n_parts <= 1.05:                  # 5% buffer to allow go at once
+        if n_parts <= 1.05:  # 5% buffer to allow go at once
             return [[0, total_len]]
-        
+
         batch_size = int(batch_size)
-        rows_ids = [[0, batch_size]]         # go in parts init batch
-        R = range( int(n_parts+0.5) )        # number of batch runs
+        rows_ids = [[0, batch_size]]  # go in parts init batch
+        R = range(int(n_parts + 0.5))  # number of batch runs
         for i in R:
-            b0 = rows_ids[i][1]              # get previous val. to ensure that all ids/rows are processed
-            b1 = b0 + batch_size             # batch size to process
-            if i == R[-1]: b1 = total_len    # last position is given by size of ID/row
-            rows_ids.append([b0, b1])        # batch of given part
+            b0 = rows_ids[i][
+                1
+            ]  # get previous val. to ensure that all ids/rows are processed
+            b1 = b0 + batch_size  # batch size to process
+            if i == R[-1]:
+                b1 = total_len  # last position is given by size of ID/row
+            rows_ids.append([b0, b1])  # batch of given part
         return rows_ids
-    
+
     @classmethod
-    def _row_batches(cls, T:pDF|dict|list, data_exp_len:int, mem_max_rows:int) -> dict|list:
-        row_parts = data_exp_len / mem_max_rows     # parts needed to process all rows in batches
+    def _row_batches(
+        cls, T: pDF | dict | list, data_exp_len: int, mem_max_rows: int
+    ) -> dict | list:
+        row_parts = (
+            data_exp_len / mem_max_rows
+        )  # parts needed to process all rows in batches
         row_batches = []
-        for d in cls._flat_data_input_type(T):            
+        for d in cls._flat_data_input_type(T):
             total_len = len(d)
             batch_size = total_len / row_parts
-            row_batches.append( cls._per_partes(row_parts, batch_size, total_len) )        
+            row_batches.append(cls._per_partes(row_parts, batch_size, total_len))
         return cls._revert_data_input_type(T, row_batches)
-    
+
     @classmethod
-    def _id_batches(cls, ids_len:int, data_exp_len_per_id:int, mem_max_rows:int) -> list:
-        batch_id  = mem_max_rows / data_exp_len_per_id  # batch size of ids given fitting in mem
-        id_parts  = ids_len / batch_id                # parts needed to process all unique IDs 
+    def _id_batches(
+        cls, ids_len: int, data_exp_len_per_id: int, mem_max_rows: int
+    ) -> list:
+        batch_id = (
+            mem_max_rows / data_exp_len_per_id
+        )  # batch size of ids given fitting in mem
+        id_parts = ids_len / batch_id  # parts needed to process all unique IDs
         ids_batches = cls._per_partes(id_parts, batch_id, ids_len)
         return ids_batches
-    
+
     @classmethod
-    def fit_data_id_batch(cls, 
-        data:       pDF|dict|list, 
-        id_vector:  pSe|list|tuple = None, 
-        group:      str = None, 
-        mem_buffer: float = 0.5, 
-        verbose:    bool = False
+    def fit_data_id_batch(
+        cls,
+        data: pDF | dict | list,
+        id_vector: pSe | list | tuple = None,
+        group: str = None,
+        mem_buffer: float = 0.5,
+        verbose: bool = False,
     ) -> dict[str, list] | list[list]:
         """
-        Measures Data memory needs vs. available system memory and creates batches of data 
-        slices to ensure smooth processing. If ID is provided the return is batches of ID 
-        slices expecting user to follow up on slicing ID vector by batches and subsetting 
+        Measures Data memory needs vs. available system memory and creates batches of data
+        slices to ensure smooth processing. If ID is provided the return is batches of ID
+        slices expecting user to follow up on slicing ID vector by batches and subsetting
         data based on batch id.
 
         Args:
-            data (pDF | dict | list) : pandas or pyspark.pandas data either directly or 
+            data (pDF | dict | list) : pandas or pyspark.pandas data either directly or
                 in container dict |list.
 
             id_vector (pDF, optional) :  Defaults to None.
                 ID dataframe vector - if provided then return is batches of ID slices.
 
-            group (str, optional) : Defaults to None. 
-                Group for data and ID dataframes - if not provided, yet ID provided - infer based on ID. 
+            group (str, optional) : Defaults to None.
+                Group for data and ID dataframes - if not provided, yet ID provided - infer based on ID.
 
             mem_buffer (float, optional) : Defaults to 0.5.
                 Part of memory left free for overhead, processing etc.
-            
+
             verbose (bool, optional) : Defaults to False.
                 print information during memory inference.
 
         Returns:
-            (dict | list): Either indicies of batches slices of each data provided | 
-                or batches of ID indicies. 
+            (dict | list): Either indicies of batches slices of each data provided |
+                or batches of ID indicies.
         """
-        ids_len, Group_ = cls._ids_len(id_vector, group)        
+        ids_len, Group_ = cls._ids_len(id_vector, group)
         data_len = cls._data_len(data, Group_)
-        max_rows = cls.fit_df_rows(data, mem_buffer=mem_buffer, verbose=verbose)        
-        
+        max_rows = cls.fit_df_rows(data, mem_buffer=mem_buffer, verbose=verbose)
+
         if Group_ is not None:
             return cls._id_batches(ids_len, data_len, max_rows)
-        
+
         return cls._row_batches(data, data_len, max_rows)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class MemoryCheck:
 
@@ -245,17 +280,17 @@ class MemoryCheck:
     def rss() -> None:
         """Returns the MEM profile by USS | RSS | PSS."""
         gc.collect()
-        
+
         p = psutil.Process(os.getpid())
         m = p.memory_full_info()
-        l = lambda x: round(x/1024**3,1)
+        l = lambda x: round(x / 1024**3, 1)
 
         print("USS:", l(m.uss), "GB")
         print("RSS:", l(m.rss), "GB")
         print("PSS:", l(m.pss), "GB")
 
     @staticmethod
-    def ctx_offload(lbl:str='Worker Offload'):
+    def ctx_offload(lbl: str = "Worker Offload"):
         """
         Context manager to trace, clean up, and diagnose worker offloads.
 
@@ -264,9 +299,9 @@ class MemoryCheck:
         with MemoryCheck.ctx_offload("Worker Offload") as t:
             # 1. Save PyArrow dataset/table to disk and null it
             fx()
-            
+
         print(t.report)
-        """    
+        """
         return OffloadTracer(lbl)
 
     @staticmethod
@@ -277,50 +312,60 @@ class MemoryCheck:
         Usage
         -----
         with MemoryCheck.ctx_tracer() as t:
-            fx()    
-        
+            fx()
+
         print(t.report)
-        """        
+        """
         return MemDiag().tracer()
-    
+
     @staticmethod
-    def trace_instance(instance_name:str) -> None:
-        ui_instances = [o for o in gc.get_objects() if type(o).__name__ == instance_name]
+    def trace_instance(instance_name: str) -> None:
+        ui_instances = [
+            o for o in gc.get_objects() if type(o).__name__ == instance_name
+        ]
         if len(ui_instances) <= 1:
-            print(f"No old {instance_name} instances found. Re-run your notebook cell first.")
+            print(
+                f"No old {instance_name} instances found. Re-run your notebook cell first."
+            )
             return
 
         old_ui = ui_instances[0]
-        cells = [r for r in gc.get_referrers(old_ui) if type(r).__name__ == 'cell']
-        print(f"Tracing {len(cells)} closure cell(s) for old {instance_name} (id={id(old_ui)}):\n")
+        cells = [r for r in gc.get_referrers(old_ui) if type(r).__name__ == "cell"]
+        print(
+            f"Tracing {len(cells)} closure cell(s) for old {instance_name} (id={id(old_ui)}):\n"
+        )
 
         for i, cell in enumerate(cells):
 
             # Step 1: Unwrap cell -> __closure__ tuple
-            closure_tuples = [r for r in gc.get_referrers(cell) if isinstance(r, tuple)]            
+            closure_tuples = [r for r in gc.get_referrers(cell) if isinstance(r, tuple)]
             for ct in closure_tuples:
 
                 # Step 2: Unwrap tuple -> function
                 funcs = [r for r in gc.get_referrers(ct) if callable(r)]
                 for fn in funcs:
-                    code = getattr(fn, '__code__', None)
-                    loc = f"{code.co_filename}:{code.co_firstlineno}" if code else "unknown"
-                    qname = getattr(fn, '__qualname__', str(fn))
+                    code = getattr(fn, "__code__", None)
+                    loc = (
+                        f"{code.co_filename}:{code.co_firstlineno}"
+                        if code
+                        else "unknown"
+                    )
+                    qname = getattr(fn, "__qualname__", str(fn))
                     print(f"Cell [{i}] captured by -> Function: {qname} ({loc})")
 
                     # Step 3: Find holding widget or container
                     for holder in gc.get_referrers(fn):
                         h_type = type(holder).__name__
-                        if h_type in ('list', 'dict', 'tuple'):
+                        if h_type in ("list", "dict", "tuple"):
                             for outer in gc.get_referrers(holder):
                                 o_type = type(outer).__name__
-                                if o_type not in ('frame', 'list', 'dict', 'tuple'):
+                                if o_type not in ("frame", "list", "dict", "tuple"):
                                     print(f"  └── Held by: {o_type}")
-                        elif h_type not in ('frame', 'code'):
-                            print(f"  └── Held directly by: {h_type}")        
+                        elif h_type not in ("frame", "code"):
+                            print(f"  └── Held directly by: {h_type}")
 
     @staticmethod
-    def get_instance(instance_id:int):
+    def get_instance(instance_id: int):
         for obj in gc.get_objects():
             if id(obj) == instance_id:
                 return obj
@@ -345,9 +390,7 @@ class MemoryCheck:
         arrow_objs = [
             obj
             for obj in gc.get_objects()
-            if isinstance(
-                obj, (pa.Table, pa.ChunkedArray, pa.RecordBatch, pa.Buffer)
-            )
+            if isinstance(obj, (pa.Table, pa.ChunkedArray, pa.RecordBatch, pa.Buffer))
         ]
 
         total_bytes = sum(get_arrow_size(o) for o in arrow_objs)
@@ -407,10 +450,10 @@ class MemoryCheck:
 
                 else:
                     print(f"    ├─ ⚙️  [{type(ref).__module__}.{type(ref).__name__}]")
-                    
+
     @staticmethod
     def inspect_widget_counts():
-        """Finds all active widgets objects and provide stats by type."""        
+        """Finds all active widgets objects and provide stats by type."""
         gc.collect()
 
         # 1. Registered widgets connected to the frontend Comm channel
@@ -429,9 +472,14 @@ class MemoryCheck:
                 name = type(w).__name__
                 counts[name] = counts.get(name, 0) + 1
 
-            for w_type, count in sorted(counts.items(), key=lambda x: x[1], reverse=True):
-                print(f"  ├── {w_type}: {count}")  
+            for w_type, count in sorted(
+                counts.items(), key=lambda x: x[1], reverse=True
+            ):
+                print(f"  ├── {w_type}: {count}")
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 @dataclass
 class MemSnapshot:
@@ -451,6 +499,7 @@ class MemSnapshot:
     top_objects: list[dict] = field(default_factory=list)
     top_arrays: list[dict] = field(default_factory=list)
     tracemalloc_top: list[dict] = field(default_factory=list)
+
 
 class MemDiag:
     """Lightweight memory diagnostics for pipeline workers."""
@@ -530,9 +579,7 @@ class MemDiag:
         top_arrays = sorted(
             numpy_arrays + pandas_dfs, key=lambda x: x["size_mb"], reverse=True
         )[:10]
-        top_objects = sorted(
-            top_objects, key=lambda x: x["size_mb"], reverse=True
-        )[:10]
+        top_objects = sorted(top_objects, key=lambda x: x["size_mb"], reverse=True)[:10]
 
         tl_top: list[dict] = []
         if tracemalloc.is_tracing():
@@ -551,12 +598,8 @@ class MemDiag:
             pid=pid,
             rss_gb=round(proc.get("Rss", 0) / 1024 / 1024, 3),
             pss_gb=round(proc.get("Pss", 0) / 1024 / 1024, 3),
-            private_clean_gb=round(
-                proc.get("Private_Clean", 0) / 1024 / 1024, 3
-            ),
-            private_dirty_gb=round(
-                proc.get("Private_Dirty", 0) / 1024 / 1024, 3
-            ),
+            private_clean_gb=round(proc.get("Private_Clean", 0) / 1024 / 1024, 3),
+            private_dirty_gb=round(proc.get("Private_Dirty", 0) / 1024 / 1024, 3),
             python_object_count=py_obj_count,
             numpy_array_count=np_count,
             numpy_total_gb=round(np_total / 1024 / 1024 / 1024, 3),
@@ -639,7 +682,7 @@ class MemDiag:
                 self._diag.compare(self.before, self.after),
             ]
 
-            # Collect metadata 
+            # Collect metadata
             new_dfs = []
             new_objs = []
 
@@ -671,9 +714,7 @@ class MemDiag:
             new_dfs.sort(key=lambda x: x[0], reverse=True)
             lines.append(self._sep(f"NEW DataFrames ({len(new_dfs)})"))
             for sz, shape, cols in new_dfs[:20]:
-                lines.append(
-                    f"  {sz:>8.1f} MB  shape={shape}  cols[:4]={cols}"
-                )
+                lines.append(f"  {sz:>8.1f} MB  shape={shape}  cols[:4]={cols}")
 
             if len(new_dfs) > 20:
                 rest_total = sum(sz for sz, _, _ in new_dfs[20:])
@@ -727,14 +768,15 @@ class MemDiag:
                 return {}
 
     @staticmethod
-    def _row(
-        name: str, before: float, after: float, cast: type = float
-    ) -> str:
+    def _row(name: str, before: float, after: float, cast: type = float) -> str:
         delta = after - before
         if cast is int:
             return f"{name:<25} {before:>10,.0f} {after:>10,.0f} {delta:>+10,.0f}"
         return f"{name:<25} {before:>10.2f} {after:>10.2f} {delta:>+10.2f}"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class OffloadTracer:
     """
@@ -745,7 +787,7 @@ class OffloadTracer:
     with OffloadTracer(f"Worker [{worker.name}] Offload") as t:
         # 1. Save PyArrow dataset/table to disk and null it
         fx()
-        
+
     print(t.report)
     """
 
@@ -775,9 +817,7 @@ class OffloadTracer:
         self.pa_before_mb = pool.bytes_allocated() / 1024 / 1024
 
         mem = self._read_smaps(self.pid)
-        self.private_before_gb = (
-            mem.get("Private_Dirty", 0) / 1024 / 1024
-        )  # MB to GB
+        self.private_before_gb = mem.get("Private_Dirty", 0) / 1024 / 1024  # MB to GB
         self.rss_before_gb = mem.get("Rss", 0) / 1024 / 1024
 
         return self
@@ -808,9 +848,7 @@ class OffloadTracer:
 
     def _diagnose(self):
         pa_freed = self.pa_before_mb - self.pa_after_release_mb
-        private_freed_mb = (
-            self.private_before_gb - self.private_after_gb
-        ) * 1024
+        private_freed_mb = (self.private_before_gb - self.private_after_gb) * 1024
 
         if self.pa_after_release_mb > (self.pa_before_mb * 0.8) and pa_freed < 10:
             self.diagnosis = (
@@ -865,4 +903,6 @@ class OffloadTracer:
                 return res
         except (OSError, ValueError):
             return {}
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

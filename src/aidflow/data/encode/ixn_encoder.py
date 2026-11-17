@@ -53,50 +53,42 @@ and/or categorical encoding) to be completed. Interaction
 mining operates on the standardized feature set.
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM,
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,  
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.base               import  FitterModelBase
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass,
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import PRM, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.base import FitterModelBase
+from ...core.factory import (
+    Dataclass,
+    DictClass,
+)
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from .fitters.ixn_extractor     import  (
-                                        InteractionExtractorXGB,
-                                        InteractionExtractorLGB,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitResult,
-                                        FitStats
-                                        )
+from .fitters.ixn_extractor import (
+    InteractionExtractorXGB,
+    InteractionExtractorLGB,
+    FitParamsBase,
+    FitParamsCfg,
+    FitResult,
+    FitStats,
+)
 
 MODEL = AIGFLOW.Encoding.ixn_encoder
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► INTERACTION ENCODING ► Extract Non-Linear Interactions to New Features'
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG DATA STAGE ► INTERACTION ENCODING ► Extract Non-Linear Interactions to New Features"
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -104,10 +96,12 @@ DESC  = 'AIG DATA STAGE ► INTERACTION ENCODING ► Extract Non-Linear Interact
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    LGB: str = 'IxnLGB'
-    XGB: str = 'IxnXGB'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    LGB: str = "IxnLGB"
+    XGB: str = "IxnXGB"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -116,96 +110,110 @@ class REG(DictClass):
 @Dataclass.mapping
 class IxnParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.ENCODE.ixn_leaves.param     : (params.gb_max_leaves,        'Tree Maximum Leaves'   ),
-        PRM.TRAIN.gb_estimators.param   : (params.gb_estimators,        'Tree Estimators'       ),
-        PRM.TRAIN.gb_learning.param     : (params.gb_learning_rate,     'Tree Learning Rate'    ),
-        PRM.TRAIN.gb_min_child.param    : (params.gb_min_child_weight,  'Tree Min Child Weight' ),
-        PRM.ENCODE.ixn_target.param     : (params.ixn_min_target,       'Ixn Min Target Rate'   ),
-        PRM.ENCODE.mbs.param            : (params.ixn_min_share,        'Ixn Min Pop Share'     ),
-        PRM.SCREEN.corr.param           : (params.ixn_max_corr,         'Ixn Max Correlation'   ),
-        PRM.ENCODE.gini.param           : (params.gini_cutoff,          'Gini Feature Cutoff'   )
-    }  
+    setup = {
+        PRM.ENCODE.ixn_leaves.param: (params.gb_max_leaves, "Tree Maximum Leaves"),
+        PRM.TRAIN.gb_estimators.param: (params.gb_estimators, "Tree Estimators"),
+        PRM.TRAIN.gb_learning.param: (params.gb_learning_rate, "Tree Learning Rate"),
+        PRM.TRAIN.gb_min_child.param: (
+            params.gb_min_child_weight,
+            "Tree Min Child Weight",
+        ),
+        PRM.ENCODE.ixn_target.param: (params.ixn_min_target, "Ixn Min Target Rate"),
+        PRM.ENCODE.mbs.param: (params.ixn_min_share, "Ixn Min Pop Share"),
+        PRM.SCREEN.corr.param: (params.ixn_max_corr, "Ixn Max Correlation"),
+        PRM.ENCODE.gini.param: (params.gini_cutoff, "Gini Feature Cutoff"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class InnerFitterBase(FitParamsBase):
 
-    config: dict|FitParamsCfg = FitParamsCfg(
-        target   = None,
-        verbose  = True
-    )
+    config: dict | FitParamsCfg = FitParamsCfg(target=None, verbose=True)
 
     @property
     def _model(self) -> FitterModelBase:
-        return self.model        
-    
+        return self.model
+
     def get_result(self) -> FitResult:
         return self._model.result
 
     def get_stats(self) -> FitStats:
         return self._model.stats
 
+
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """       
+    """
 
     @FREG.register(REG.LGB)
     class InteractionExtractorLGBFitter(InnerFitterBase):
-        
+
         @property
         def _model(self) -> InteractionExtractorLGB:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> InteractionExtractorLGB:            
-            setup  = dict(params) | config
+            return self.model
+
+        def _build(
+            self, params: FitParamsBase, config: dict
+        ) -> InteractionExtractorLGB:
+            setup = dict(params) | config
             return InteractionExtractorLGB(**setup)
-            
+
     @FREG.register(REG.XGB)
     class InteractionExtractorXGBFitter(InnerFitterBase):
 
         @property
         def _model(self) -> InteractionExtractorXGB:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> InteractionExtractorXGB:            
-            setup  = dict(params) | config
-            return InteractionExtractorXGB(**setup)          
+            return self.model
+
+        def _build(
+            self, params: FitParamsBase, config: dict
+        ) -> InteractionExtractorXGB:
+            setup = dict(params) | config
+            return InteractionExtractorXGB(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
     """Fitter params input design."""
+
     num_features: list
     cat_features: list
 
+
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """       
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
-    
-    _is_dummy = False    
 
-    def _fit_no_model(self, data:pDF) -> bool:
+    _is_dummy = False
+
+    def _fit_no_model(self, data: pDF) -> bool:
         if len(data.columns) > 3:
             return False
         self._is_no_model = True
         self.result = None
         if self.verbose:
-            print('► Not Enough Features to Generate Interactions ► Skipping') 
+            print("► Not Enough Features to Generate Interactions ► Skipping")
         return True
-        
-    def fit(self, data:pDF): 
+
+    def fit(self, data: pDF):
         """
         Analyze and learn interactions encoding.
 
@@ -217,35 +225,36 @@ class Fitter(FitterBase[FitParams]):
             return
 
         self.model.fit(
-            data, 
-            num_features = self.params.num_features, 
-            cat_features = self.params.cat_features
+            data,
+            num_features=self.params.num_features,
+            cat_features=self.params.cat_features,
         )
         self.result: FitResult = self.model.get_result()
-        self.stats:  FitStats  = self.model.get_stats()
+        self.stats: FitStats = self.model.get_stats()
         self._init_dash()
         return self
-    
-    def transform(self, data:pDF, ixn_subset:list=None) -> pDF:
-        """ 
+
+    def transform(self, data: pDF, ixn_subset: list = None) -> pDF:
+        """
         Transform Features to Interactions.
 
         Parameters
         ----------
         data : New Data to apply trained transformation.
         ixn_subset : list, optional
-            Specific interactions to produce. 
+            Specific interactions to produce.
             Default = None: all trained are produced.
-                            
+
         Returns
         -------
         Transformed Data with transformed numerical features.
-        """         
+        """
         if self._is_no_model:
-            return pDF()        
+            return pDF()
         return self.model.transform(data, ixn_subset)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -254,49 +263,54 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    encoding:       dict
-    vars_ixn:       list
-    vars_selected:  list
-    vars_dropped:   list
-    vars_map:       dict
+
+    encoding: dict
+    vars_ixn: list
+    vars_selected: list
+    vars_dropped: list
+    vars_map: dict
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
 
     ModelFitter = Fitter
 
-    def _fit_data(self, inputs:"IxnEncoderInput"): 
+    def _fit_data(self, inputs: "IxnEncoderInput"):
         return inputs.train_set
 
     def _set_cols(self):
-        res = self.fitter.result        
+        res = self.fitter.result
         return TransResCols(
-            encoding      = res.encoding,
-            vars_ixn      = res.vars_ixn,
-            vars_selected = res.vars_org,
-            vars_dropped  = res.vars_dropped,
-            vars_map      = res.vars_map
-        )    
-        
-    def transform(self, data:pDF, ixn_subset:list=None) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            data = self.fitter.transform(data, ixn_subset)
+            encoding=res.encoding,
+            vars_ixn=res.vars_ixn,
+            vars_selected=res.vars_org,
+            vars_dropped=res.vars_dropped,
+            vars_map=res.vars_map,
         )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    def transform(self, data: pDF, ixn_subset: list = None) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(data=self.fitter.transform(data, ixn_subset))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -305,43 +319,43 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
+
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
     Transformer - Fitter before execution begins.
     """
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = FitParamsCfg
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = IxnParamsMapping
 
     ModelTransformer = Transformer
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"IxnEncoderInput"):
+    def get_choice(self, fx_choice: str, inputs: "IxnEncoderInput"):
         defaults = self.Config(
-            target   = AigParam.di(inputs.target,  self.setup.target),
-            verbose  = AigParam.di(inputs.verbose, self.setup.verbose),
-            val_size = PRM.LOAD.valid.value
-        )        
+            target=AigParam.di(inputs.target, self.setup.target),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+            val_size=PRM.LOAD.valid.value,
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)  
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        return RegGet.choice(fx_choice, fx_config)
 
-    def get_params(self, fx_choice:str, inputs:"IxnEncoderInput", params:dict):
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "IxnEncoderInput", params: dict):
         params = self.get_fit_params(fx_choice, inputs.fx_params, params)
         fit = FitParams(
-            num_features = inputs.num_features, 
-            cat_features = inputs.cat_features, 
-            **params
+            num_features=inputs.num_features, cat_features=inputs.cat_features, **params
         )
         return fit, self.setup
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
- 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → IXN → API
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -385,10 +399,12 @@ class IxnEncoderInput(ModelInput):
     are required for interaction mining. Fewer than this
     produces no meaningful interactions.
     """
-    train_set:      pDF
-    num_features:   list|None = None
-    cat_features:   list|None = None
-    ixn_subset:     list|None = None
+
+    train_set: pDF
+    num_features: list | None = None
+    cat_features: list | None = None
+    ixn_subset: list | None = None
+
 
 @Dataclass.base
 class IxnEncoderResult(ModelResult):
@@ -431,15 +447,19 @@ class IxnEncoderResult(ModelResult):
     condition (e.g., `revenue > 500 AND segment == 'B'`),
     stored in the `encoding` dict.
     """
-    data:       pDF
-    features:   list
-    selected:   list
-    dropped:    list
-    fe_map:     dict
-    encoding:   dict
+
+    data: pDF
+    features: list
+    selected: list
+    dropped: list
+    fe_map: dict
+    encoding: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class IxnEncoder(Processor, ModelBase):     
+
+class IxnEncoder(Processor, ModelBase):
     """
     Feature Interaction Extraction — Tree Mining & Binary Encoding.
 
@@ -509,13 +529,10 @@ class IxnEncoder(Processor, ModelBase):
     """
 
     def _save(self, save_path) -> None:
-        features = {
-            'features': self.cols.vars_ixn,
-            'map': self.cols.vars_map
-        }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
-    
-    def _vars_req(self, ixn_subset:list|None) -> list:
+        features = {"features": self.cols.vars_ixn, "map": self.cols.vars_map}
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
+    def _vars_req(self, ixn_subset: list | None) -> list:
         if self.cols.encoding is None:
             return []
         if ixn_subset is None:
@@ -524,9 +541,10 @@ class IxnEncoder(Processor, ModelBase):
         for x in ixn_subset:
             req_vars.extend(self.cols.encoding[x].vars)
         return list(dict.fromkeys(req_vars))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def fit(self, inputs:IxnEncoderInput, fx_choice: str = REG.LGB, **params):
+    def fit(self, inputs: IxnEncoderInput, fx_choice: str = REG.LGB, **params):
         """
         Analyze the feature set and mine interaction rules.
 
@@ -552,26 +570,23 @@ class IxnEncoder(Processor, ModelBase):
         IxnEncoder
             The fitted encoder instance.
         """
-        verify = ( 
-            len(inputs.train_set) and (
-            ( inputs.num_features is None or len(inputs.num_features) ) or
-            ( inputs.cat_features is None or len(inputs.cat_features) )
-        ))
-        
+        verify = len(inputs.train_set) and (
+            (inputs.num_features is None or len(inputs.num_features))
+            or (inputs.cat_features is None or len(inputs.cat_features))
+        )
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data:pDF, subset:list=None) -> IxnEncoderResult:
+    def transform(self, data: pDF, subset: list = None) -> IxnEncoderResult:
         """
         Apply mined interaction rules to new data.
 
@@ -592,29 +607,31 @@ class IxnEncoder(Processor, ModelBase):
         IxnEncoderResult
             Binary interaction columns + feature lineage metadata.
         """
-        miss = [x for x in self._vars_req(subset) if (x not in data.columns)]                
-        df = self.processor.transform(data, subset, verify = miss)
+        miss = [x for x in self._vars_req(subset) if (x not in data.columns)]
+        df = self.processor.transform(data, subset, verify=miss)
         return IxnEncoderResult(
-            data     = df.data, 
-            features = self.cols.vars_ixn, 
-            selected = self.cols.vars_selected, 
-            dropped  = self.cols.vars_dropped,
-            fe_map   = self.cols.vars_map,
-            encoding = self.cols.encoding
+            data=df.data,
+            features=self.cols.vars_ixn,
+            selected=self.cols.vars_selected,
+            dropped=self.cols.vars_dropped,
+            fe_map=self.cols.vars_map,
+            encoding=self.cols.encoding,
         )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → IXN → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class OptionUI(OptionUIBase):
-    title   = 'INTERACTIONS ENCODING PANEL'
-    split   = 4
+    title = "INTERACTIONS ENCODING PANEL"
+    split = 4
     Mapping = IxnParamsMapping
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -624,23 +641,26 @@ class IxnEncoderUI(ModelUIBase):
     """
     AIG Flow Data Feature Interaction Encoder.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Responsible for identifying and creating interaction features 
-    between different variable types to capture complex relationships.    
+
+    Responsible for identifying and creating interaction features
+    between different variable types to capture complex relationships.
     """
 
-    Model  = IxnEncoder
+    Model = IxnEncoder
     Option = OptionUI
-        
+
     @wraps(IxnEncoder.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(), **kwargs)  
-    
+        self.model_ui.fit(*args, ui_params=self._get_ui_fit_defaults(), **kwargs)
+
     @wraps(IxnEncoder.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> IxnEncoderResult: return self.model_ui.fitted
+    def fitted(self) -> IxnEncoderResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

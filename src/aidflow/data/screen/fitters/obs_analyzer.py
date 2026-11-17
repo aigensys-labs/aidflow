@@ -29,24 +29,14 @@ Output
   per-feature comparison of IN vs OUT means.
 """
 
-from ....deps.data          import  np, pDF
-from ....deps.ml.dim        import  (
-                                    IsolationForest, 
-                                    StandardScaler, 
-                                    scale
-                                    )
-from ....core.base          import  (
-                                    FitterDataBase, 
-                                    FitterModelBase
-                                    )
-from ....core.factory       import  (
-                                    Dataclass,
-                                    DictClass
-                                    )
-from ....core.foundation    import  AigParam
-from ....core.interop       import  Pd
+from ....deps.data import np, pDF
+from ....deps.ml.dim import IsolationForest, StandardScaler, scale
+from ....core.base import FitterDataBase, FitterModelBase
+from ....core.factory import Dataclass, DictClass
+from ....core.foundation import AigParam
+from ....core.interop import Pd
 
-from ....ml.sampling        import  Sampling
+from ....ml.sampling import Sampling
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -54,16 +44,20 @@ from ....ml.sampling        import  Sampling
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class LBL(DictClass):
     """ol-vr-sc labels"""
-    OL = 'OUTLIER'
-    VR = 'VERDICT'
-    SC = 'SCORE'
+
+    OL = "OUTLIER"
+    VR = "VERDICT"
+    SC = "SCORE"
+
 
 class IO(DictClass):
-    """Outliers IN / OUT"""   
-    IN  = 'IN'
-    OUT = 'OUT'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+    """Outliers IN / OUT"""
 
+    IN = "IN"
+    OUT = "OUT"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -85,8 +79,10 @@ class FitParamsBase:
         Lower values are more conservative (fewer observations flagged).
         Higher values are more aggressive (more observations flagged).
         Default 0.01 flags the most extreme 1% of observations.
-    """     
+    """
+
     th_outliers: float = 0.01
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -106,15 +102,18 @@ class FitParamsCfg:
         Seed for reproducibility.
     n_jobs : int, default=-1
         Number of parallel workers for tree construction (-1 = all cores).
-    """ 
-    bootstrap:    bool  = True     # obs sampling
-    max_features: float = 0.8      # < 1 → features sampling
-    random_state: int   = 42
-    n_jobs:       int   = -1
+    """
+
+    bootstrap: bool = True  # obs sampling
+    max_features: float = 0.8  # < 1 → features sampling
+    random_state: int = 42
+    n_jobs: int = -1
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
-    """Outliers params input design."""       
+    """Outliers params input design."""
+
 
 @Dataclass.base
 class FitStats:
@@ -136,13 +135,17 @@ class FitStats:
         Per-feature mean comparison of IN vs OUT groups (transposed).
         Highlights which features drive the outlier classification.
     """
-    th:         float
-    len_data:   int
-    sum_ol:     int
-    sample:     pDF
-    compare:    pDF
+
+    th: float
+    len_data: int
+    sum_ol: int
+    sample: pDF
+    compare: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
-   
+
+
 class FitDataScaler:
     """
     Preprocessing pipeline for outlier detection.
@@ -160,28 +163,28 @@ class FitDataScaler:
         Column-wise median values from the training data (for imputation).
     scaler : StandardScaler
         Fitted scaler (mean and std per feature).
-    """       
-    
+    """
+
     medians = None
-    scaler  = None    
-        
-    def _fillna(self, data:pDF) -> pDF:        
+    scaler = None
+
+    def _fillna(self, data: pDF) -> pDF:
         if self.medians is None:
-            self.medians = data.median() 
+            self.medians = data.median()
         return data.fillna(self.medians)
 
-    def _fill_data(self, data:pDF) -> pDF:  
+    def _fill_data(self, data: pDF) -> pDF:
         return self._fillna(data)
-    
-    def _fit_scaler(self, data:pDF) -> None:
+
+    def _fit_scaler(self, data: pDF) -> None:
         if self.scaler is None:
-            self.scaler = StandardScaler()        
-            self.scaler.fit(data) 
-        
-    def _scale_data(self, data:pDF) -> pDF:
+            self.scaler = StandardScaler()
+            self.scaler.fit(data)
+
+    def _scale_data(self, data: pDF) -> pDF:
         data_sc = self.scaler.transform(data)
         return pDF(data_sc, columns=data.columns, index=data.index)
-    
+
     def data_pipe(self, data: pDF) -> tuple[pDF, pDF]:
         """
         Execute the full preprocessing pipeline: impute → fit scaler → scale.
@@ -196,11 +199,14 @@ class FitDataScaler:
         tuple[pDF, pDF]
             d_scaled : Scaled data (zero-mean, unit-variance) for model input.
             d_std    : Imputed data (median-filled, unscaled) for display/inspection.
-        """       
-        d_std = self._fill_data(data)   # relatively cheap to compute
-        self._fit_scaler(d_std)         # -- no need to keep extra 2xdata in memory for update  
+        """
+        d_std = self._fill_data(data)  # relatively cheap to compute
+        self._fit_scaler(d_std)  # -- no need to keep extra 2xdata in memory for update
         return self._scale_data(d_std), d_std
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitModel:
     """
@@ -218,29 +224,27 @@ class FitModel:
         Contamination rate (expected outlier proportion).
     config : dict
         Isolation Forest hyperparameters (bootstrap, max_features, etc.).
-    """      
+    """
+
     _estimator: IsolationForest = None
 
-    def __init__(self, th_outliers:float, config:dict):
-        self.th     = th_outliers 
-        self.cfg    = config
+    def __init__(self, th_outliers: float, config: dict):
+        self.th = th_outliers
+        self.cfg = config
         self.scaler = FitDataScaler()
 
     @property
     def model(self) -> IsolationForest:
         if self._estimator is None:
-            raise RuntimeError('Run .fit prior prediction.')
+            raise RuntimeError("Run .fit prior prediction.")
         return self._estimator
-    
+
     def get_setup(self) -> dict:
         th_min = 1e-10
-        th_out = dict(
-            contamination = max(self.th, th_min),
-            random_state = 42
-        )
+        th_out = dict(contamination=max(self.th, th_min), random_state=42)
         return th_out | self.cfg
 
-    def fit(self, X:pDF):
+    def fit(self, X: pDF):
         """
         Train the Isolation Forest on preprocessed feature data.
 
@@ -248,12 +252,12 @@ class FitModel:
         ----------
         X : pDF
             Scaled feature matrix (output of `FitDataScaler.data_pipe`).
-        """        
+        """
         setup = self.get_setup()
         self._estimator = IsolationForest(**setup)
         self._estimator.fit(X)
-    
-    def predict(self, data:pDF, is_scaled:bool=False) -> pDF:
+
+    def predict(self, data: pDF, is_scaled: bool = False) -> pDF:
         """
         Classify observations as outlier or inlier.
 
@@ -270,16 +274,16 @@ class FitModel:
         pDF
             Single-column DataFrame with `OUTLIER` (1 = outlier, 0 = inlier),
             indexed identically to the input.
-        """         
-        data_= data
+        """
+        data_ = data
         if not is_scaled:
-            data_, _  = self.scaler.data_pipe(data)
+            data_, _ = self.scaler.data_pipe(data)
 
-        pred = self.model.predict(data_)   
-        pred = np.where(pred == -1, 1, 0) 
+        pred = self.model.predict(data_)
+        pred = np.where(pred == -1, 1, 0)
 
-        return pDF({LBL.OL: pred}, index = data.index) 
-            
+        return pDF({LBL.OL: pred}, index=data.index)
+
     def _scale_decision(self, data: pDF) -> np.ndarray:
         """
         Compute the anomaly score for each observation.
@@ -288,18 +292,16 @@ class FitModel:
         (z-scored) to produce a comparable continuous score where
         higher values indicate greater anomaly.
         """
-        return scale(self.model.decision_function(data))   
-        
-    def _get_ovs(self, data_scaled:pDF) -> pDF:
+        return scale(self.model.decision_function(data))
+
+    def _get_ovs(self, data_scaled: pDF) -> pDF:
         """Compute outlier label, verdict, and score for scaled data."""
-        ol = self.predict(data_scaled, True).squeeze() 
-        vr = np.where(ol==1, IO.OUT, IO.IN)
+        ol = self.predict(data_scaled, True).squeeze()
+        vr = np.where(ol == 1, IO.OUT, IO.IN)
         sc = self._scale_decision(data_scaled)
-        return Pd.df_zip(
-            LBL.list(), [ol, vr, sc], data_scaled.index
-        )
-    
-    def stats(self, X_scaled:pDF, X_std:pDF) -> FitStats:
+        return Pd.df_zip(LBL.list(), [ol, vr, sc], data_scaled.index)
+
+    def stats(self, X_scaled: pDF, X_std: pDF) -> FitStats:
         """
         Generate diagnostic statistics for user inspection.
 
@@ -316,23 +318,22 @@ class FitModel:
             Contamination rate, outlier count, sample rows, and
             per-feature IN/OUT mean comparison.
         """
-        data = X_std.copy()        
+        data = X_std.copy()
         data[LBL.list()] = self._get_ovs(X_scaled)
 
-        sample  = Sampling(2e3).subsample(data, reset_index=True)
+        sample = Sampling(2e3).subsample(data, reset_index=True)
         compare = (
-            data[ [LBL.VR] + X_std.columns.to_list() ]
-            .groupby(LBL.VR).mean().transpose()
+            data[[LBL.VR] + X_std.columns.to_list()].groupby(LBL.VR).mean().transpose()
         )
         return FitStats(
-            th       = self.th,
-            len_data = len(data),
-            sum_ol   = sum(data[LBL.OL]),
-            sample   = sample,
-            compare  = compare
+            th=self.th,
+            len_data=len(data),
+            sum_ol=sum(data[LBL.OL]),
+            sample=sample,
+            compare=compare,
         )
-    
-    def process(self, X:pDF) -> FitStats:
+
+    def process(self, X: pDF) -> FitStats:
         """
         Run the complete outlier detection pipeline.
 
@@ -348,9 +349,10 @@ class FitModel:
         FitStats
             Full diagnostic output.
         """
-        d_scaled, d_std = self.scaler.data_pipe(X)                
+        d_scaled, d_std = self.scaler.data_pipe(X)
         self.fit(d_scaled)
-        return self.stats(d_scaled, d_std)          
+        return self.stats(d_scaled, d_std)
+
 
 @Dataclass.verify
 class Fitter(FitterDataBase):
@@ -371,14 +373,15 @@ class Fitter(FitterDataBase):
         Contamination rate and estimator configuration.
     config : dict
         Isolation Forest hyperparameters.
-    """    
+    """
+
     _model: FitModel = None
 
-    def __init__(self, params:FitParams, config:dict):
+    def __init__(self, params: FitParams, config: dict):
         self.prm = params
         self.cfg = config
 
-    def fit(self, data:pDF):
+    def fit(self, data: pDF):
         """
         Fit the outlier detection model on the full feature matrix.
 
@@ -392,14 +395,14 @@ class Fitter(FitterDataBase):
         self
             Fitted instance with `stats`, `features`, and `model` set.
         """
-        self._model   = FitModel(self.prm.th_outliers, self.cfg)
-        self.stats    = self._model.process(data)        
+        self._model = FitModel(self.prm.th_outliers, self.cfg)
+        self.stats = self._model.process(data)
         self.features = data.columns.to_list()
-        self.result   = True
+        self.result = True
 
-        return self  
-        
-    def transform(self, data:pDF) -> pDF:
+        return self
+
+    def transform(self, data: pDF) -> pDF:
         """
         Predict outlier status for new observations.
 
@@ -418,8 +421,9 @@ class Fitter(FitterDataBase):
             indexed identically to the input.
         """
         return self.model.predict(data[self.features])
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -474,18 +478,19 @@ class ObservationAnalyzer(FitterModelBase[Fitter]):
     >>> result = oa.transform(data_new)  # doctest: +SKIP
     >>> result  # OUTLIER | VERDICT | SCORE  # doctest: +SKIP
     """
+
     _estimator: type = IsolationForest
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
         self._config = self.get_estimator_config(self._params, kwargs)
 
-    def _get_num(self, data:pDF, num:list|None) -> list:
+    def _get_num(self, data: pDF, num: list | None) -> list:
         if num is not None:
             return num
         return [x for x in data.columns]
-    
-    def fit(self, data:pDF, num_features:list|None = None):        
+
+    def fit(self, data: pDF, num_features: list | None = None):
         """
         Fit the outlier detection model on the feature matrix.
 
@@ -500,13 +505,13 @@ class ObservationAnalyzer(FitterModelBase[Fitter]):
         -------
         self
             Fitted instance ready for `transform`.
-        """          
+        """
         num = self._get_num(data, num_features)
         self._fitter = Fitter(self._params, self._config)
         self._fitter.fit(data[num])
         return self
-    
-    def transform(self, data:pDF) -> pDF:
+
+    def transform(self, data: pDF) -> pDF:
         """
         Score new observations for outlier status.
 
@@ -522,4 +527,6 @@ class ObservationAnalyzer(FitterModelBase[Fitter]):
             for each observation, indexed identically to input.
         """
         return self.fitter.transform(data)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

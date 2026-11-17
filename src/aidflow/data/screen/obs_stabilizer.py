@@ -32,7 +32,7 @@ encoding. Removing these observations **before** training prevents:
 Pipeline Position
 -----------------
 This is the **fourth** stage (after Data Loader → Feature Cleaner →
-Temporal Stabilizer). It operates on the fully prepared feature set 
+Temporal Stabilizer). It operates on the fully prepared feature set
 and produces the final clean observation.
 
 Dependencies
@@ -41,52 +41,39 @@ Requires the Feature Stabilizer stage to be completed (provides
 the stationarity-verified feature set).
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM,
-                                        AIGFLOW,
-                                        Parameters
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,  
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
-from ...core.interop            import  Arrow
+from ...core.parameters import PRM, AIGFLOW, Parameters
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
+from ...core.interop import Arrow
 
-from .fitters.obs_analyzer      import  (
-                                        LBL,
-                                        ObservationAnalyzer,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitStats
-                                        )
-from .utils_ui                  import  PanelUtilsUI
-
+from .fitters.obs_analyzer import (
+    LBL,
+    ObservationAnalyzer,
+    FitParamsBase,
+    FitParamsCfg,
+    FitStats,
+)
+from .utils_ui import PanelUtilsUI
 
 MODEL = AIGFLOW.Data.obs_stabilizer
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► OBSERVATION STABILITY ► Learn Outliers and Ensure Observation Stability'
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG DATA STAGE ► OBSERVATION STABILITY ► Learn Outliers and Ensure Observation Stability"
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -94,9 +81,11 @@ DESC  = 'AIG DATA STAGE ► OBSERVATION STABILITY ► Learn Outliers and Ensure 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'IsolationForest'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    AIG = "IsolationForest"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -105,108 +94,116 @@ class REG(DictClass):
 @Dataclass.mapping
 class OLParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.SCREEN.th_ol.param  : params.th_outliers
-    }  
+    setup = {PRM.SCREEN.th_ol.param: params.th_outliers}
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """      
-    
+    """
+
     @FREG.register(REG.AIG)
     class IsolationForestFitter(FitParamsBase):
-        
-        config: dict|FitParamsCfg = FitParamsCfg(
-            bootstrap     = True,     # obs sampling
-            max_features  = 0.8,      # < 1 → features sampling
-            random_state  = 42,
-            n_jobs        = -1
+
+        config: dict | FitParamsCfg = FitParamsCfg(
+            bootstrap=True,  # obs sampling
+            max_features=0.8,  # < 1 → features sampling
+            random_state=42,
+            n_jobs=-1,
         )
 
-        def _build(self, params:FitParamsBase, config:dict) -> ObservationAnalyzer:
-            setup  = dict(params) | config
+        def _build(self, params: FitParamsBase, config: dict) -> ObservationAnalyzer:
+            setup = dict(params) | config
             return ObservationAnalyzer(**setup)
-        
+
         @property
         def _model(self) -> ObservationAnalyzer:
             return self.model
-        
-        def get_stats(self) -> FitStats:            
+
+        def get_stats(self) -> FitStats:
             return self._model.stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
-    """Fitter params input design."""       
+    """Fitter params input design."""
+
     num_features: list
     cat_features: list = None
 
+
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """   
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
 
-    def _get_th(self, th:None|float) -> float:
+    def _get_th(self, th: None | float) -> float:
         return AigParam.di(th, self.params.th_outliers)
 
-    def fit(self, data:pDF, th: None|float = None):        
+    def fit(self, data: pDF, th: None | float = None):
         """
         Analyze and clean variables of observation instability.
 
         Parameters
         ----------
         data :    Input Data for outliers learning.
-        verbose : bool → True shows dashboard and stats.     
-        """               
+        verbose : bool → True shows dashboard and stats.
+        """
         if self._fit_no_model(MODEL, self.params.num_features):
             return
-        
+
         th = self._get_th(th)
         self.model = self.model(th)
         self.model.fit(data, self.params.num_features)
         self.stats: FitStats = self.model.get_stats()
         self._init_dash()
 
-        return self               
-    
-    def update(self, data:pDF, th_out:float):        
-        """Update Outliers by TH update.""" 
+        return self
+
+    def update(self, data: pDF, th_out: float):
+        """Update Outliers by TH update."""
         return self.fit(data, th_out)
         # NOTE Several approches have been tried regarding memory occupation vs. recomp.speed vs. UI.
-        # Expected usage is that user will not ride the TH slider for fun - thus, CONFIRM button to 
+        # Expected usage is that user will not ride the TH slider for fun - thus, CONFIRM button to
         # submit TH change to data was confusing - therefore update = self.fit.
         # Historically it was combination slider + confirm button - where internally all needed data
         # for update were stored in the RAM - thus changing the slider was immediately propagated to UI.
-        
+
     def transform(self, data: pDF) -> pDF:
-        """ 
+        """
         Clean variables of observation instability.
 
         Parameters
         ----------
         data : New Data to apply trained transformation.
-                
+
         Returns
         -------
         Transformed Data without outliers.
         """
         if self._is_no_model:
             return pDF({LBL.OL: [0]}, index=data.index)
-        
-        return self.model.transform(data)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+        return self.model.transform(data)
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -215,49 +212,50 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
-    data:     pDF
+
+    data: pDF
     outliers: pDF
+
 
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
+
     numeric: list
-    vars_ol: list 
+    vars_ol: list
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
 
     ModelFitter = Fitter
 
-    def _fit_data(self, inputs:"ObsStabilizerInput"):
+    def _fit_data(self, inputs: "ObsStabilizerInput"):
         return inputs.train_set
-    
+
     def _set_cols(self):
         prm = self.fitter.params
-        return TransResCols(
-            numeric = prm.num_features,
-            vars_ol = [LBL.OL]
-        )
-    
-    def transform(self, data:pDF) -> TransResData:
+        return TransResCols(numeric=prm.num_features, vars_ol=[LBL.OL])
+
+    def transform(self, data: pDF) -> TransResData:
         """Model meta-transform."""
-        
+
         o = self.fitter.transform(data)
-        d = data.loc[o[LBL.OL]==0, :]
+        d = data.loc[o[LBL.OL] == 0, :]
 
-        return TransResData(
-            data = d, 
-            outliers = o
-            )
+        return TransResData(data=d, outliers=o)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -266,42 +264,41 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
-    Transformer - Fitter before execution begins.
-    """   
-    
-    MODEL = MODEL
-    DESC  = DESC
 
-    Config  = FitParamsCfg
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
+    Transformer - Fitter before execution begins.
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = OLParamsMapping
 
     ModelTransformer = Transformer
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"ObsStabilizerInput"):
-        defaults  = FitParamsCfg()
+    def get_choice(self, fx_choice: str, inputs: "ObsStabilizerInput"):
+        defaults = FitParamsCfg()
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)  
-        
-    def get_params(self, fx_choice:str, inputs:"ObsStabilizerInput", params:dict):
+        return RegGet.choice(fx_choice, fx_config)
+
+    def get_params(self, fx_choice: str, inputs: "ObsStabilizerInput", params: dict):
         params = self.get_fit_params(fx_choice, inputs.fx_params, params)
 
         fit = FitParams(
-            num_features = inputs.num_features,
-            cat_features = inputs.cat_features,
-            **params
-        )                
-        return fit, self.setup      
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬    
+            num_features=inputs.num_features, cat_features=inputs.cat_features, **params
+        )
+        return fit, self.setup
 
 
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬    
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → OBSERVATION STABILITY
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬    
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 @Dataclass.base(dynamic_params=True)
 class ObsStabilizerInput(ModelInput):
     """
@@ -332,10 +329,12 @@ class ObsStabilizerInput(ModelInput):
     included in the anomaly score — the detection is based
     purely on numeric feature deviation.
     """
-    train_set:      pDF
-    num_features:   list
-    cat_features:   list|None = None
-    
+
+    train_set: pDF
+    num_features: list
+    cat_features: list | None = None
+
+
 @Dataclass.base
 class ObsStabilizerResult(ModelResult):
     """
@@ -374,9 +373,13 @@ class ObsStabilizerResult(ModelResult):
     equals the configured `th_outliers` threshold (default
     1%). Users can adjust this interactively via `update`.
     """
-    data:     pDF
+
+    data: pDF
     outliers: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class ObservationStabilizer(Processor, ModelBase):
     """
@@ -454,12 +457,12 @@ class ObservationStabilizer(Processor, ModelBase):
     """
 
     def _save(self, save_path) -> None:
-        features = {'features': self.cols.vars_ol}
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path) 
+        features = {"features": self.cols.vars_ol}
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
 
-    def _to_pd(self, data:pDF) -> pDF:
+    def _to_pd(self, data: pDF) -> pDF:
         """
-        Executes deferred conversion of Arrow-backed data to native Pandas dtypes 
+        Executes deferred conversion of Arrow-backed data to native Pandas dtypes
         at the end of the screening phase.
 
         Behavior:
@@ -468,22 +471,23 @@ class ObservationStabilizer(Processor, ModelBase):
             Dependency: `fe_cleaner` preserved PyArrow dtypes through row filtering.
         - offload == True:
             Passes data through as-is.
-            Dependency: `fe_cleaner` already offloaded Arrow memory and converted 
+            Dependency: `fe_cleaner` already offloaded Arrow memory and converted
             to native Pandas dtypes upstream.
 
         Rationale:
-            Downstream ML packages (e.g., LightGBM, Scikit-Learn) do not natively 
-            support `ArrowDtype` and trigger inefficient on-the-fly conversions during 
-            training. Deferring conversion until after row dropping (outliers removal) 
-            minimizes overall RAM consumption by ensuring native Pandas allocations 
+            Downstream ML packages (e.g., LightGBM, Scikit-Learn) do not natively
+            support `ArrowDtype` and trigger inefficient on-the-fly conversions during
+            training. Deferring conversion until after row dropping (outliers removal)
+            minimizes overall RAM consumption by ensuring native Pandas allocations
             only occur on the finalized, reduced dataset.
-        """              
+        """
         if self.setup.offload:
             return data
         return Arrow.to_safe_datatype(data)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def fit(self, inputs:ObsStabilizerInput, fx_choice: str  = REG.AIG, **params):
+    def fit(self, inputs: ObsStabilizerInput, fx_choice: str = REG.AIG, **params):
         """
         Execute the full outlier detection and filtering pipeline.
 
@@ -506,22 +510,20 @@ class ObservationStabilizer(Processor, ModelBase):
         ObservationStabilizer
             The fitted instance with the clean observation set
             and outlier flags available.
-        """    
+        """
         verify = len(inputs.train_set)
-        
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs, 
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self.custom_path = inputs.save_path
         self._save(self.custom_path)
         self._set_update_data(lambda: inputs.train_set)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def update(self, *args, **kwargs):
@@ -547,10 +549,11 @@ class ObservationStabilizer(Processor, ModelBase):
         data = self._get_update_data()
         self.processor.update(data, kwargs[PRM.SCREEN.th_ol.param])
         self._save(self.custom_path)
-        return self    
+        return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data:pDF) -> ObsStabilizerResult:
+    def transform(self, data: pDF) -> ObsStabilizerResult:
         """
         Apply the trained outlier filter to new data.
 
@@ -564,19 +567,17 @@ class ObservationStabilizer(Processor, ModelBase):
         ObsStabilizerResult
             Cleaned data (outliers removed) + outlier flags.
 
-            As the final step of the Screening phase, returned `data` is converted to native 
-            Pandas/NumPy dtypes. This single-conversion boundary minimizes peak pipeline 
-            memory footprint by preventing redundant downstream allocations and ensuring 
+            As the final step of the Screening phase, returned `data` is converted to native
+            Pandas/NumPy dtypes. This single-conversion boundary minimizes peak pipeline
+            memory footprint by preventing redundant downstream allocations and ensuring
             full compatibility with numpy, LightGBM, XGBoost, and Scikit-Learn.
         """
-        miss = [x for x in self.cols.numeric if (x not in data.columns)]                
-        df = self.processor.transform(data, verify = miss)
-        return ObsStabilizerResult(
-            data     = self._to_pd(df.data),
-            outliers = df.outliers
-        )  
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬    
+        miss = [x for x in self.cols.numeric if (x not in data.columns)]
+        df = self.processor.transform(data, verify=miss)
+        return ObsStabilizerResult(data=self._to_pd(df.data), outliers=df.outliers)
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -585,17 +586,18 @@ class ObservationStabilizer(Processor, ModelBase):
 class OptionUI(OptionUIBase):
     """UI Dynamic Parameters Panel."""
 
-    title = 'OBSERVATION STABILITY'
+    title = "OBSERVATION STABILITY"
 
-    def __init__(self, setup:Parameters, input:ObsStabilizerInput):
+    def __init__(self, setup: Parameters, input: ObsStabilizerInput):
         prm = OLParamsMapping(setup, default=True)
-        self.wg = PanelUtilsUI(prm, self.title) 
-        
+        self.wg = PanelUtilsUI(prm, self.title)
+
     @property
     def slider(self):
         return self.wg.slider()
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -605,30 +607,30 @@ class ObservationStabilizerUI(ModelUIBase[ObservationStabilizer, OptionUI]):
     """
     AIG Flow Data Observation Stability.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Screens the dataset for outlier observations that may distort 
+
+    Screens the dataset for outlier observations that may distort
     model training and ensures observation-level stability.
     """
-    
-    Model  = ObservationStabilizer
+
+    Model = ObservationStabilizer
     Option = OptionUI
 
     def custom_control(self, fx):
         """Custom UI widget."""
-        return self.option_ui.slider.observe(fx, names='value')
+        return self.option_ui.slider.observe(fx, names="value")
 
     @wraps(ObservationStabilizer.fit)
-    def fit(self, *args, **kwargs): 
-        """Observation Stability fit UI wrapper."""                        
-        self.model_ui.fit(   
+    def fit(self, *args, **kwargs):
+        """Observation Stability fit UI wrapper."""
+        self.model_ui.fit(
             *args,
-            ui_params = self._get_ui_fit_defaults(
-                output_wait                 = True,
-                parent_has_update_FX_method = True,
-                gui_static_before_confirm_1 = None,
-                custom_control_widget       = self.custom_control,
+            ui_params=self._get_ui_fit_defaults(
+                output_wait=True,
+                parent_has_update_FX_method=True,
+                gui_static_before_confirm_1=None,
+                custom_control_widget=self.custom_control,
             ),
-            **kwargs
+            **kwargs,
         )
         return self
 
@@ -637,5 +639,8 @@ class ObservationStabilizerUI(ModelUIBase[ObservationStabilizer, OptionUI]):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> ObsStabilizerResult: return self.model_ui.fitted
+    def fitted(self) -> ObsStabilizerResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

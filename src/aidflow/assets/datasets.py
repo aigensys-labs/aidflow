@@ -24,55 +24,54 @@ Usage
 >>> data.target.value_counts()
 """
 
-from ..deps.common   import Path
-from ..deps.data     import np, pd, pDF
+from ..deps.common import Path
+from ..deps.data import np, pd, pDF
 from ..deps.ml.stats import ArmaProcess
-from ..storage.file  import FileIO
-
+from ..storage.file import FileIO
 
 _PRESETS = {
-    'small':  dict(
-        n_samples       = 10_000,
-        n_numeric       = 30,
-        n_categorical   = 30,
-        n_informative   = 8,
-        n_redundant     = 8,
-        n_repeated      = 4,
-        n_categories    = 4,
-        p_target        = 0.30,
-        seed            = 42,
+    "small": dict(
+        n_samples=10_000,
+        n_numeric=30,
+        n_categorical=30,
+        n_informative=8,
+        n_redundant=8,
+        n_repeated=4,
+        n_categories=4,
+        p_target=0.30,
+        seed=42,
     ),
-    'medium': dict(
-        n_samples       = 100_000,
-        n_numeric       = 75,
-        n_categorical   = 75,
-        n_informative   = 20,
-        n_redundant     = 20,
-        n_repeated      = 10,
-        n_categories    = 5,
-        p_target        = 0.25,
-        seed            = 42,
+    "medium": dict(
+        n_samples=100_000,
+        n_numeric=75,
+        n_categorical=75,
+        n_informative=20,
+        n_redundant=20,
+        n_repeated=10,
+        n_categories=5,
+        p_target=0.25,
+        seed=42,
     ),
-    'large':  dict(
-        n_samples       = 1_000_000,
-        n_numeric       = 200,
-        n_categorical   = 200,
-        n_informative   = 50,
-        n_redundant     = 40,
-        n_repeated      = 20,
-        n_categories    = 6,
-        p_target        = 0.20,
-        seed            = 42,
+    "large": dict(
+        n_samples=1_000_000,
+        n_numeric=200,
+        n_categorical=200,
+        n_informative=50,
+        n_redundant=40,
+        n_repeated=20,
+        n_categories=6,
+        p_target=0.20,
+        seed=42,
     ),
 }
 
 _CAT_LABELS = {
-    1: ['A'],
-    2: ['A', 'B'],
-    3: ['A', 'B', 'C'],
-    4: ['A', 'B', 'C', 'D'],
-    5: ['A', 'B', 'C', 'D', 'E'],
-    6: ['A', 'B', 'C', 'D', 'E', 'F'],
+    1: ["A"],
+    2: ["A", "B"],
+    3: ["A", "B", "C"],
+    4: ["A", "B", "C", "D"],
+    5: ["A", "B", "C", "D", "E"],
+    6: ["A", "B", "C", "D", "E", "F"],
 }
 
 
@@ -93,7 +92,7 @@ class DataGetter:
     """
 
     @classmethod
-    def get(cls, preset: str = 'medium', target: str = 'target') -> pDF:
+    def get(cls, preset: str = "medium", target: str = "target") -> pDF:
         """
         Generate a synthetic dataset from a named preset.
 
@@ -119,7 +118,7 @@ class DataGetter:
         if preset not in _PRESETS:
             raise ValueError(
                 f'AIG SAFETY ► Unknown preset "{preset}". '
-                f'Available: {list(_PRESETS.keys())}'
+                f"Available: {list(_PRESETS.keys())}"
             )
         cfg = _PRESETS[preset]
         return cls._generate(cfg, target)
@@ -137,9 +136,8 @@ class DataGetter:
         return dict(_PRESETS)
 
     @classmethod
-    def create_data(cls, 
-        size: str = 'small', 
-        path: str|Path = 'data/test.csv'
+    def create_data(
+        cls, size: str = "small", path: str | Path = "data/test.csv"
     ) -> str:
         """
         Generate synthetic demo data and save to disk as `csv`.
@@ -158,15 +156,15 @@ class DataGetter:
         """
         demo_data = DataGetter.get(size)
         return FileIO.save_csv(demo_data, path)
-    
+
     @staticmethod
     def generate_data(
         n_samples: int = 10000,
         n_features: int = 50,
         p_positive: float = 0.15,
-        n_informative: int | None = None,   # features carrying true signal
-        n_redundant: int | None = None,     # linear combos of informative
-        n_repeated: int | None = None,      # exact duplicates of informative
+        n_informative: int | None = None,  # features carrying true signal
+        n_redundant: int | None = None,  # linear combos of informative
+        n_repeated: int | None = None,  # exact duplicates of informative
         corr_strength: float = 0.3,
         linear_weight: float = 1.0,
         frac_smooth: float = 0.25,
@@ -185,7 +183,7 @@ class DataGetter:
         - redundant: Linear combinations of informative features
         - repeated: Exact duplicates of informative features
         - noise: Pure Gaussian, no relationship to target
-  
+
         Parameters
         ----------
         n_samples : int
@@ -322,25 +320,26 @@ class DataGetter:
     @classmethod
     def _generate(cls, cfg: dict, target: str) -> pDF:
         """Generate the full dataset from a preset config."""
-        fes  = cfg['n_numeric'] + cfg['n_categorical']
-        seed = cfg['seed']
+        fes = cfg["n_numeric"] + cfg["n_categorical"]
+        seed = cfg["seed"]
 
         X, y = cls.generate_data(
-            n_samples       = cfg['n_samples'],
-            n_features      = fes,
-            n_informative   = cfg['n_informative'],
-            n_redundant     = cfg['n_redundant'],
-            n_repeated      = cfg['n_repeated'],            
-            p_positive      = cfg['p_target'],
-            linear_weight   = 1.5,
-            label_noise     = 0.03,
-            feature_noise   = 0.25,
-            seed            = seed,
+            n_samples=cfg["n_samples"],
+            n_features=fes,
+            n_informative=cfg["n_informative"],
+            n_redundant=cfg["n_redundant"],
+            n_repeated=cfg["n_repeated"],
+            p_positive=cfg["p_target"],
+            linear_weight=1.5,
+            label_noise=0.03,
+            feature_noise=0.25,
+            seed=seed,
         )
 
-        d = pDF(X, columns =
-            [f'num_{i}' for i in range(cfg['n_numeric'])] +
-            [f'cat_{i}' for i in range(cfg['n_categorical'])]
+        d = pDF(
+            X,
+            columns=[f"num_{i}" for i in range(cfg["n_numeric"])]
+            + [f"cat_{i}" for i in range(cfg["n_categorical"])],
         )
         d[target] = y.astype(int)
 
@@ -348,7 +347,7 @@ class DataGetter:
         cls._add_categoricals(d, cfg)
         cls._add_non_stationary(d, seed)
 
-        ids  = ['time', target]
+        ids = ["time", target]
         cols = [x for x in d.columns if x not in ids]
 
         return d[ids + cols]
@@ -356,12 +355,12 @@ class DataGetter:
     @staticmethod
     def _add_categoricals(d: pDF, cfg: dict) -> None:
         """Convert the categorical portion of columns to binned string labels."""
-        cat_cols = [c for c in d.columns if c.startswith('cat_')]
-        n_cat    = cfg['n_categories']
-        labels   = _CAT_LABELS[n_cat]
+        cat_cols = [c for c in d.columns if c.startswith("cat_")]
+        n_cat = cfg["n_categories"]
+        labels = _CAT_LABELS[n_cat]
 
         for c in cat_cols:
-            d[c] = pd.qcut(d[c], q=n_cat, labels=labels, duplicates='drop').astype(str)
+            d[c] = pd.qcut(d[c], q=n_cat, labels=labels, duplicates="drop").astype(str)
 
     @staticmethod
     def _add_non_stationary(d: pDF, seed: int) -> None:
@@ -369,22 +368,22 @@ class DataGetter:
         n = len(d)
         rng = np.random.default_rng(seed)
 
-        for i in range(len(d.columns)//10):
-            phi   = rng.uniform(0.3, 0.8)      # AR(1) coef
-            theta = rng.uniform(-0.5, 0.5)     # MA(1) coef
+        for i in range(len(d.columns) // 10):
+            phi = rng.uniform(0.3, 0.8)  # AR(1) coef
+            theta = rng.uniform(-0.5, 0.5)  # MA(1) coef
 
-            ar   = [1.0, -phi]
-            ma   = [1.0, theta]
+            ar = [1.0, -phi]
+            ma = [1.0, theta]
             arma = ArmaProcess(ar, ma)
             stationary = arma.generate_sample(nsample=n)
 
-            d[f'ns_{i}'] = np.cumsum(stationary) # ARIMA d=1
+            d[f"ns_{i}"] = np.cumsum(stationary)  # ARIMA d=1
 
     @staticmethod
     def _add_time(d: pDF, seed: int) -> pDF:
         """Add a synthetic time column (daily granularity, 2 years)."""
-        rng  = np.random.default_rng(seed)
+        rng = np.random.default_rng(seed)
         days = rng.integers(0, 730, size=len(d))
-        base = pd.Timestamp('2023-01-01')
-        d['time'] = base + pd.to_timedelta(days, unit='D')
-        return d.sort_values('time').reset_index(drop=True)
+        base = pd.Timestamp("2023-01-01")
+        d["time"] = base + pd.to_timedelta(days, unit="D")
+        return d.sort_values("time").reset_index(drop=True)

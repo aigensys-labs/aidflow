@@ -1,33 +1,33 @@
 """
 Visual Identity System and Dynamic Theme Engine for the AIDflow User Interface.
 
-This module implements a centralized CSS orchestration layer that manages the 
-aesthetic and structural presentation of all AIDflow GUI components within 
-Jupyter environments. By separating layout logic from stylistic tokens, it 
-enables a highly flexible "skinning" system where the entire visual interface 
-can be swapped via theme presets (e.g., DARK, METAL, PRO) without affecting 
+This module implements a centralized CSS orchestration layer that manages the
+aesthetic and structural presentation of all AIDflow GUI components within
+Jupyter environments. By separating layout logic from stylistic tokens, it
+enables a highly flexible "skinning" system where the entire visual interface
+can be swapped via theme presets (e.g., DARK, METAL, PRO) without affecting
 functional behavior.
 
 Key Design Pillars:
-1. Structural Decoupling: Isolates core layout rules (Z-index, flexbox grids, 
-   and spacing) in `base_style` while delegating color palettes and effects 
+1. Structural Decoupling: Isolates core layout rules (Z-index, flexbox grids,
+   and spacing) in `base_style` while delegating color palettes and effects
    to specialized theme methods.
 
-2. Immersive Themes: Provides a range of professional visual profiles—from 
-   high-contrast 'Metal' industrial interfaces to neon-accented 'Pro' AI 
+2. Immersive Themes: Provides a range of professional visual profiles—from
+   high-contrast 'Metal' industrial interfaces to neon-accented 'Pro' AI
    aesthetics—using CSS variables for consistent branding.
 
-3. Jupyter Ecosystem Integration: Includes critical CSS overrides to resolve 
-   common JupyterLab/Notebook rendering issues, such as widget clipping, 
+3. Jupyter Ecosystem Integration: Includes critical CSS overrides to resolve
+   common JupyterLab/Notebook rendering issues, such as widget clipping,
    input box styling, and interactive element visibility.
 
-4. Dynamic Component Styling: Implements a sophisticated custom UI kit for 
-   checkboxes, sliders, and tooltips that replaces native OS elements with 
+4. Dynamic Component Styling: Implements a sophisticated custom UI kit for
+   checkboxes, sliders, and tooltips that replaces native OS elements with
    a consistent, modern design language across all themes.
 """
 
-from ...deps.display   import  display, HTML
-from ..factory         import  DictClass
+from ...deps.display import display, HTML
+from ..factory import DictClass
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -35,44 +35,54 @@ from ..factory         import  DictClass
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class THEME(DictClass):
     """Theme of UI HTML elements DARK | DARK2 | LIGHT | LIGHT2 | METAL | METAL2 | PRO | PRO2."""
-    DARK    = 'dark'
-    DARK2   = 'dark2'
-    LIGHT   = 'light'
-    LIGHT2  = 'light2'
-    LIGHT3  = 'light3'
-    METAL   = 'metal'
-    METAL2  = 'metal2'
-    PRO     = 'pro'
-    PRO2    = 'pro2'
+
+    DARK = "dark"
+    DARK2 = "dark2"
+    LIGHT = "light"
+    LIGHT2 = "light2"
+    LIGHT3 = "light3"
+    METAL = "metal"
+    METAL2 = "metal2"
+    PRO = "pro"
+    PRO2 = "pro2"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ConfigCss:
     """
-    Centralized CSS orchestration layer that manages the aesthetic and structural 
+    Centralized CSS orchestration layer that manages the aesthetic and structural
     presentation of all AIDflow GUI components within Jupyter environments.
     """
-    
-    def __init__(self, 
-        panel_id: str = 'panel-v1', 
-        theme:    str = 'dark'
-    ):
+
+    def __init__(self, panel_id: str = "panel-v1", theme: str = "dark"):
         self.panel_id = panel_id
-        
+
         # 1. Inject the structural CSS first (Layout, Z-Index, Jupyter Fixes)
         self.base_style()
         self.choice_style()
         self.genesis_extras()
 
         # 2. Inject only the colors and shadows for the selected theme
-        if theme == THEME.DARK    : self.dark_theme()
-        if theme == THEME.DARK2   : self.dark_theme2()
-        if theme == THEME.LIGHT   : self.light_theme()
-        if theme == THEME.LIGHT2  : self.light_theme2()
-        if theme == THEME.LIGHT3  : self.light_theme3()
-        if theme == THEME.METAL   : self.metal_theme()
-        if theme == THEME.METAL2  : self.metal_theme2()
-        if theme == THEME.PRO     : self.pro_theme()
-        if theme == THEME.PRO2    : self.pro_theme2()
+        if theme == THEME.DARK:
+            self.dark_theme()
+        if theme == THEME.DARK2:
+            self.dark_theme2()
+        if theme == THEME.LIGHT:
+            self.light_theme()
+        if theme == THEME.LIGHT2:
+            self.light_theme2()
+        if theme == THEME.LIGHT3:
+            self.light_theme3()
+        if theme == THEME.METAL:
+            self.metal_theme()
+        if theme == THEME.METAL2:
+            self.metal_theme2()
+        if theme == THEME.PRO:
+            self.pro_theme()
+        if theme == THEME.PRO2:
+            self.pro_theme2()
 
     def base_style(self):
         """Contains all structural CSS, Z-index logic, and Jupyter overrides common to ALL themes."""
@@ -324,7 +334,7 @@ class ConfigCss:
 
     def choice_style(self) -> None:
         """Checboxes and Radio buttons."""
-        display(HTML(f'''
+        display(HTML(f"""
         <style>                   
         /* 1. Base Reset for both */
         .{self.panel_id} input[type="checkbox"] {{
@@ -382,7 +392,7 @@ class ConfigCss:
             pointer-events: none !important;        
         }}
         </style>        
-        '''))        
+        """))
 
     def genesis_extras(self):
         """Contains extra CSS for ProjectGenesis."""
@@ -1014,7 +1024,7 @@ class ConfigCss:
             }}
             .{self.panel_id} .ui-slider {{ background: #e0e0e0 !important; height: 3px !important; }}
         </style>
-        """))    
+        """))
 
     def metal_theme(self):
         """Precision Titanium / Brushed Metal Panel"""
@@ -1160,7 +1170,7 @@ class ConfigCss:
         }}
 
     </style>
-    """))  
+    """))
 
     def metal_theme2(self):
         """Industrial Precision Metal Panel (High Contrast, Machined Feel)"""
@@ -1503,4 +1513,6 @@ class ConfigCss:
 
     </style>
     """))
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

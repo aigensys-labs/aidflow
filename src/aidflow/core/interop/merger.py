@@ -16,11 +16,11 @@ combine incremental result sets (e.g., per-agent diagnostics)
 into unified output structures.
 """
 
-from ...deps.types      import Any
-from ...deps.data       import pDF, pSe
+from ...deps.types import Any
+from ...deps.data import pDF, pSe
 
-from ..factory          import DictDataclass
-from ..interop          import Pd
+from ..factory import DictDataclass
+from ..interop import Pd
 
 
 class DictMerger:
@@ -34,7 +34,7 @@ class DictMerger:
     """
 
     @classmethod
-    def merge(cls, d_new: dict, d_org: dict, pd_axis:int=0) -> dict:
+    def merge(cls, d_new: dict, d_org: dict, pd_axis: int = 0) -> dict:
         """
         Merge `d_org` into `d_new` (org values take priority).
 
@@ -58,8 +58,8 @@ class DictMerger:
         -------
         dict
             The merged dictionary (`d_new` mutated in place).
-        """ 
-        for k, v in d_org.items():        
+        """
+        for k, v in d_org.items():
             if k not in d_new:
                 d_new[k] = cls.init_value_by_type(v)
             if isinstance(v, dict):
@@ -69,10 +69,11 @@ class DictMerger:
         return d_new
 
     @classmethod
-    def merge_list(cls, 
-        list_of_dict: list[dict | DictDataclass] | tuple[dict | DictDataclass], 
-        pd_axis:int=0
-    ) -> dict | DictDataclass:   
+    def merge_list(
+        cls,
+        list_of_dict: list[dict | DictDataclass] | tuple[dict | DictDataclass],
+        pd_axis: int = 0,
+    ) -> dict | DictDataclass:
         """
         Merge a sequence of dictionaries into a single unified
         structure.
@@ -100,31 +101,31 @@ class DictMerger:
         TypeError
             If elements are mixed types (e.g., dict and
             DictDataclass).
-        """        
+        """
         d_cls: DictDataclass | None = None
         if all([isinstance(d, DictDataclass) for d in list_of_dict]):
             d_cls: DictDataclass = type(list_of_dict[0])
             list_of_dict = [dict(d) for d in list_of_dict]
-            # NOTE 
+            # NOTE
             #  → dict(d)     → turns only the top level class (d_cls) to dict
             #  → d.to_dict() → turns all sub-dictdaclasses to dict (!)
 
         if not all([isinstance(d, dict) for d in list_of_dict]):
             type_ = [type(d) for d in list_of_dict]
-            raise TypeError(f'\nAIG SAFETY\
+            raise TypeError(f"\nAIG SAFETY\
         \n ► DICTIONARY MERGE FROM LIST ELEMENTS IS POSSIBLE ONLY WHEN ALL LIST ELEMENTS BEING DICTIONARY\
-        \n ► TYPES OF ELEMENTS IN LIST: {type_}')
-        
-        new = {}    
+        \n ► TYPES OF ELEMENTS IN LIST: {type_}")
+
+        new = {}
         for d in list_of_dict:
             cls.merge(new, d, pd_axis)
-        
+
         if d_cls is None:
             return new
         return d_cls(**new)
-    
+
     @classmethod
-    def _merge_by_type(cls, *args, pd_axis:int=0) -> Any:
+    def _merge_by_type(cls, *args, pd_axis: int = 0) -> Any:
         """
         Merge two or more values of the same type using type-
         appropriate concatenation.
@@ -153,13 +154,13 @@ class DictMerger:
         ------
         TypeError
             If the arguments are not all the same type.
-        """  
+        """
         t = args[0]
         c = [type(x) for x in args if type(x) != type(t)]
         if c:
             raise TypeError(
-                'AIG SAFETY ► Merging is possible only for same types\n'
-                f'► Org: {type(t)} | Mismatch: {c}'
+                "AIG SAFETY ► Merging is possible only for same types\n"
+                f"► Org: {type(t)} | Mismatch: {c}"
             )
         if isinstance(t, (list, tuple)):
             merged = [r for res in args for r in res]
@@ -171,9 +172,9 @@ class DictMerger:
             merged = Pd.concat(args, axis=pd_axis)
         elif isinstance(t, pSe):
             merged = Pd.concat(args, axis=0)
-        else: 
+        else:
             merged = args
-        return merged   
+        return merged
 
     @staticmethod
     def mergable_data_types() -> tuple:
@@ -187,9 +188,9 @@ class DictMerger:
             Supported mergable type identifiers.
         """
         return (list, tuple, set, dict, pDF, pSe)
-    
+
     @classmethod
-    def is_mergable_data_type(cls, value:Any) -> bool:
+    def is_mergable_data_type(cls, value: Any) -> bool:
         """
         Check whether a value is of a type supported for merging.
 
@@ -204,9 +205,9 @@ class DictMerger:
             True if the value's type is in `mergable_data_types()`.
         """
         return isinstance(value, cls.mergable_data_types())
-    
+
     @classmethod
-    def init_value_by_type(cls, value:Any):
+    def init_value_by_type(cls, value: Any):
         """
         Create an empty instance of the same type as the input
         value (for initializing merge targets).
@@ -228,5 +229,5 @@ class DictMerger:
             itself for scalars.
         """
         if cls.is_mergable_data_type(value):
-            return type(value)()  
-        return value    
+            return type(value)()
+        return value

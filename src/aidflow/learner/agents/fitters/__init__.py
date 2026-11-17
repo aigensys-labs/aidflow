@@ -3,10 +3,7 @@ from .glm_selector import (
     LassoBinaryGLM,
     ElasticBinaryGLM,
     LogRegBinaryGLM,
-    PLSBinaryGLM
+    PLSBinaryGLM,
 )
 
-from .gbm_selector import (
-    LightBinaryGBM,
-    ExtremeBinaryGBM
-)
+from .gbm_selector import LightBinaryGBM, ExtremeBinaryGBM

@@ -66,62 +66,46 @@ Requires the following stages to be completed:
 - Interaction Encoder (optional — binary rule features).
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM,
-                                        AIGFLOW,
-                                        Parameters
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelEnvelope,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,  
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.base               import  FitterModelBase
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  (
-                                        AigParam, 
-                                        AigStop
-                                        )
-from ...core.io                 import  ModelIO
-from ...core.interop            import  Pd
+from ...core.parameters import PRM, AIGFLOW, Parameters
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelEnvelope,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.base import FitterModelBase
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam, AigStop
+from ...core.io import ModelIO
+from ...core.interop import Pd
 
-from .fitters.woe_transformer   import  (
-                                        WoeTransformerGini,
-                                        WoeTransformerTest,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitResult,
-                                        FitStats                                          
-                                        )
-from .ixn_encoder               import  IxnEncoder
-
+from .fitters.woe_transformer import (
+    WoeTransformerGini,
+    WoeTransformerTest,
+    FitParamsBase,
+    FitParamsCfg,
+    FitResult,
+    FitStats,
+)
+from .ixn_encoder import IxnEncoder
 
 MODEL = AIGFLOW.Encoding.woe_encoder
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► WOE ENCODING ► Transform Encoded Num and Cat FEs to WOE Representation'
-DEP1  = AIGFLOW.Encoding.num_encoder
-DEP2  = AIGFLOW.Encoding.cat_encoder
-DEP3  = AIGFLOW.Encoding.ixn_encoder
-DEPS  = (DEP1, DEP2, DEP3)
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG DATA STAGE ► WOE ENCODING ► Transform Encoded Num and Cat FEs to WOE Representation"
+DEP1 = AIGFLOW.Encoding.num_encoder
+DEP2 = AIGFLOW.Encoding.cat_encoder
+DEP3 = AIGFLOW.Encoding.ixn_encoder
+DEPS = (DEP1, DEP2, DEP3)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -129,8 +113,11 @@ DEPS  = (DEP1, DEP2, DEP3)
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    GINI = 'WoeGini'
-    TEST = 'WoeTest'
+
+    GINI = "WoeGini"
+    TEST = "WoeTest"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -140,49 +127,51 @@ class REG(DictClass):
 @Dataclass.mapping
 class WoeParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.ENCODE.gini.param        : (params.gini_cutoff,  'Gini Feature Cutoff'   ),
-        PRM.ENCODE.woe_alpha.param   : (params.alpha,        'Bins Pruning alpha'    ),
-    }  
+    setup = {
+        PRM.ENCODE.gini.param: (params.gini_cutoff, "Gini Feature Cutoff"),
+        PRM.ENCODE.woe_alpha.param: (params.alpha, "Bins Pruning alpha"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class InnerFitterBase(FitParamsBase):
 
-    config: dict|FitParamsCfg = FitParamsCfg(
-        target   = None,
-        verbose  = True
-    )
+    config: dict | FitParamsCfg = FitParamsCfg(target=None, verbose=True)
 
     @property
     def _model(self) -> FitterModelBase:
-        return self.model        
-    
+        return self.model
+
     def get_result(self) -> FitResult:
         return self._model.result
 
     def get_stats(self) -> FitStats:
         return self._model.stats
-    
+
+
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """   
-    
+    """
+
     @FREG.register(REG.GINI)
     class WoeTransformerGiniFitter(InnerFitterBase):
 
         @property
         def _model(self) -> WoeTransformerGini:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> WoeTransformerGini:            
-            setup  = dict(params) | config
+            return self.model
+
+        def _build(self, params: FitParamsBase, config: dict) -> WoeTransformerGini:
+            setup = dict(params) | config
             return WoeTransformerGini(**setup)
 
     @FREG.register(REG.TEST)
@@ -190,26 +179,32 @@ class FitOptions(FitRegOpt):
 
         @property
         def _model(self) -> WoeTransformerTest:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> WoeTransformerTest:            
-            setup  = dict(params) | config
-            return WoeTransformerTest(**setup)            
+            return self.model
+
+        def _build(self, params: FitParamsBase, config: dict) -> WoeTransformerTest:
+            setup = dict(params) | config
+            return WoeTransformerTest(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
-    """Fitter params input design."""    
+    """Fitter params input design."""
+
     num_features: list
     cat_features: list
     ixn_encoder: IxnEncoder
+
 
 class FitIxn:
     """
     IXN vars as special type of CAT → provided ixn to gen interactions.
     Same philosophy as WOE/CAT: direct woe from input data.
-    """    
-    def __init__(self, cfg:Parameters, prm:FitParams):
+    """
+
+    def __init__(self, cfg: Parameters, prm: FitParams):
         self.cfg = cfg
         self.prm = prm
         self.ixn = self.get_uni_ixn()
@@ -218,60 +213,59 @@ class FitIxn:
         num = self.prm.num_features or []
         cat = self.prm.cat_features or []
         return num, cat
-    
-    def get_uni_ixn(self) -> list:        
+
+    def get_uni_ixn(self) -> list:
         """Unique IXN mapping → user can define req. ixn subset via num-cat."""
         if self.prm.ixn_encoder is None:
             return []
-        
-        ixn_mapping = self.prm.ixn_encoder.cols.encoding        
+
+        ixn_mapping = self.prm.ixn_encoder.cols.encoding
         if not ixn_mapping:
             return []
-        
+
         num, cat = self.get_fes()
-        ixn = [x for x in num + cat if x in ixn_mapping] 
+        ixn = [x for x in num + cat if x in ixn_mapping]
         if ixn:
             return ixn
         return list(ixn_mapping)
-    
-    def get_uni_fes(self) -> tuple[list|None, list|None]:
+
+    def get_uni_fes(self) -> tuple[list | None, list | None]:
         """Unique WOE-CAT mapping → user can define req. ixn subset via num-cat."""
         num, cat = self.get_fes()
         if not num + cat + self.ixn:
-            return None, None       # fallback to the target model fes handling
+            return None, None  # fallback to the target model fes handling
         num = [x for x in num if x not in self.ixn]
         cat = [x for x in cat if x not in self.ixn]
         return num, cat + self.ixn  # ixn vars are cat types
 
-    def create_ixn(self, data:pDF, subset:list=None) -> pDF:
+    def create_ixn(self, data: pDF, subset: list = None) -> pDF:
         if self.prm.ixn_encoder is None:
             return pDF(index=data.index)
-        return self.prm.ixn_encoder.transform(
-            data, subset = subset or self.ixn
-        ).data
-                    
-    def extend_by_ixn(self, data:pDF, subset:list=None) -> pDF:
+        return self.prm.ixn_encoder.transform(data, subset=subset or self.ixn).data
+
+    def extend_by_ixn(self, data: pDF, subset: list = None) -> pDF:
         if not self.ixn:
-            return data  
+            return data
         ixn = [x for x in self.ixn if x in subset] if subset else self.ixn
         if not ixn:
             return data
-        d = data.copy()        
+        d = data.copy()
         d[ixn] = self.create_ixn(data, ixn)
         return d
-    
-    def update_fitted_ixn(self, result:FitResult) -> None:
+
+    def update_fitted_ixn(self, result: FitResult) -> None:
         self.ixn = [x for x in self.ixn if x in result.encoding]
- 
+
+
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """  
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
 
     FREG = FREG
     DREG = DREG
-    
+
     def _set_ixn(self) -> None:
         self.ixn = FitIxn(self.setup, self.params)
 
@@ -279,43 +273,44 @@ class Fitter(FitterBase[FitParams]):
         num, cat = self.ixn.get_uni_fes()
         return self.ixn.extend_by_ixn(data), num, cat
 
-    def fit(self, data:pDF): 
+    def fit(self, data: pDF):
         """
         Learns WOE Encoding
 
         Parameters
         ----------
         data : Exogenous Data for woe encoding.
-        """        
+        """
         self._set_ixn()
         data_, num, cat = self._data_preprocess(data)
 
         self.model.fit(data_, num, cat)
         self.result: FitResult = self.model.get_result()
-        self.stats:  FitStats  = self.model.get_stats()
+        self.stats: FitStats = self.model.get_stats()
         self.ixn.update_fitted_ixn(self.result)
         self._init_dash()
-        
+
         return self
-    
-    def transform(self, data:pDF, subset:list=None) -> pDF:
-        """ 
+
+    def transform(self, data: pDF, subset: list = None) -> pDF:
+        """
         Transform Features to WOE Encoding.
 
         Parameters
         ----------
         data : New Data to apply trained transformation.
         subset : Feature subset to encode.
-                
+
         Returns
         -------
         Transformed Data with transformed woe features.
-        """         
+        """
         data_ = self.ixn.extend_by_ixn(data, subset)
-        cols  = subset or data_.columns
+        cols = subset or data_.columns
         return self.model.transform(data_[cols])
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -324,23 +319,29 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    encoding:       dict
-    vars_woe:       list
-    vars_selected:  list
-    vars_dropped:   list
-    vars_map:       dict
+
+    encoding: dict
+    vars_woe: list
+    vars_selected: list
+    vars_dropped: list
+    vars_map: dict
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
@@ -350,20 +351,19 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     def _set_cols(self):
         res = self.fitter.result
         return TransResCols(
-            encoding        = res.encoding,
-            vars_woe        = res.vars_woe,
-            vars_selected   = list(res.vars_map),
-            vars_dropped    = res.vars_dropped,
-            vars_map        = res.vars_map
+            encoding=res.encoding,
+            vars_woe=res.vars_woe,
+            vars_selected=list(res.vars_map),
+            vars_dropped=res.vars_dropped,
+            vars_map=res.vars_map,
         )
-        
-    def transform(self, data:pDF, subset:list=None) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            data = self.fitter.transform(data, subset)
-        )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    def transform(self, data: pDF, subset: list = None) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(data=self.fitter.transform(data, subset))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -372,45 +372,47 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
-    Transformer - Fitter before execution begins.
-    """    
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = FitParamsCfg
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
+    Transformer - Fitter before execution begins.
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = WoeParamsMapping
 
     ModelTransformer = Transformer
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"WoeEncoderInput"):
+    def get_choice(self, fx_choice: str, inputs: "WoeEncoderInput"):
         defaults = self.Config(
-            target   = AigParam.di(inputs.target,  self.setup.target),
-            verbose  = AigParam.di(inputs.verbose, self.setup.verbose),
-        )        
+            target=AigParam.di(inputs.target, self.setup.target),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)  
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        return RegGet.choice(fx_choice, fx_config)
 
-    def get_params(self, fx_choice:str, inputs:"WoeEncoderInput", params:dict):
-        params  = self.get_fit_params(fx_choice, inputs.fx_params, params)
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "WoeEncoderInput", params: dict):
+        params = self.get_fit_params(fx_choice, inputs.fx_params, params)
         encoder = self.get_model_dependecy(DEP3, is_req=False)
 
         fit = FitParams(
-            num_features = inputs.num_features, 
-            cat_features = inputs.cat_features, 
-            ixn_encoder  = encoder, 
-            **params
+            num_features=inputs.num_features,
+            cat_features=inputs.cat_features,
+            ixn_encoder=encoder,
+            **params,
         )
         return fit, self.setup
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
- 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → WOE → API
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -452,20 +454,25 @@ class WoeEncoderInput(ModelInput):
     models. GBM models consume stable numerical and categorical
     features directly without WOE transformation.
     """
-    train_set:      pDF
-    num_features:   list|None = None
-    cat_features:   list|None = None
+
+    train_set: pDF
+    num_features: list | None = None
+    cat_features: list | None = None
+
 
 @Dataclass.base(dynamic_params=True)
 class WoeEncoderEnvelopeCfg:
-    train_num:   pDF | None
-    train_cat:   pDF | None
+    train_num: pDF | None
+    train_cat: pDF | None
+
 
 @Dataclass.base(dynamic_params=True)
 class WoeEncoderEnvelope(ModelEnvelope):
     """Model Fit Input Design."""
-    inputs: WoeEncoderInput 
+
+    inputs: WoeEncoderInput
     config: WoeEncoderEnvelopeCfg
+
 
 @Dataclass.base
 class WoeEncoderResult(ModelResult):
@@ -510,15 +517,19 @@ class WoeEncoderResult(ModelResult):
     below-average. The magnitude reflects the strength of
     separation.
     """
-    data:       pDF
-    features:   list
-    selected:   list
-    dropped:    list
-    fe_map:     dict
-    encoding:   dict
+
+    data: pDF
+    features: list
+    selected: list
+    dropped: list
+    fe_map: dict
+    encoding: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
-    
-class WoeEncoder(Processor, ModelBase):     
+
+
+class WoeEncoder(Processor, ModelBase):
     """
     WOE (Weight of Evidence) Encoder — Final Feature Representation.
 
@@ -593,17 +604,15 @@ class WoeEncoder(Processor, ModelBase):
     """
 
     def _save(self, save_path) -> None:
-        features = {
-            'features': self.cols.vars_woe,
-            'map': self.cols.vars_map
-        }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
+        features = {"features": self.cols.vars_woe, "map": self.cols.vars_map}
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _set_vars_req(self) -> None:
         selected = self.cols.vars_selected
         self.ixn_mapping = {}
-        
+
         ixn_encoder: IxnEncoder = self.get_model_dependecy(DEP3, is_req=False)
 
         if ixn_encoder is None or not ixn_encoder.cols.encoding:
@@ -611,28 +620,29 @@ class WoeEncoder(Processor, ModelBase):
             return
 
         ixn_mapping = ixn_encoder.cols.encoding
-        
+
         vars_req = [x for x in selected if x not in ixn_mapping]
         for x in ixn_mapping:
-            ixn = ixn_mapping[x].vars # orig data vars needed to gen ixn vars
+            ixn = ixn_mapping[x].vars  # orig data vars needed to gen ixn vars
             self.ixn_mapping[x] = ixn
             ixn = [x for x in ixn if x not in vars_req]
-            vars_req.extend(ixn) 
+            vars_req.extend(ixn)
         self._vars_req = vars_req
-    
-    def _get_vars_req(self, subset:list=None) -> list:
+
+    def _get_vars_req(self, subset: list = None) -> list:
         if subset is None:
             return self._vars_req
         subset = [x for x in subset if x in self._vars_req]
         if not self.ixn_mapping:
             return subset
-        vars_req = [] 
+        vars_req = []
         for x in subset:
             if x in self.ixn_mapping:
                 vars_req.extend(self.ixn_mapping[x])
             else:
                 vars_req.append(x)
         return vars_req
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
@@ -649,32 +659,31 @@ class WoeEncoder(Processor, ModelBase):
         self._num_enc = self.get_model_dependecy(DEP1)
         self._cat_enc = self.get_model_dependecy(DEP2)
 
-    def _get_data(self, inputs: WoeEncoderEnvelope | WoeEncoderInput) -> tuple[pDF, pDF, pDF]:
+    def _get_data(
+        self, inputs: WoeEncoderEnvelope | WoeEncoderInput
+    ) -> tuple[pDF, pDF, pDF]:
         if isinstance(inputs, WoeEncoderInput):
             return (
                 inputs.train_set,
                 self._num_enc.transform(inputs.train_set).data,
-                self._cat_enc.transform(inputs.train_set).data
+                self._cat_enc.transform(inputs.train_set).data,
             )
-        d = (
-            inputs.inputs.train_set,
-            inputs.config.train_num,
-            inputs.config.train_cat
-        )
+        d = (inputs.inputs.train_set, inputs.config.train_num, inputs.config.train_cat)
         d = [x for x in d if len(x)]
-        if any(len(d[i]) != len(d[i+1]) for i in range(len(d)-1)):
+        if any(len(d[i]) != len(d[i + 1]) for i in range(len(d) - 1)):
             AigStop.custom(
-                'AIG SAFETY ► Input data has different length ► NUM & CAT '
-                'encoders must be re-fitted prior WOE after Outliers removal update.'                
+                "AIG SAFETY ► Input data has different length ► NUM & CAT "
+                "encoders must be re-fitted prior WOE after Outliers removal update."
             )
         return d
-    
+
     def _join_data(self, inputs: WoeEncoderInput | WoeEncoderInput) -> pDF:
         data = self._get_data(inputs)
         return Pd.concat(data, axis=1)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def fit(self, inputs: WoeEncoderInput, fx_choice:str = REG.GINI, **params):
+    def fit(self, inputs: WoeEncoderInput, fx_choice: str = REG.GINI, **params):
         """
         Fit WOE encoding on all encoded features.
 
@@ -699,26 +708,27 @@ class WoeEncoder(Processor, ModelBase):
             The fitted encoder instance.
         """
         inputs_ = self._get_inputs(inputs)
-        verify  = len(inputs_.train_set)
-        
+        verify = len(inputs_.train_set)
+
         self.choice = self.get_choice(fx_choice, inputs_)
         self.params = self.get_params(fx_choice, inputs_, params)
 
         self._set_encoders()
 
         self.processor.fit(
-            inputs_, 
+            inputs_,
             self._join_data(inputs),
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            fx_choice=self.choice,
+            params=self.params,
+            verify=verify,
         )
         self._set_vars_req()
         self._save(inputs_.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data:pDF, subset:list=None) -> WoeEncoderResult:
+    def transform(self, data: pDF, subset: list = None) -> WoeEncoderResult:
         """
         Apply fitted WOE encodings to new data.
 
@@ -731,8 +741,8 @@ class WoeEncoder(Processor, ModelBase):
         data : pDF
             New data containing the original (pre-WOE) features.
         subset : list, optional
-            Specific features to process and return (`including IXN`). 
-            Default = None: all trained features.         
+            Specific features to process and return (`including IXN`).
+            Default = None: all trained features.
 
         Returns
         -------
@@ -740,28 +750,30 @@ class WoeEncoder(Processor, ModelBase):
             WOE-encoded features + full feature lineage metadata.
         """
         miss = [x for x in self._get_vars_req(subset) if (x not in data.columns)]
-        df = self.processor.transform(data, subset = subset, verify = miss)
+        df = self.processor.transform(data, subset=subset, verify=miss)
         return WoeEncoderResult(
-            data     = df.data, 
-            features = self.cols.vars_woe, 
-            selected = self.cols.vars_selected,
-            dropped  = self.cols.vars_dropped,
-            fe_map   = self.cols.vars_map,
-            encoding = self.cols.encoding
-        )    
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+            data=df.data,
+            features=self.cols.vars_woe,
+            selected=self.cols.vars_selected,
+            dropped=self.cols.vars_dropped,
+            fe_map=self.cols.vars_map,
+            encoding=self.cols.encoding,
+        )
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → WOE → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class OptionUI(OptionUIBase):
-    title   = 'WOE ENCODING PANEL'
-    split   = 1
+    title = "WOE ENCODING PANEL"
+    split = 1
     Mapping = WoeParamsMapping
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -771,24 +783,27 @@ class WoeEncoderUI(ModelUIBase):
     """
     AIG Flow Features WOE Encoder.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Implemented to perform Weight of Evidence (WOE) encoding on features, 
-    converting categorical/discrete features into a continuous scale 
-    relative to a binary target.    
+
+    Implemented to perform Weight of Evidence (WOE) encoding on features,
+    converting categorical/discrete features into a continuous scale
+    relative to a binary target.
     """
 
-    Model  = WoeEncoder
+    Model = WoeEncoder
     Option = OptionUI
-        
+
     @wraps(WoeEncoder.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(), **kwargs)
+        self.model_ui.fit(*args, ui_params=self._get_ui_fit_defaults(), **kwargs)
 
     @wraps(WoeEncoder.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
-        
+
     @property
-    def fitted(self) -> WoeEncoderResult: return self.model_ui.fitted
+    def fitted(self) -> WoeEncoderResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

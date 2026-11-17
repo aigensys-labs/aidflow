@@ -44,49 +44,37 @@ Requires the Feature Cleaner stage to be completed (numerical
 features should be type-standardized before binning).
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM,
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,  
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import PRM, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from .fitters.num_discretizor   import  (
-                                        NumericalDiscretizor,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitResult,
-                                        FitStats                                        
-                                        )
-
+from .fitters.num_discretizor import (
+    NumericalDiscretizor,
+    FitParamsBase,
+    FitParamsCfg,
+    FitResult,
+    FitStats,
+)
 
 MODEL = AIGFLOW.Encoding.num_encoder
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► NUMERICAL ENCODING ► Encode Numerical Features to Bin Representation'
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG DATA STAGE ► NUMERICAL ENCODING ► Encode Numerical Features to Bin Representation"
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -94,7 +82,10 @@ DESC  = 'AIG DATA STAGE ► NUMERICAL ENCODING ► Encode Numerical Features to 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG: str = 'NumDiscretizor'
+
+    AIG: str = "NumDiscretizor"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -104,39 +95,41 @@ class REG(DictClass):
 @Dataclass.mapping
 class NumParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.ENCODE.bins.param      : (params.max_num_bins,   'Bin Search Space'      ),
-        PRM.ENCODE.gini.param      : (params.gini_cutoff,    'Gini Feature Cutoff'   ),
-        PRM.ENCODE.num_alpha.param : (params.alpha,          'Bins Difference alpha' ),
-        PRM.ENCODE.mbs.param       : (params.min_bin_share,  'Minimum Bin Size'      ),
-    } 
+    setup = {
+        PRM.ENCODE.bins.param: (params.max_num_bins, "Bin Search Space"),
+        PRM.ENCODE.gini.param: (params.gini_cutoff, "Gini Feature Cutoff"),
+        PRM.ENCODE.num_alpha.param: (params.alpha, "Bins Difference alpha"),
+        PRM.ENCODE.mbs.param: (params.min_bin_share, "Minimum Bin Size"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """     
-    
+    """
+
     @FREG.register(REG.AIG)
     class NumericalDiscretizorFitter(FitParamsBase):
 
-        config: dict|FitParamsCfg = FitParamsCfg(
-            target   = None,
-            discrete = 10,
-            verbose  = True
+        config: dict | FitParamsCfg = FitParamsCfg(
+            target=None, discrete=10, verbose=True
         )
 
         @property
         def _model(self) -> NumericalDiscretizor:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> NumericalDiscretizor:            
-            setup  = dict(params) | config
+            return self.model
+
+        def _build(self, params: FitParamsBase, config: dict) -> NumericalDiscretizor:
+            setup = dict(params) | config
             return NumericalDiscretizor(**setup)
 
         def get_result(self) -> FitResult:
@@ -144,23 +137,28 @@ class FitOptions(FitRegOpt):
 
         def get_stats(self) -> FitStats:
             return self._model.stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
-    """Fitter params input design."""       
+    """Fitter params input design."""
+
     num_features: list
+
 
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
 
     FREG = FREG
     DREG = DREG
-    
-    def fit(self, data:pDF): 
+
+    def fit(self, data: pDF):
         """
         Analyze and learn numerical encoding.
 
@@ -170,32 +168,33 @@ class Fitter(FitterBase[FitParams]):
         """
         if self._fit_no_model(MODEL, self.params.num_features, FitResult):
             return
-                
-        self.model.fit(data, self.params.num_features)        
-        self.result: FitResult = self.model.get_result()        
-        self.stats:  FitStats  = self.model.get_stats()
+
+        self.model.fit(data, self.params.num_features)
+        self.result: FitResult = self.model.get_result()
+        self.stats: FitStats = self.model.get_stats()
         self._init_dash()
 
         return self
-    
-    def transform(self, data:pDF) -> pDF:
-        """ 
+
+    def transform(self, data: pDF) -> pDF:
+        """
         Transform Numerical Features to Discrete Space.
 
         Parameters
         ----------
         data : New Data to apply trained transformation.
-                
+
         Returns
         -------
         Transformed Data with transformed numerical features.
         """
         if self._is_no_model:
-            return pDF() 
-               
-        return self.model.transform(data)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+            return pDF()
 
+        return self.model.transform(data)
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -204,23 +203,29 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    encoding:       dict
-    vars_num:       list
-    vars_selected:  list
-    vars_dropped:   list
-    vars_map:       dict
+
+    encoding: dict
+    vars_num: list
+    vars_selected: list
+    vars_dropped: list
+    vars_map: dict
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
@@ -231,22 +236,21 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
         return inputs.train_set
 
     def _set_cols(self):
-        res = self.fitter.result        
+        res = self.fitter.result
         return TransResCols(
-            encoding      = res.encoding,
-            vars_num      = res.vars_num,
-            vars_selected = list(res.vars_map),
-            vars_dropped  = res.vars_dropped,
-            vars_map      = res.vars_map
+            encoding=res.encoding,
+            vars_num=res.vars_num,
+            vars_selected=list(res.vars_map),
+            vars_dropped=res.vars_dropped,
+            vars_map=res.vars_map,
         )
-        
-    def transform(self, data:pDF) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            data = self.fitter.transform(data)
-        )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    def transform(self, data: pDF) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(data=self.fitter.transform(data))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -255,39 +259,41 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
+
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
     Transformer - Fitter before execution begins.
-    """ 
-    
-    MODEL  = MODEL
-    DESC   = DESC
-    
-    Config  = FitParamsCfg
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = NumParamsMapping
 
-    ModelTransformer = Transformer 
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    ModelTransformer = Transformer
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"NumEncoderInput"):
+    def get_choice(self, fx_choice: str, inputs: "NumEncoderInput"):
         defaults = self.Config(
-            target   = AigParam.di(inputs.target,  self.setup.target),
-            verbose  = AigParam.di(inputs.verbose, self.setup.verbose),
-            discrete = 10,
-        )        
+            target=AigParam.di(inputs.target, self.setup.target),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+            discrete=10,
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)  
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        return RegGet.choice(fx_choice, fx_config)
 
-    def get_params(self, fx_choice:str, inputs:"NumEncoderInput", params:dict):
-        params = self.get_fit_params(fx_choice, inputs.fx_params, params)        
-        fit = FitParams(num_features = inputs.num_features, **params)
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "NumEncoderInput", params: dict):
+        params = self.get_fit_params(fx_choice, inputs.fx_params, params)
+        fit = FitParams(num_features=inputs.num_features, **params)
         return fit, self.setup
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
- 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → NUM → API
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -317,11 +323,13 @@ class NumEncoderInput(ModelInput):
 
     **Feature Resolution**: If `num_features` is None, the
     full column set (excluding target) is used. In practice,
-    the Feature Cleaner stage resolves the numerical feature 
+    the Feature Cleaner stage resolves the numerical feature
     list before this stage.
     """
-    train_set:      pDF
-    num_features:   list|None = None
+
+    train_set: pDF
+    num_features: list | None = None
+
 
 @Dataclass.base
 class NumEncoderResult(ModelResult):
@@ -354,15 +362,19 @@ class NumEncoderResult(ModelResult):
         grouped bin). Used by the WOE encoder for probability
         computation.
     """
-    data:       pDF
-    features:   list
-    selected:   list
-    dropped:    list
-    fe_map:     dict
-    encoding:   dict
+
+    data: pDF
+    features: list
+    selected: list
+    dropped: list
+    fe_map: dict
+    encoding: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class NumEncoder(Processor, ModelBase):     
+
+class NumEncoder(Processor, ModelBase):
     """
     Numerical Feature Discretization — Non-Greedy Binning & Encoding.
 
@@ -432,16 +444,14 @@ class NumEncoder(Processor, ModelBase):
     >>> result.selected     # ['revenue', 'tenure', ...]
     >>> result.dropped      # ['noise_var', 'irrelevant', ...]
     """
-    
+
     def _save(self, save_path) -> None:
-        features = {
-            'features': self.cols.vars_num,
-            'map': self.cols.vars_map
-        }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
+        features = {"features": self.cols.vars_num, "map": self.cols.vars_map}
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def fit(self, inputs:NumEncoderInput, fx_choice: str = REG.AIG, **params):
+    def fit(self, inputs: NumEncoderInput, fx_choice: str = REG.AIG, **params):
         """
         Analyze and learn numerical bin encoding.
 
@@ -467,21 +477,19 @@ class NumEncoder(Processor, ModelBase):
             The fitted encoder instance.
         """
         verify = len(inputs.train_set)
-        
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data:pDF, subset:list=None) -> NumEncoderResult:
+    def transform(self, data: pDF, subset: list = None) -> NumEncoderResult:
         """
         Apply fitted bin encodings to new data.
 
@@ -493,8 +501,8 @@ class NumEncoder(Processor, ModelBase):
         data : pDF
             New data containing the original numerical features.
         subset : list, optional
-            Specific features to process and return. 
-            Default = None: all trained features.            
+            Specific features to process and return.
+            Default = None: all trained features.
 
         Returns
         -------
@@ -503,48 +511,48 @@ class NumEncoder(Processor, ModelBase):
         """
         c_all = self.cols.vars_selected
         c_sub = subset or data.columns
-        cols  = [x for x in c_sub if x in c_all]
+        cols = [x for x in c_sub if x in c_all]
 
         miss = c_all if not cols else None
-        df = self.processor.transform(data[cols], verify = miss)
+        df = self.processor.transform(data[cols], verify=miss)
 
         return NumEncoderResult(
-            data     = df.data, 
-            features = self.cols.vars_num, 
-            selected = self.cols.vars_selected,
-            dropped  = self.cols.vars_dropped,
-            fe_map   = self.cols.vars_map,
-            encoding = self.cols.encoding
+            data=df.data,
+            features=self.cols.vars_num,
+            selected=self.cols.vars_selected,
+            dropped=self.cols.vars_dropped,
+            fe_map=self.cols.vars_map,
+            encoding=self.cols.encoding,
         )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → NUM → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class OptionUI(OptionUIBase):
-    
-    title   = 'NUMERICAL DISCRETIZATION PANEL'
-    split   = 2
+
+    title = "NUMERICAL DISCRETIZATION PANEL"
+    split = 2
     Mapping = NumParamsMapping
-        
+
     def _min_share_constrain(self, value):
-        if value < 1: # Driven by param design in PRM
+        if value < 1:  # Driven by param design in PRM
             return 0  # shared param - either float or int
         return value
-    
+
     def options(self):
         super().options()
 
         mbs = PRM.ENCODE.mbs.param
-        desc = {
-            mbs: ['Minimum Bin Size', [0], self._min_share_constrain]
-        }     
-        self.wg.params_to_values(desc)        
-        self.wg.shared_param_link( {mbs: self.wg.shared_relat_abs} )  
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        desc = {mbs: ["Minimum Bin Size", [0], self._min_share_constrain]}
+        self.wg.params_to_values(desc)
+        self.wg.shared_param_link({mbs: self.wg.shared_relat_abs})
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -554,23 +562,26 @@ class NumEncoderUI(ModelUIBase):
     """
     AIG Flow Data Numerical Features Encoder.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Responsible for analyzing numerical features and transforming them 
-    into a discrete space based on the selected fitting strategy.    
+
+    Responsible for analyzing numerical features and transforming them
+    into a discrete space based on the selected fitting strategy.
     """
 
-    Model  = NumEncoder
+    Model = NumEncoder
     Option = OptionUI
-        
+
     @wraps(NumEncoder.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(), **kwargs)
-    
+        self.model_ui.fit(*args, ui_params=self._get_ui_fit_defaults(), **kwargs)
+
     @wraps(NumEncoder.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> NumEncoderResult: return self.model_ui.fitted
+    def fitted(self) -> NumEncoderResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

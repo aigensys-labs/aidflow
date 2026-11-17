@@ -12,12 +12,12 @@ model-agnostic importance ranking.
 Two solver strategies are provided depending on the model type:
 
 1. **GLM (Logistic Regression) — Analytic Solver**
-    Uses the sub-Hessian inversion (Schur complement of the Fisher 
-    Information matrix) combined with a 1-step Newton-Raphson update 
-    to approximate the  exact refit of the logistic model when feature j 
+    Uses the sub-Hessian inversion (Schur complement of the Fisher
+    Information matrix) combined with a 1-step Newton-Raphson update
+    to approximate the  exact refit of the logistic model when feature j
     is ablated.
 
-    This eliminates full model refitting loops, reducing execution time 
+    This eliminates full model refitting loops, reducing execution time
     from O(N * p * iterations) to O(p^2) per feature. One or two Newton-
     Raphson steps produce results nearly identical to a full MLE refit.
 
@@ -26,7 +26,7 @@ Two solver strategies are provided depending on the model type:
 
     β_reduced ≈ β_full, -j + (X_r^T W X_r)^(-1) X_r^T (y - p_full) + O(1/N)
 
-    where W = diag(p_full * (1 - p_full)), X_r is the design matrix without 
+    where W = diag(p_full * (1 - p_full)), X_r is the design matrix without
     feature j, and β_full, -j is the full model coefficient vector excluding β_j.
 
     Reference:
@@ -36,7 +36,7 @@ Two solver strategies are provided depending on the model type:
 2. **GBM (LightGBM / XGBoost) — Resampling Solver**
    Since GBM has no closed-form solution for coefficient updates,
    the ablation is performed by **ablated refits**: for each
-   feature, the model is retrained on (p-1) features, and the Gini 
+   feature, the model is retrained on (p-1) features, and the Gini
    drop is measured. This is computationally expensive (p refits)
    but produces valid, unbiased importance estimates.
 
@@ -46,22 +46,15 @@ between predictions from the full and ablated models (they share
 the same test observations).
 """
 
-from ...deps.common     import  (
-                                ABC, 
-                                abstractmethod
-                                )
-from ...deps.data       import  np, pDF, pSe
-from ...deps.types      import  NDArray
+from ...deps.common import ABC, abstractmethod
+from ...deps.data import np, pDF, pSe
+from ...deps.types import NDArray
 
-from ...core.factory    import  DictClass
+from ...core.factory import DictClass
 
-from ..metrics          import  Gini
-from ..tests            import  TestModelDiff
-from .models            import  (
-                                Logit, 
-                                LGB, XGB, 
-                                ModelUtils
-                                )
+from ..metrics import Gini
+from ..tests import TestModelDiff
+from .models import Logit, LGB, XGB, ModelUtils
 
 GLM = Logit
 GBM = LGB | XGB
@@ -69,10 +62,11 @@ GBM = LGB | XGB
 
 class LBL(DictClass):
     """Column labels for the Feature Ablation result table."""
-    F  = 'Feature'
-    A  = 'Ablation_ΔGini'
-    R  = 'Orig_ΔGini(%)'
-    IS = 'SignificantΔ'
+
+    F = "Feature"
+    A = "Ablation_ΔGini"
+    R = "Orig_ΔGini(%)"
+    IS = "SignificantΔ"
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -114,17 +108,19 @@ class _AblationSolver(ABC):
         Validation / Test samples.
 
     alpha : float = 0.01
-        Significance threshold for model's residual change 
+        Significance threshold for model's residual change
         by adding/removing a feature under the assessment.
     """
+
     KIND: GLM | GBM
-    
-    def __init__(self, 
-        model: GLM | GBM, 
-        X: pDF | NDArray, 
-        y: pSe | NDArray, 
+
+    def __init__(
+        self,
+        model: GLM | GBM,
+        X: pDF | NDArray,
+        y: pSe | NDArray,
         eval_set: tuple[list[pDF | NDArray, pSe | NDArray], ...],
-        alpha: float = 0.05
+        alpha: float = 0.05,
     ):
         self._verify(model, eval_set)
 
@@ -135,9 +131,9 @@ class _AblationSolver(ABC):
 
         self.store = {}
         self.update_eval_set(eval_set)
-    
-    def update_eval_set(self, 
-        eval_set: tuple[list[pDF | NDArray, pSe | NDArray], ...]
+
+    def update_eval_set(
+        self, eval_set: tuple[list[pDF | NDArray, pSe | NDArray], ...]
     ) -> None:
         """
         Replace the evaluation set for subsequent ablation assessments.
@@ -148,14 +144,14 @@ class _AblationSolver(ABC):
         covariance matrices, etc.).
 
         **Performance Note:**
-        - **GLM solver**: The reduced beta vectors  are computed from the 
-          training data and are independent of the eval set. Updating the 
-          eval set is essentially free — the next `compute()` call will 
-          simply predict on the new data using the already-computed betas. 
+        - **GLM solver**: The reduced beta vectors  are computed from the
+          training data and are independent of the eval set. Updating the
+          eval set is essentially free — the next `compute()` call will
+          simply predict on the new data using the already-computed betas.
           O(p × Z) matrix multiplications, where Z is the eval set size.
 
-        - **GBM solver**: The reduced estimators are computed from the training 
-          data and are independent of the eval set. The estimators remain cached 
+        - **GBM solver**: The reduced estimators are computed from the training
+          data and are independent of the eval set. The estimators remain cached
           and `update()` is significantly faster (prediction only, no refit).
 
         Parameters:
@@ -169,10 +165,10 @@ class _AblationSolver(ABC):
             >>>
             >>> # Re-assess on a different OOT test set (no rebuild):
             >>> result_oot = ablation.update(eval_set=[(X_oot, y_oot)])
-        """        
+        """
         self.eval_set = eval_set
 
-    def compute(self, subset:list=None) -> pDF | list[pDF]:
+    def compute(self, subset: list = None) -> pDF | list[pDF]:
         """
         Execute the feature ablation assessment.
 
@@ -205,12 +201,12 @@ class _AblationSolver(ABC):
         self._set_init()
         self._set_fes(subset)
         self._set_pipeline_attrs()
-        
+
         if not self._is_eval():
             return self._get_nan_result()
 
         res = []
-        for X,y in self.eval_set:
+        for X, y in self.eval_set:
             self._set_init()
             self._set_eval_set(X, y)
 
@@ -218,30 +214,29 @@ class _AblationSolver(ABC):
                 g, z = self._fe_eval(x)
                 self._add_result(x, g, z)
 
-            res.append( self._get_result() )
+            res.append(self._get_result())
 
-        return res if len(self.eval_set)  > 1 else res[0]
-
-    @abstractmethod
-    def _fe_eval(self, x:str) -> tuple[float, float]:
-        ...
+        return res if len(self.eval_set) > 1 else res[0]
 
     @abstractmethod
-    def _set_pipeline_attrs(self) -> None:
-        ...
-        
+    def _fe_eval(self, x: str) -> tuple[float, float]: ...
+
+    @abstractmethod
+    def _set_pipeline_attrs(self) -> None: ...
+
     @staticmethod
-    def _align_X(X:pDF) -> pDF:
-        return X        
+    def _align_X(X: pDF) -> pDF:
+        return X
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def _set_eval_set(self, X:pDF, y:pSe) -> None:
+
+    def _set_eval_set(self, X: pDF, y: pSe) -> None:
         self.X_eval = self._align_X(X)
-        self.y_eval = y        
-        self.y_eval_proba = self.model.predict_proba(X)[:,1]
-        self.model_eval_gini = self._calc_g(self.y_eval_proba) 
-    
-    def _set_fes(self, subset:list) -> None:
+        self.y_eval = y
+        self.y_eval_proba = self.model.predict_proba(X)[:, 1]
+        self.model_eval_gini = self._calc_g(self.y_eval_proba)
+
+    def _set_fes(self, subset: list) -> None:
         if isinstance(self.X, pDF):
             col = self.X.columns.to_list()
         else:
@@ -256,10 +251,11 @@ class _AblationSolver(ABC):
     def _is_eval(self) -> bool:
         if len(self._fes) < 2:
             return False
-        return True         
+        return True
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def _calc_z(self, p_idx:pSe) -> float:
+
+    def _calc_z(self, p_idx: pSe) -> float:
         """
         Compute the DeLong z-score for comparing two correlated Gini estimates.
 
@@ -275,10 +271,10 @@ class _AblationSolver(ABC):
 
         Returns:
             float: The DeLong z-score. |z| > 1.96 implies p < 0.05.
-        """        
+        """
         return TestModelDiff(self.y_eval, self.y_eval_proba, p_idx).delong(z_score=True)
 
-    def _calc_g(self, p_idx:pSe) -> float:
+    def _calc_g(self, p_idx: pSe) -> float:
         """
         Compute the Gini coefficient for a set of predictions.
 
@@ -288,20 +284,18 @@ class _AblationSolver(ABC):
 
         Returns:
             float: The Gini coefficient (2 × AUC - 1).
-        """        
+        """
         return Gini.fast_calc(self.y_eval, p_idx)
-        
-    def _get_stats(self, y_idx_proba:pSe) -> tuple[float, float]:
-        return (
-            self._calc_g(y_idx_proba), 
-            self._calc_z(y_idx_proba)
-        )    
+
+    def _get_stats(self, y_idx_proba: pSe) -> tuple[float, float]:
+        return (self._calc_g(y_idx_proba), self._calc_z(y_idx_proba))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _set_init(self) -> None:
         self.result = []
 
-    def _is_significant(self, z:float, a:float=None) -> bool:
+    def _is_significant(self, z: float, a: float = None) -> bool:
         """
         Determine if a feature's ablation is statistically significant.
 
@@ -317,23 +311,25 @@ class _AblationSolver(ABC):
 
         Returns:
             bool: True if the ablation is statistically significant.
-        """        
+        """
         if z is None:
             return False
-        t = TestModelDiff.p_value(z) < self.alpha 
+        t = TestModelDiff.p_value(z) < self.alpha
         if a is not None:
-            return t and ( a < 0 )
+            return t and (a < 0)
         return t
 
-    def _add_result(self, x:str, g:float, z:float) -> None:
+    def _add_result(self, x: str, g: float, z: float) -> None:
         m = self.model_eval_gini
         a = g - m
-        self.result.append({
-            LBL.F:  x,
-            LBL.A:  a, 
-            LBL.R:  round(g / m, 4),
-            LBL.IS: self._is_significant(z, a)
-        })
+        self.result.append(
+            {
+                LBL.F: x,
+                LBL.A: a,
+                LBL.R: round(g / m, 4),
+                LBL.IS: self._is_significant(z, a),
+            }
+        )
 
     def _get_result(self) -> pDF:
         """
@@ -344,11 +340,11 @@ class _AblationSolver(ABC):
 
         Returns:
             pDF: The ablation table sorted by Ablation_ΔGini (ascending).
-        """        
+        """
         if not self.result:
             for x in self._fes:
                 self._add_result(x, 0, None)
-        return pDF(self.result).sort_values(LBL.A).reset_index(drop=True) 
+        return pDF(self.result).sort_values(LBL.A).reset_index(drop=True)
 
     def _get_nan_result(self) -> pDF | list[pDF]:
         self.model_eval_gini = np.nan
@@ -356,20 +352,25 @@ class _AblationSolver(ABC):
         l = len(self.eval_set)
         if l == 1:
             return r
-        return [r]*l
+        return [r] * l
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
     def _verify(cls, model, eval_set):
-        if not isinstance(model, cls.KIND):            
-            raise TypeError('AIG SAFETY'
-                f'\n► Provided {type(model).__name__} is not supported.'
-                f'\n► Supported models defined by {cls.KIND}'
+        if not isinstance(model, cls.KIND):
+            raise TypeError(
+                "AIG SAFETY"
+                f"\n► Provided {type(model).__name__} is not supported."
+                f"\n► Supported models defined by {cls.KIND}"
             )
         if not eval_set:
-            raise ValueError('eval_set must contain at least one (X, y) pair.')        
+            raise ValueError("eval_set must contain at least one (X, y) pair.")
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-        
+
+
 class _GLMAnalyticSolver(_AblationSolver):
     """
     Analytic feature ablation solver for GLM (Logistic Regression) models.
@@ -403,6 +404,7 @@ class _GLMAnalyticSolver(_AblationSolver):
           collinear features (increase `n_steps` to 3+).
         - Assumes the full model's coefficients are the global MLE.
     """
+
     KIND = GLM
 
     def _set_pipeline_attrs(self):
@@ -412,25 +414,24 @@ class _GLMAnalyticSolver(_AblationSolver):
         self._set_coef()
 
     @staticmethod
-    def _align_X(X:pDF) -> NDArray:
-        return np.concatenate(
-            [np.array([[1]]*len(X)), np.array(X)], axis=1
-        )      
+    def _align_X(X: pDF) -> NDArray:
+        return np.concatenate([np.array([[1]] * len(X)), np.array(X)], axis=1)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _set_y_proba(self) -> None:
-        """Compute and store the full model's predicted probabilities."""        
-        self.y_proba = self.model.predict_proba(self.X)[:,1]
-    
+        """Compute and store the full model's predicted probabilities."""
+        self.y_proba = self.model.predict_proba(self.X)[:, 1]
+
     def _set_X(self) -> None:
         """
         Sets self.X_design :
-        NDArray, (N, p+1) array `including intercept` column (+1) at the first pos. 
-        """        
+        NDArray, (N, p+1) array `including intercept` column (+1) at the first pos.
+        """
         self.X_ = self._align_X(self.X)
 
     def _set_coef(self) -> None:
-        """Assemble the full coefficient vector (intercept + features)."""        
+        """Assemble the full coefficient vector (intercept + features)."""
         self.coef = np.append(self.model.intercept_, self.model.coef_)
 
     def _set_covariance(self) -> None:
@@ -446,20 +447,22 @@ class _GLMAnalyticSolver(_AblationSolver):
         """
         p = self.y_proba
         X = self.X_
-        w = p * (1.0 - p)   # W = p*(1-p)        
-        H = (X.T * w) @ X   # Fast X^T * W * X
-        self.cov_matrix = np.linalg.pinv(H)        
+        w = p * (1.0 - p)  # W = p*(1-p)
+        H = (X.T * w) @ X  # Fast X^T * W * X
+        self.cov_matrix = np.linalg.pinv(H)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _align_idx(self, x: str) -> int:
         idx = self._fes.index(x)
         return idx + 1  # +1 for intercept
-        
-    def _exclude_fe(self, X:pDF, x:str) -> NDArray:
+
+    def _exclude_fe(self, X: pDF, x: str) -> NDArray:
         idx = self._align_idx(x)
         return np.delete(X, idx, axis=1)
-    
-    def _set_reduced_betas(self,        
+
+    def _set_reduced_betas(
+        self,
         x: str,
         n_steps: int = 2,
     ) -> tuple[NDArray, NDArray]:
@@ -493,8 +496,8 @@ class _GLMAnalyticSolver(_AblationSolver):
                   (intercept + remaining features).
         """
         if self.store.get(x) is not None:
-            return        
-        
+            return
+
         idx = self._align_idx(x)
 
         p = len(self.coef)
@@ -509,17 +512,17 @@ class _GLMAnalyticSolver(_AblationSolver):
         H_inv = V_rr - np.outer(V_rj, V_rj) / V_jj
 
         # Newton steps on reduced model
-        X_r  = self._exclude_fe(self.X_, x)
+        X_r = self._exclude_fe(self.X_, x)
         beta = self.coef[mask].copy()
 
         for _ in range(n_steps):
-            eta   = X_r @ beta
+            eta = X_r @ beta
             p_hat = 1.0 / (1.0 + np.exp(-eta))
             score = X_r.T @ (self.y - p_hat)
-            beta  = beta + H_inv @ score
+            beta = beta + H_inv @ score
 
         self.store[x] = beta
-    
+
     def _predict_proba(self, x: str) -> NDArray:
         """
         Compute predicted probabilities from a reduced model on eval set.
@@ -535,9 +538,9 @@ class _GLMAnalyticSolver(_AblationSolver):
         X = self._exclude_fe(self.X_eval, x)
         lin = np.dot(X, b)
         lin = np.asarray(lin)
-        return 1 / (1 + np.exp(-lin))    
-    
-    def _fe_eval(self, x:str|int) -> tuple[float, float]:
+        return 1 / (1 + np.exp(-lin))
+
+    def _fe_eval(self, x: str | int) -> tuple[float, float]:
         """
         Evaluate the ablation impact of a single feature (GLM analytic).
 
@@ -550,11 +553,14 @@ class _GLMAnalyticSolver(_AblationSolver):
 
         Returns:
             tuple[float, float]: (gini_ablated, delong_z_score).
-        """        
+        """
         self._set_reduced_betas(x)
         p = self._predict_proba(x)
         return self._get_stats(p)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class _GBDTResamplingSolver(_AblationSolver):
     """
@@ -565,7 +571,7 @@ class _GBDTResamplingSolver(_AblationSolver):
         the ablation is performed by **refitting the model** on
         (p-1) features. For each feature:
 
-        a. Train the ablated model on training set 
+        a. Train the ablated model on training set
             (p-1 features, excluding feature x).
         c. Evaluate both on eval set.
         d. Compute Gini and DeLong z-score.
@@ -586,16 +592,18 @@ class _GBDTResamplingSolver(_AblationSolver):
         y (pSe): Binary target.
         alpha (float): Significance level (default 0.05).
     """
+
     KIND = GBM
-          
+
     def _set_pipeline_attrs(self) -> None:
         pass
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _store_annot(self) -> None:
         self.store: dict[str, GBM] = {}
 
-    def _get_setup(self, X:pDF) -> dict:
+    def _get_setup(self, X: pDF) -> dict:
         """
         Prepare the estimator configuration for ablated refits.
 
@@ -614,7 +622,7 @@ class _GBDTResamplingSolver(_AblationSolver):
 
         Returns:
             dict: The estimator configuration dictionary.
-        """        
+        """
         s = self.model.get_setup()
         c = self.model.get_categorical_feature()
 
@@ -623,19 +631,19 @@ class _GBDTResamplingSolver(_AblationSolver):
 
         # 2 Lock tree count to optimal iteration from full fit
         m = self.model._model
-        
+
         if isinstance(self.model, LGB) and m.best_iteration_:
             s["n_estimators"] = m.best_iteration_
         elif getattr(self.model.booster_, "best_iteration", 0) > 0:
-            s["n_estimators"] = self.model.booster_.best_iteration        
+            s["n_estimators"] = self.model.booster_.best_iteration
 
         if not c:
             return s
-        
-        c  = [x for x in c if x in X.columns]        
-        return s | dict(categorical_feature = c)
 
-    def _get_estimator(self, X:pDF) -> GBM:
+        c = [x for x in c if x in X.columns]
+        return s | dict(categorical_feature=c)
+
+    def _get_estimator(self, X: pDF) -> GBM:
         """
         Instantiate a new estimator with the ablation configuration.
 
@@ -644,15 +652,15 @@ class _GBDTResamplingSolver(_AblationSolver):
 
         Returns:
             GBM: A new, unfitted estimator instance.
-        """        
+        """
         e = type(self.model)
         p = self._get_setup(X)
         return e(**p)
 
-    def _exclude_fe(self, X:pDF, x:str) -> pDF:
-        fes = [f for f in self._fes if f!=x]
+    def _exclude_fe(self, X: pDF, x: str) -> pDF:
+        fes = [f for f in self._fes if f != x]
         return X[fes]
-    
+
     def _set_estimator(self, x) -> GBM:
         """
         Fit (or retrieve cached) ablated estimator for feature x.
@@ -663,15 +671,15 @@ class _GBDTResamplingSolver(_AblationSolver):
 
         Parameters:
             x (str): The feature name to exclude from the training set.
-        """        
+        """
         if self.store.get(x) is not None:
             return
-        
+
         X_r = self._exclude_fe(self.X, x)
-        est = self._get_estimator(X_r)        
+        est = self._get_estimator(X_r)
         self.store[x] = est.fit(X_r, self.y)
 
-    def _predict_proba(self, x:str) -> NDArray: 
+    def _predict_proba(self, x: str) -> NDArray:
         """
         Predict on the eval set using the cached ablated estimator.
 
@@ -680,17 +688,18 @@ class _GBDTResamplingSolver(_AblationSolver):
 
         Returns:
             NDArray: Predicted probabilities on the current eval_set.
-        """      
+        """
         m = self.store[x]
         X = self._exclude_fe(self.X_eval, x)
-        return m.predict_proba(X)[:,1]
+        return m.predict_proba(X)[:, 1]
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _fe_eval(self, x:str) -> tuple[float, float]:
+    def _fe_eval(self, x: str) -> tuple[float, float]:
         """
         Evaluate the ablation impact of a single feature (GBM resampling).
 
-        Refits the model on (p-1) features and measures the Gini drop with 
+        Refits the model on (p-1) features and measures the Gini drop with
         DeLong significance.
 
         Parameters:
@@ -698,11 +707,14 @@ class _GBDTResamplingSolver(_AblationSolver):
 
         Returns:
             tuple[float, float]: (gini_ablated, z_score).
-        """        
+        """
         self._set_estimator(x)
         p = self._predict_proba(x)
         return self._get_stats(p)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureAblation:
     """
@@ -762,21 +774,23 @@ class FeatureAblation:
       enabling data-driven decisions about data collection scope.
     - **Monitoring Baseline**: Establishes the expected contribution
       of each feature, against which PSI and performance drift can
-      be monitored.        
+      be monitored.
     """
 
-    def __init__(self, 
-        model: GLM | GBM, 
-        alpha: float = 0.05, 
+    def __init__(
+        self,
+        model: GLM | GBM,
+        alpha: float = 0.05,
     ):
         self.model = model
         self.alpha = alpha
 
-    def evaluate(self, 
-        X: pDF | NDArray, 
-        y: pSe | NDArray, 
-        eval_set: tuple[list[pDF | NDArray, pSe | NDArray],...], 
-        subset: list = None
+    def evaluate(
+        self,
+        X: pDF | NDArray,
+        y: pSe | NDArray,
+        eval_set: tuple[list[pDF | NDArray, pSe | NDArray], ...],
+        subset: list = None,
     ) -> pDF | list[pDF]:
         """
         Execute the feature ablation assessment.
@@ -791,12 +805,12 @@ class FeatureAblation:
                 Must contain all features of the model.
             y (pSe | NDArray): The binary target used in the original model fit.
             eval_set : tuple[list[pDF | NDArray, pSe | NDArray], ...]
-                Evaluation set pairs - matrix of shape (Z, p)         
+                Evaluation set pairs - matrix of shape (Z, p)
                 with binary target vector (Z,). Validation / Test samples.
             subset (list | None): Optional list of feature names to
                 evaluate. If None, all features are assessed.
                 Useful for focused analysis on a shortlist.
-                
+
         Returns:
             pDF | list[pDF]: The ablation results table with columns:
                 - `Feature`: Feature name.
@@ -821,17 +835,18 @@ class FeatureAblation:
             Solver = _GBDTResamplingSolver
 
         self.solver = Solver(
-            model = self.model, 
-            X = X, 
-            y = y, 
-            eval_set = eval_set,
-            alpha = self.alpha, 
+            model=self.model,
+            X=X,
+            y=y,
+            eval_set=eval_set,
+            alpha=self.alpha,
         )
         return self.solver.compute(subset)
 
-    def update(self,
-        eval_set: tuple[list[pDF | NDArray, pSe | NDArray],...], 
-        subset: list = None
+    def update(
+        self,
+        eval_set: tuple[list[pDF | NDArray, pSe | NDArray], ...],
+        subset: list = None,
     ) -> pDF | list[pDF]:
         """
         Re-evaluate the feature ablation on a new evaluation set.
@@ -881,7 +896,9 @@ class FeatureAblation:
             ... )
             >>> # results[0] → validation ablation table
             >>> # results[1] → OOT ablation table
-        """        
+        """
         self.solver.update_eval_set(eval_set)
-        return self.solver.compute(subset)        
+        return self.solver.compute(subset)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

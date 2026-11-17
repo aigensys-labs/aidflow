@@ -1,54 +1,23 @@
 """
 Unified Persistence Layer for standardized data and model serialization.
 
-This module implements a high-level I/O abstraction that decouples the library's 
-internal data structures from their physical storage formats. By utilizing an 
-inference-based approach to file types, it provides a single, consistent API 
-for saving and loading diverse assets—ranging from CSVs and Pickles to compressed 
-mgzip archives—while ensuring that all paths are standardized through the 
+This module implements a high-level I/O abstraction that decouples the library's
+internal data structures from their physical storage formats. By utilizing an
+inference-based approach to file types, it provides a single, consistent API
+for saving and loading diverse assets—ranging from CSVs and Pickles to compressed
+mgzip archives—while ensuring that all paths are standardized through the
 global Folder management system.
 """
 
-from ..deps.common import (
-    wraps, 
-    io
-)
-from ..deps.data import (
-    pd, 
-    pDF, 
-    pa, 
-    pa_csv, 
-    pa_ds, 
-    pa_pq, 
-    pa_ft,
-    pa_pc
-)
-from ..deps.common import (
-    pickle, 
-    mgzip, 
-    csv, 
-    Path
-)
-from ..deps.types import (
-    Any, 
-    Literal
-)
-from ..core.standard import (
-    TypeDef
-)
-from ..core.logging import (
-    Logger
-)
-from ..display.rgb import (
-    RgbANSI
-)
-from .thread import (
-    AsyncIO
-)
-from .folder import (
-    Folder
-)
-
+from ..deps.common import wraps, io
+from ..deps.data import pd, pDF, pa, pa_csv, pa_ds, pa_pq, pa_ft, pa_pc
+from ..deps.common import pickle, mgzip, csv, Path
+from ..deps.types import Any, Literal
+from ..core.standard import TypeDef
+from ..core.logging import Logger
+from ..display.rgb import RgbANSI
+from .thread import AsyncIO
+from .folder import Folder
 
 logger = Logger(__name__)
 
@@ -60,21 +29,21 @@ class ArrowIO:
     """
     High-performance layer utilizing Apache Arrow for large datasets.
     Standardized interface for high-level object persistence.
-    
-    Provides a simplified 'save/load' API that abstracts away the underlying 
+
+    Provides a simplified 'save/load' API that abstracts away the underlying
     compression logic.
     """
 
     EXT = dict(
-        pq  = (".parquet", ".pq"),
-        csv = (".csv", ".tsv"),
-        zip = (".gzip", ".gz"),
-        ipc = (".arrow", ".feather", ".ipc"),
+        pq=(".parquet", ".pq"),
+        csv=(".csv", ".tsv"),
+        zip=(".gzip", ".gz"),
+        ipc=(".arrow", ".feather", ".ipc"),
     )
 
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     # LOAD
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     @staticmethod
     def _sanitize_col(field: pa.Field, col: pa.ChunkedArray) -> pa.ChunkedArray:
         """Sanitizes an individual column in C++ if NaNs are present."""
@@ -84,7 +53,7 @@ class ArrowIO:
 
     @classmethod
     def _postprocess(cls, table: pa.Table) -> pa.Table:
-        """Batch sanitizes IEEE NaNs and reconstructs the Table."""                
+        """Batch sanitizes IEEE NaNs and reconstructs the Table."""
         if not any(pa.types.is_floating(field.type) for field in table.schema):
             return table
 
@@ -99,28 +68,28 @@ class ArrowIO:
     @wraps(pa_csv.read_csv)
     def read_csv(cls, input_file: str | Path, **kwargs) -> pa.Table:
         """Read a Table from a stream of CSV data."""
-        
+
         ro = kwargs.pop("read_options", None)
         read_options = ro or pa_csv.ReadOptions(
-            use_threads = True, 
-            block_size  = 1048576,  # 1MB chunks for thread distribution
-            skip_rows   = 0
+            use_threads=True,
+            block_size=1048576,  # 1MB chunks for thread distribution
+            skip_rows=0,
         )
-                
+
         co = kwargs.pop("convert_options", None)
         convert_options = co or pa_csv.ConvertOptions(
-            null_values = TypeDef.missing,
-            strings_can_be_null = True,            
+            null_values=TypeDef.missing,
+            strings_can_be_null=True,
         )
-        
+
         d = pa_csv.read_csv(
             input_file,
-            read_options    = read_options,
-            convert_options = convert_options,
-            **kwargs
+            read_options=read_options,
+            convert_options=convert_options,
+            **kwargs,
         )
         return cls._postprocess(d)
-    
+
     @classmethod
     def read_gzip(cls, path: str | Path, **kwargs) -> pa.Table:
         """
@@ -136,9 +105,9 @@ class ArrowIO:
 
         if isinstance(d, pa.Table):
             return p(d)
-        
+
         if isinstance(d, pDF):
-            return p( pa.Table.from_pandas(d, preserve_index = True) )
+            return p(pa.Table.from_pandas(d, preserve_index=True))
 
         if isinstance(d, (bytes, bytearray, pa.Buffer)):
             if d.startswith(b"PAR1"):
@@ -147,21 +116,23 @@ class ArrowIO:
             return cls.read_csv(pa.BufferReader(d), **kwargs)
 
         if isinstance(d, io.IOBase):
-            return cls.read_csv(d)        
-                
+            return cls.read_csv(d)
+
         if isinstance(d, str):
             if "\n" in d or "\r" in d or "," in d:
                 return cls.read_csv(pa.BufferReader(d.encode("utf-8")), **kwargs)
             return cls.read_csv(d, **kwargs)
 
         if isinstance(d, dict):
-            return p( pa.Table.from_pydict(d) )
-        
+            return p(pa.Table.from_pydict(d))
+
         if isinstance(d, list):
-            return p( pa.Table.from_pylist(d) )
-        
-        raise TypeError(f"Unsupported payload type returned by MgzipIO: {type(d).__name__}")
-    
+            return p(pa.Table.from_pylist(d))
+
+        raise TypeError(
+            f"Unsupported payload type returned by MgzipIO: {type(d).__name__}"
+        )
+
     @classmethod
     @wraps(pa_pq.read_table)
     def read_parquet(cls, source: str | Path, **kwargs) -> pa.Table:
@@ -182,15 +153,16 @@ class ArrowIO:
         """Read the dataset to an Arrow table."""
         d = pa_ds.dataset(source, **kwargs).to_table()
         return cls._postprocess(d)
-    
+
     @classmethod
-    def load(cls,
-        path: str | Path, 
-        format: Literal['parquet', 'csv', 'gzip', 'feather', 'dataset'] = None, 
-        **kwargs
+    def load(
+        cls,
+        path: str | Path,
+        format: Literal["parquet", "csv", "gzip", "feather", "dataset"] = None,
+        **kwargs,
     ) -> pa.Table:
         """
-        Unified Arrow entrypoint factory supporting files, multi-file datasets, and SQL.        
+        Unified Arrow entrypoint factory supporting files, multi-file datasets, and SQL.
 
         Parameters
         ----------
@@ -198,12 +170,12 @@ class ArrowIO:
             Path to the source file.
 
         format : Literal['parquet', 'csv', 'gzip', 'feather', 'dataset'] = None
-            Optional explicit format of the file to load. 
+            Optional explicit format of the file to load.
             When `format = None` → format is infered by the file extension .
-        
+
         Returns
         -------
-        pa.Table : Loaded arrow Table from the source.            
+        pa.Table : Loaded arrow Table from the source.
         """
         # 1. SQL / ADBC Driver Cursor
         if hasattr(path, "fetch_arrow_table"):
@@ -213,25 +185,25 @@ class ArrowIO:
         if isinstance(path, (str, Path)):
             path = str(path)
 
-            if format == "parquet" or path.endswith(cls.EXT['pq']):
+            if format == "parquet" or path.endswith(cls.EXT["pq"]):
                 return cls.read_parquet(path, **kwargs)
-            
-            if format == "csv" or path.endswith(cls.EXT['csv']):
+
+            if format == "csv" or path.endswith(cls.EXT["csv"]):
                 return cls.read_csv(path, **kwargs)
-            
-            if format == "gzip" or path.endswith(cls.EXT['zip']):
+
+            if format == "gzip" or path.endswith(cls.EXT["zip"]):
                 return cls.read_gzip(path, **kwargs)
-            
-            if format in ("feather", "ipc") or path.endswith(cls.EXT['ipc']):
+
+            if format in ("feather", "ipc") or path.endswith(cls.EXT["ipc"]):
                 return cls.read_feather(path, **kwargs)
-            
+
             if format == "dataset" or "partitioning" in kwargs:
                 return cls.read_dataset(path, **kwargs)
 
         # 3. Direct Dataset or Table Pass-through
         if isinstance(path, pa_ds.Dataset):
             return path.to_table()
-            
+
         raise ValueError(f"Unsupported Arrow source or format: {type(path)} / {format}")
 
     # ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -282,11 +254,12 @@ class ArrowIO:
         pa_ds.write_dataset(data, base_dir, **kwargs)
 
     @classmethod
-    def save(cls, 
-        data: pa.Table, 
-        path: str | Path, 
-        format: Literal['parquet', 'csv', 'gzip', 'feather', 'dataset'] = None, 
-        **kwargs
+    def save(
+        cls,
+        data: pa.Table,
+        path: str | Path,
+        format: Literal["parquet", "csv", "gzip", "feather", "dataset"] = None,
+        **kwargs,
     ) -> None:
         """
         Unified Arrow save factory supporting individual file formats and
@@ -301,7 +274,7 @@ class ArrowIO:
             Destination path where to save the data.
 
         format : Literal['parquet', 'csv', 'gzip', 'feather', 'dataset'] = None
-            Optional explicit format of the file to save. 
+            Optional explicit format of the file to save.
             When `format = None` → format is infered by the file extension .
         """
         if not isinstance(data, pa.Table):
@@ -310,16 +283,16 @@ class ArrowIO:
             )
         path = str(path)
 
-        if format == "parquet" or path.endswith(cls.EXT['pq']):
+        if format == "parquet" or path.endswith(cls.EXT["pq"]):
             return cls.to_parquet(data, path, **kwargs)
 
-        if format == "csv" or path.endswith(cls.EXT['csv']):
+        if format == "csv" or path.endswith(cls.EXT["csv"]):
             return cls.to_csv(data, path, **kwargs)
 
-        if format == "gzip" or path.endswith(cls.EXT['zip']):
+        if format == "gzip" or path.endswith(cls.EXT["zip"]):
             return cls.to_gzip(data, path, **kwargs)
 
-        if format in ("feather", "ipc") or path.endswith(cls.EXT['ipc']):
+        if format in ("feather", "ipc") or path.endswith(cls.EXT["ipc"]):
             return cls.to_feather(data, path, **kwargs)
 
         if (
@@ -329,34 +302,34 @@ class ArrowIO:
         ):
             return cls.to_dataset(data, path, **kwargs)
 
-        raise ValueError(
-            f"Unsupported Arrow destination or format: {path} / {format}"
-        )    
+        raise ValueError(f"Unsupported Arrow destination or format: {path} / {format}")
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-    
+
 class BaseIO:
     """
     Standardized interface for high-level object persistence.
-    
-    Provides a simplified 'save/load' API that abstracts away the underlying 
-    compression logic, utilizing either synchronous or asynchronous mgzip 
+
+    Provides a simplified 'save/load' API that abstracts away the underlying
+    compression logic, utilizing either synchronous or asynchronous mgzip
     backends to ensure consistent serialization of models and structured files.
-    """        
-    
+    """
+
     @classmethod
-    def _exception(cls, o:str, p:str, e:Exception, verbose:bool): 
-        m = RgbANSI.bold_red(f'AIG ► {o.upper()} FAILED') + ' ► ' + str(p)
+    def _exception(cls, o: str, p: str, e: Exception, verbose: bool):
+        m = RgbANSI.bold_red(f"AIG ► {o.upper()} FAILED") + " ► " + str(p)
         logger.error(m)
-        if verbose: 
+        if verbose:
             print(m)
         raise e
 
     @classmethod
-    def save(cls, data, path:str|Path, async_io:bool=True, verbose:bool=True):
+    def save(cls, data, path: str | Path, async_io: bool = True, verbose: bool = True):
         """
         Persist a Python object to disk using the standard AIDflow compression.
-        
+
         Parameters
         ----------
         data : Any
@@ -368,18 +341,18 @@ class BaseIO:
         verbose : bool, default=True
             If True, prints an error message to the console upon failure.
         """
-        ops  = 'save'
+        ops = "save"
         path = Folder.standard(path)
         try:
             if async_io:
                 MgzipIOAsync.io().ops(ops, path, data)
             else:
-                MgzipIO.save(data, path) 
-        except Exception as e: 
+                MgzipIO.save(data, path)
+        except Exception as e:
             cls._exception(ops, path, e, verbose)
 
     @classmethod
-    def load(cls, path:str|Path, async_io:bool=False, verbose:bool=True):
+    def load(cls, path: str | Path, async_io: bool = False, verbose: bool = True):
         """
         Load a serialized object from the standard AIDflow storage format.
 
@@ -396,21 +369,24 @@ class BaseIO:
         -------
         Any: The deserialized Python object.
         """
-        ops  = 'load'
-        path =  Folder.standard(path)
-        try: 
+        ops = "load"
+        path = Folder.standard(path)
+        try:
             if async_io:
-                res  = MgzipIOAsync.io().ops(ops, path)
-                return MgzipIOAsync.callback(res)                
+                res = MgzipIOAsync.io().ops(ops, path)
+                return MgzipIOAsync.callback(res)
             return MgzipIO.load(path)
-        except Exception as e: 
+        except Exception as e:
             cls._exception(ops, path, e, verbose)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class MgzipIO:
     """Low-level implementation of compressed pickle serialization using mgzip."""
 
-    EXT = 'pkl.gz'
+    EXT = "pkl.gz"
 
     @classmethod
     def suffix(cls, path) -> str:
@@ -421,13 +397,13 @@ class MgzipIO:
     def save(cls, data: pDF, path: str | Path, **kwargs) -> None:
         """Compresses and dumps object to disk."""
         path = cls.suffix(path)
-        with mgzip.open(path, 'wb') as f:
+        with mgzip.open(path, "wb") as f:
             pickle.dump(data, f, **kwargs)
-    
+
     @classmethod
     def load(cls, path: str | Path, **kwargs) -> Any:
         """Decompresses and loads object from disk."""
-        path = cls.suffix(path)        
+        path = cls.suffix(path)
         return cls._load(path, kwargs)
 
     @classmethod
@@ -443,9 +419,8 @@ class MgzipIO:
             return None
 
         # 1. Pickle Deserialization
-        if (
-            decompressed_data.startswith(b"\x80") or 
-            decompressed_data.startswith(b"\x81")
+        if decompressed_data.startswith(b"\x80") or decompressed_data.startswith(
+            b"\x81"
         ):
             try:
                 return pickle.loads(decompressed_data, **kwargs)
@@ -454,9 +429,8 @@ class MgzipIO:
 
         # 2. Check for Parquet / Arrow magic headers
         # Returns raw bytes buffer to pass directly to C++ readers
-        if (
-            decompressed_data.startswith(b"PAR1") or 
-            decompressed_data.startswith(b"ARROW1")
+        if decompressed_data.startswith(b"PAR1") or decompressed_data.startswith(
+            b"ARROW1"
         ):
             return decompressed_data
 
@@ -466,11 +440,12 @@ class MgzipIO:
         except UnicodeDecodeError:
             return decompressed_data
 
+
 class MgzipIOAsync:
     """Asynchronous wrapper for MgzipIO operations to prevent thread blocking."""
 
     _async: AsyncIO | None = None
-    _io = {'save': MgzipIO.save, 'load':MgzipIO.load}
+    _io = {"save": MgzipIO.save, "load": MgzipIO.load}
 
     @classmethod
     def io(cls) -> AsyncIO:
@@ -480,15 +455,17 @@ class MgzipIOAsync:
         return cls._async
 
     @staticmethod
-    def callback(result:tuple) -> Any:
+    def callback(result: tuple) -> Any:
         """Extracts the result from an asynchronous future/tuple."""
         if result[1] is not None:
             raise result[1]
         return result[0]
-    
+
     @classmethod
     def shutdown(cls) -> None:
-        cls.io().stop(wait=True)    
+        cls.io().stop(wait=True)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -496,122 +473,125 @@ class FileIO:
     """Atomic utility methods for low-level file format manipulation."""
 
     @staticmethod
-    def save_pickle(data:pDF, path:str|Path, **kwargs):
+    def save_pickle(data: pDF, path: str | Path, **kwargs):
         """Standard python pickle save wrapper."""
-        with open(path, 'wb') as f: 
-            pickle.dump(data, f, protocol=-1, **kwargs)   
+        with open(path, "wb") as f:
+            pickle.dump(data, f, protocol=-1, **kwargs)
 
     @staticmethod
-    def load_pickle(path:str|Path, **kwargs):
+    def load_pickle(path: str | Path, **kwargs):
         """Standard python pickle load wrapper."""
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             return pickle.load(f, **kwargs)
-    
+
     @staticmethod
     def save_dict_to_csv(
-        data: dict, 
-        path: str|Path, 
+        data: dict,
+        path: str | Path,
         fields: tuple = ("Attribute", "Value"),
-        err: str = 'AIG WARNING ► Saving csv failed!'
+        err: str = "AIG WARNING ► Saving csv failed!",
     ) -> None:
         """Specialized method to transform a dictionary into 2-column CSV (Attr, Val)."""
         try:
             if not isinstance(data, dict):
                 raise ValueError(
-                    '► Save to csv supports only dictionary data input ► '
-                    f'provided data is {type(data)}'
+                    "► Save to csv supports only dictionary data input ► "
+                    f"provided data is {type(data)}"
                 )
-            
-            path = FileUtils.ensure_extension(path, 'csv')
-            
-            with open(path, mode='w', newline='') as file:
+
+            path = FileUtils.ensure_extension(path, "csv")
+
+            with open(path, mode="w", newline="") as file:
                 writer = csv.writer(file)
                 writer.writerow(fields)
                 for attr, value in data.items():
-                    writer.writerow([attr, value])        
+                    writer.writerow([attr, value])
         except:
-            logger.error(f'{err} ► {path}')
+            logger.error(f"{err} ► {path}")
 
     @staticmethod
-    def save_csv(df:pDF, path:str|Path, **kwargs) -> str:
+    def save_csv(df: pDF, path: str | Path, **kwargs) -> str:
         """Simplified pandas csv save interface. Returns save path string."""
-        path = FileUtils.ensure_extension(path, 'csv')
+        path = FileUtils.ensure_extension(path, "csv")
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(path, **kwargs)
         return path
 
     @staticmethod
-    def load_csv(path:str|Path, **kwargs) -> pd.DataFrame:
+    def load_csv(path: str | Path, **kwargs) -> pd.DataFrame:
         """Simplified pandas csv load interface."""
         return pd.read_csv(path, **kwargs)
-    
-    @classmethod        
-    def load_csv_as_dict(cls, 
-        path: str|Path, fields: tuple[str] = ("Attribute", "Value"), **kwargs
+
+    @classmethod
+    def load_csv_as_dict(
+        cls, path: str | Path, fields: tuple[str] = ("Attribute", "Value"), **kwargs
     ) -> dict:
         """Simplified pandas csv load interface → return as dictionary by fields."""
-        return (
-            cls.load_csv(path, **kwargs)
-            .set_index(fields[0])[fields[1]]
-            .to_dict()
-        )
+        return cls.load_csv(path, **kwargs).set_index(fields[0])[fields[1]].to_dict()
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 class FileUtils:
     """Path manipulation and filename sanitization utilities."""
-    
+
     @staticmethod
-    def file_extension(file:str|Path) -> str:
+    def file_extension(file: str | Path) -> str:
         """Extracts the extension from a path string."""
-        return Path(file).suffix.lstrip('.')
-    
-    @classmethod    
-    def infer_type(cls, file_name:str|Path, base:list=None) -> str:
+        return Path(file).suffix.lstrip(".")
+
+    @classmethod
+    def infer_type(cls, file_name: str | Path, base: list = None) -> str:
         """Determines the data format based on extension or a provided fallback list."""
         file_type = cls.file_extension(file_name)
-        if ( base is not None ) and ( file_type not in base[:-1] ): 
+        if (base is not None) and (file_type not in base[:-1]):
             file_type = base[-1]
         return file_type
-   
+
     @classmethod
-    def ensure_extension(cls, file:str|Path, ftype:str) -> str:
+    def ensure_extension(cls, file: str | Path, ftype: str) -> str:
         """Guarantees that a path has the required extension for its type."""
         file_type = cls.infer_type(file)
-        if file_type != ftype.split('.')[-1]: 
-            file = str(file) + '.' + ftype
+        if file_type != ftype.split(".")[-1]:
+            file = str(file) + "." + ftype
         return str(file)
-    
+
     @staticmethod
     def local_path(path, *args):
         """Joins paths while ensuring they are normalized via Folder.standard()."""
         path = Folder.standard(path)
-        for a in args: 
+        for a in args:
             path = path / str(a)
         return path
-    
+
     @classmethod
     def path_extension(cls, path, *args):
         """Append args to filename with underscores."""
         path = str(path)
-        path = '_'.join([path]+list(args))
+        path = "_".join([path] + list(args))
         return cls.local_path(path)
 
     @staticmethod
     def obs_to_K(name, reverse=False):
         """Converts observation integers (e.g., '000') to K-notation ('K') and vice versa."""
-        o,k = '000','K'
-        OK  = (str, o, k)     # from obs int to 'K'
-        KO  = (int, k, o)     # from 'K' to obs int
+        o, k = "000", "K"
+        OK = (str, o, k)  # from obs int to 'K'
+        KO = (int, k, o)  # from 'K' to obs int
 
         if not reverse:
-              t, f, a = OK    # to type, find, add        
-        else: t, f, a = KO   
-        
-        l = str(name).rfind(f)    
+            t, f, a = OK  # to type, find, add
+        else:
+            t, f, a = KO
+
+        l = str(name).rfind(f)
         if l != -1:
             n = str(name)[:l] + a
-            try: name = t(n)
-            except: pass
-        return name    
+            try:
+                name = t(n)
+            except:
+                pass
+        return name
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

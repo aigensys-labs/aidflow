@@ -77,52 +77,41 @@ Requires the following pipeline stages to be completed:
 - Agent Training (≥ 2 agents — for cross-audit dimensions)
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM, 
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import PRM, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from ..predict.adapter          import  PredictorAdapter
+from ..predict.adapter import PredictorAdapter
 
-from .processor                 import  (
-                                        AGENTS,
-                                        ComparatorProcessor,
-                                        ComparatorParamsBase,
-                                        ComparatorParamsCfg,
-                                        ComparatorResult,
-                                        ComparatorStats
-                                        )
+from .processor import (
+    AGENTS,
+    ComparatorProcessor,
+    ComparatorParamsBase,
+    ComparatorParamsCfg,
+    ComparatorResult,
+    ComparatorStats,
+)
 
 MODEL = AIGFLOW.Selection.comparator
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG SELECTION STAGE ► AGENTS COMPARISON ► COMPARE TRAINED AGENTS ON OOT TEST SAMPLE'
-DEPS  = (
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG SELECTION STAGE ► AGENTS COMPARISON ► COMPARE TRAINED AGENTS ON OOT TEST SAMPLE"
+DEPS = (
     AIGFLOW.Training.agent1,
     AIGFLOW.Training.agent2,
     AIGFLOW.Training.agent3,
@@ -135,9 +124,11 @@ DEPS  = (
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'AngentsComparator'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    AIG = "AngentsComparator"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -146,45 +137,53 @@ class REG(DictClass):
 @Dataclass.mapping
 class ComparatorParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(ComparatorParamsBase)
-    setup  = {
-        PRM.SELECT.select_bins.param     : (params.proba_bins, 'Probability Discretization' ),
-        PRM.SELECT.select_alpha.param    : (params.alpha,      'Cross-Calibration alpha'    ),
-    }  
+    setup = {
+        PRM.SELECT.select_bins.param: (params.proba_bins, "Probability Discretization"),
+        PRM.SELECT.select_alpha.param: (params.alpha, "Cross-Calibration alpha"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """    
-    
+    """
+
     @FREG.register(REG.AIG)
     class AgentsComparatorFitter(ComparatorParamsBase):
-        
-        config: dict|ComparatorParamsCfg = ComparatorParamsCfg(
-            predictors = None,
-            target     = None
+
+        config: dict | ComparatorParamsCfg = ComparatorParamsCfg(
+            predictors=None, target=None
         )
 
-        def _build(self, params:ComparatorParamsBase, config:dict) -> ComparatorProcessor:            
-            setup  = dict(params) | config
-            return ComparatorProcessor(**setup) 
+        def _build(
+            self, params: ComparatorParamsBase, config: dict
+        ) -> ComparatorProcessor:
+            setup = dict(params) | config
+            return ComparatorProcessor(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterBase[ComparatorParamsBase]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """         
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
-    
-    def fit(self, data:pDF): 
+
+    def fit(self, data: pDF):
         """
         Execute the full multi-agent comparison and scoring.
 
@@ -197,13 +196,13 @@ class Fitter(FitterBase[ComparatorParamsBase]):
         Returns
         -------
         self
-        """    
+        """
         self.result: ComparatorResult = self.model.process(data)
-        self.stats:  ComparatorStats  = self.model.get_stats()
+        self.stats: ComparatorStats = self.model.get_stats()
         self._init_dash()
         return self
-    
-    def transfrom(self, data:pDF, agents:tuple=tuple(AGENTS)) -> ComparatorResult:
+
+    def transfrom(self, data: pDF, agents: tuple = tuple(AGENTS)) -> ComparatorResult:
         """
         Execute the comparison on new data (re-evaluation).
 
@@ -219,9 +218,10 @@ class Fitter(FitterBase[ComparatorParamsBase]):
         ComparatorResult
             Scoring, comparison, lift, and calibration.
         """
-        return self.model.process(data, agents = agents)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬        
+        return self.model.process(data, agents=agents)
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -230,30 +230,32 @@ class Fitter(FitterBase[ComparatorParamsBase]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
+
     pass
+
 
 @Dataclass.base
 class TransResData(ComparatorResult):
     """Transfomer data output design."""
 
+
 class Transformer(TransformerBase[Fitter, ComparatorStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
-    
-    ModelFitter = Fitter
-           
-    def transform(self, data:pDF, agents:tuple = tuple(AGENTS)) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            **self.fitter.transfrom(data, agents)
-        )   
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    ModelFitter = Fitter
+
+    def transform(self, data: pDF, agents: tuple = tuple(AGENTS)) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(**self.fitter.transfrom(data, agents))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -262,36 +264,40 @@ class Transformer(TransformerBase[Fitter, ComparatorStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
-    Transformer - Fitter before execution begins.
-    """  
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = ComparatorParamsCfg
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
+    Transformer - Fitter before execution begins.
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = ComparatorParamsCfg
     Mapping = ComparatorParamsMapping
 
-    ModelTransformer  = Transformer
+    ModelTransformer = Transformer
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"AgentsComparatorInput"):
-        agents   = self.get_model_dependecy(DEPS, is_req=False)
+    def get_choice(self, fx_choice: str, inputs: "AgentsComparatorInput"):
+        agents = self.get_model_dependecy(DEPS, is_req=False)
         defaults = self.Config(
-            predictors = PredictorAdapter(agents),
-            target     = AigParam.di(inputs.target, self.setup.target)
-        )  
+            predictors=PredictorAdapter(agents),
+            target=AigParam.di(inputs.target, self.setup.target),
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)   
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-        
-    def get_params(self, fx_choice:str, inputs:"AgentsComparatorInput", params:dict):
-        params: ComparatorParamsBase = self.get_fit_params(fx_choice, inputs.fx_params, params)  
-        return params, self.setup
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return RegGet.choice(fx_choice, fx_config)
 
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "AgentsComparatorInput", params: dict):
+        params: ComparatorParamsBase = self.get_fit_params(
+            fx_choice, inputs.fx_params, params
+        )
+        return params, self.setup
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -327,7 +333,9 @@ class AgentsComparatorInput(ModelInput):
     quantile bins (default: 10) for calibration and
     cross-transition analysis.
     """
-    data: pDF 
+
+    data: pDF
+
 
 @Dataclass.base
 class AgentsComparatorResult(ModelResult):
@@ -384,13 +392,17 @@ class AgentsComparatorResult(ModelResult):
     **Ranking Access**: The ranked agent list (best first) is
     available via `.stats.ordered` (full `ComparatorStats`).
     """
-    overview:    pDF
-    scoring:     pDF
-    lift:        dict
+
+    overview: pDF
+    scoring: pDF
+    lift: dict
     calibration: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class AgentsComparator(Processor, ModelBase):   
+
+class AgentsComparator(Processor, ModelBase):
     """
     Agent Comparator — Multi-Dimensional Model Selection & Ranking.
 
@@ -462,16 +474,18 @@ class AgentsComparator(Processor, ModelBase):
     """
 
     def _save(self, save_path) -> None:
-        ModelIO(self.setup).save(MODEL, self, custom_path = save_path)
+        ModelIO(self.setup).save(MODEL, self, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _get_result(self, res: TransResData):
         return AgentsComparatorResult(
-            overview    = res.comparison,
-            scoring     = res.scoring,
-            lift        = res.lift,
-            calibration = res.calibration,
+            overview=res.comparison,
+            scoring=res.scoring,
+            lift=res.lift,
+            calibration=res.calibration,
         )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def fit(self, inputs: AgentsComparatorInput, fx_choice: str = REG.AIG, **params):
@@ -504,24 +518,21 @@ class AgentsComparator(Processor, ModelBase):
         `.stats.ordered` — the first element is the
         recommended agent.
         """
-        verify  = len(inputs.data)
-        
+        verify = len(inputs.data)
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
-        return self    
+        return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def transform(self, 
-        data:    pDF, 
-        agents:  tuple = tuple(AGENTS)
+
+    def transform(
+        self, data: pDF, agents: tuple = tuple(AGENTS)
     ) -> AgentsComparatorResult:
         """
         Re-evaluate the full comparison on a new dataset.
@@ -561,23 +572,25 @@ class AgentsComparator(Processor, ModelBase):
 
         **Head-to-Head**: Use `agents=(i, j)` for a focused
         comparison between two specific agents.
-        """ 
-        res = self.processor.transform(data, agents)    
+        """
+        res = self.processor.transform(data, agents)
         return self._get_result(res)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # SELECTION → COMPARATOR → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-class OptionUI(OptionUIBase):    
-    title   = 'Comparison Panel'.upper()
-    split   = 1
-    width   = 150
+class OptionUI(OptionUIBase):
+    title = "Comparison Panel".upper()
+    split = 1
+    width = 150
     Mapping = ComparatorParamsMapping
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -587,27 +600,32 @@ class AgentsComparatorUI(ModelUIBase):
     """
     Agents Comparator Model.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    The 'Decision Engine' of the Selection Phase. This model consumes 
-    synchronized predictions from all trained agents and computes a multi-dimensional 
-    performance matrix (Scoring, Lift, Calibration). It transforms raw probability 
-    outputs into actionable business metrics to identify the champion candidate.      
+
+    The 'Decision Engine' of the Selection Phase. This model consumes
+    synchronized predictions from all trained agents and computes a multi-dimensional
+    performance matrix (Scoring, Lift, Calibration). It transforms raw probability
+    outputs into actionable business metrics to identify the champion candidate.
     """
 
-    Model  = AgentsComparator
+    Model = AgentsComparator
     Option = OptionUI
-        
+
     @wraps(AgentsComparator.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(
-            fit_transform_pipeline = False
-        ), **kwargs)  
-    
+        self.model_ui.fit(
+            *args,
+            ui_params=self._get_ui_fit_defaults(fit_transform_pipeline=False),
+            **kwargs,
+        )
+
     @wraps(AgentsComparator.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> AgentsComparatorResult: return self.model_ui.fitted
+    def fitted(self) -> AgentsComparatorResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

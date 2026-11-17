@@ -24,7 +24,7 @@ Intended Use:
     - Constructing lazy dashboards and repr displays that evaluate
       at display time, reflecting the current state of the object
       graph.
-      
+
 Placement Rationale:
     This module resides in `deps` (rather than `utils`) because
     it is merged with native AIDflow types (`FuncType`, callable
@@ -112,7 +112,8 @@ class WeakGetter:
             >>> live_fn = WeakGetter.Attr(lambda: compute())
             >>> result = live_fn()  # Calls the lambda
         """
-        __slots__ = ('_ref', '_attr', '_default')
+
+        __slots__ = ("_ref", "_attr", "_default")
 
         def __init__(self, obj: Any, attr: str = None, default: Any = None):
             """
@@ -161,8 +162,8 @@ class WeakGetter:
             if self._attr is None:
                 if callable(obj):
                     return obj()
-                return obj   
-            
+                return obj
+
             return WeakGetter.getter(obj, self._attr, self._default)
 
     class PairAttr:
@@ -206,14 +207,15 @@ class WeakGetter:
             >>>
             >>> # After either worker is GC'd: returns 0.0 (safe default)
         """
-        __slots__ = ('_ref1', '_ref2', '_attr1', '_attr2', '_eval_fn', '_default')
+
+        __slots__ = ("_ref1", "_ref2", "_attr1", "_attr2", "_eval_fn", "_default")
 
         def __init__(
             self,
-            pair:       tuple[object, object],
-            attrs:      tuple[str, str],
-            eval_fx:    Callable[[Any, Any], Any],
-            default:    Any = None,
+            pair: tuple[object, object],
+            attrs: tuple[str, str],
+            eval_fx: Callable[[Any, Any], Any],
+            default: Any = None,
         ):
             """
             Initialize the binary weak-reference evaluator.
@@ -256,9 +258,8 @@ class WeakGetter:
 
             v1 = WeakGetter.getter(o1, self._attr1, self._default)
             v2 = WeakGetter.getter(o2, self._attr2, self._default)
-            
+
             return self._eval_fn(v1, v2)
-    
 
     @classmethod
     def getter(cls, obj: object, attr: str, default: Any = None) -> Any:
@@ -296,9 +297,9 @@ class WeakGetter:
             >>> WeakGetter.getter(obj, 'nonexistent.deep.path', default='N/A')
             # → 'N/A'
         """
-        attrs = attr.split('.')        
+        attrs = attr.split(".")
         for a in attrs:
             obj = getattr(obj, a, default)
             if obj is default:
-                return             
-        return obj   
+                return
+        return obj

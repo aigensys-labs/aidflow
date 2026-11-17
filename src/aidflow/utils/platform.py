@@ -1,27 +1,16 @@
 """
-Environment adaptation layer providing cross-platform compatibility and 
+Environment adaptation layer providing cross-platform compatibility and
 runtime context detection.
 
-This module implements the critical infrastructure required to ensure that 
-AIDflow remains environment-agnostic, allowing seamless execution across 
-disparate deployment targets—from local Windows workstations and Linux 
+This module implements the critical infrastructure required to ensure that
+AIDflow remains environment-agnostic, allowing seamless execution across
+disparate deployment targets—from local Windows workstations and Linux
 Docker containers to managed JupyterHub clusters.
 """
 
-from ..deps.common import (
-    os, 
-    sys, 
-    psutil,
-    pathlib
-)
-from ..deps.execution import (
-    ray, 
-    Ray,
-    is_worker
-)
-from ..deps.display import (
-    get_ipython
-)
+from ..deps.common import os, sys, psutil, pathlib
+from ..deps.execution import ray, Ray, is_worker
+from ..deps.display import get_ipython
 
 
 class Platform:
@@ -30,12 +19,12 @@ class Platform:
     def is_ray_active() -> bool:
         """Returns True when env. has installed ray library."""
         return not isinstance(ray, Ray)
-    
+
     @staticmethod
     def is_main() -> bool:
         """Returns True under main process (no sub-multiprocess)."""
         return not is_worker()
-        
+
     @staticmethod
     def is_in_jupyter() -> bool:
         """
@@ -44,11 +33,11 @@ class Platform:
         """
         try:
             shell = get_ipython().__class__.__name__
-            if shell in ['ZMQInteractiveShell']:
+            if shell in ["ZMQInteractiveShell"]:
                 return True  # Jupyter Notebook or JupyterHub
-            return False     # Other IPython shells (e.g., IPython terminal)
+            return False  # Other IPython shells (e.g., IPython terminal)
         except (NameError, ImportError):
-            return False     # Standard Python shell or script
+            return False  # Standard Python shell or script
 
     @staticmethod
     def is_in_hub() -> bool:
@@ -78,22 +67,22 @@ class Platform:
     @classmethod
     def cross_platform_save_load(cls):
         """Workaround to allow cross platform save/load with Path."""
-        sys.modules["pathlib._local"] = pathlib 
+        sys.modules["pathlib._local"] = pathlib
         if cls.is_in_win():
             pathlib.PosixPath = pathlib.WindowsPath
-        else: 
+        else:
             pathlib.WindowsPath = pathlib.PosixPath
 
     @staticmethod
     def joblib_dependecy_workaround():
         """Workaround to avoid error on certain OS platforms and versions."""
         cpu = 8
-        try: 
+        try:
             cpu = psutil.cpu_count(logical=True)
         except:
-            try: 
+            try:
                 cpu = int(os.cpu_count())
-            except: 
-                pass        
-        cpu = max(1, cpu-2)
+            except:
+                pass
+        cpu = max(1, cpu - 2)
         os.environ["LOKY_MAX_CPU_COUNT"] = str(cpu)

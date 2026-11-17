@@ -11,26 +11,16 @@ three primary user-facing components:
 - **ProductionExporter**: Deployment layer — exports the
   champion model for standalone scoring.
 
-All other components - workers (api nodes),  core infrastructure, 
-display, storage - are internal and accessed through these three 
+All other components - workers (api nodes),  core infrastructure,
+display, storage - are internal and accessed through these three
 entry points.
 """
 
-from . import (
-    ProjectContext,
-    Predictor,
-    ExportConfig,
-    ProductionExporter,
-    UIGetter
-)
-from .core.foundation import (
-    AigStop
-)
-from .core.execution import (
-    set_backend,
-    config_manager
-)
+from . import ProjectContext, Predictor, ExportConfig, ProductionExporter, UIGetter
+from .core.foundation import AigStop
+from .core.execution import set_backend, config_manager
+
 config = set_backend(
-    config_manager, 
-    name = 'env-config',    
+    config_manager,
+    name="env-config",
 )

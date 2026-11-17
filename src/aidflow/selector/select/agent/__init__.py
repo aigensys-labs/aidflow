@@ -1,11 +1,9 @@
-from .champion_predictor import  (
+from .champion_predictor import (
     AgentPredictorInput,
     AgentPredictorResult,
     AgentPredictorResultDual,
     AgentPredictor,
-    AgentPredictorUI,                                                          
+    AgentPredictorUI,
 )
 
-from .report import  (
-    AgentPredictorDashWaiter
-)
+from .report import AgentPredictorDashWaiter

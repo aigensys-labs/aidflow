@@ -19,12 +19,12 @@ Decision Logic
    categorical or binned, or retains raw values if continuous.
 """
 
-from ...deps.data       import  pDF, pSe
-from ...deps.types      import  NDArray
-from ...core.interop    import  Pd, TypeStandard
-from ...core.standard   import  TypeDef, VarType
-from .binning           import  Binning
-from .woe               import  IV, WoE
+from ...deps.data import pDF, pSe
+from ...deps.types import NDArray
+from ...core.interop import Pd, TypeStandard
+from ...core.standard import TypeDef, VarType
+from .binning import Binning
+from .woe import IV, WoE
 
 
 class Encoding:
@@ -75,30 +75,33 @@ class Encoding:
         instead of `qcut`). Only relevant for numeric
         features with `bins > 1`.
     """
-    def __init__(self, 
-        n_bins:     int = None,
-        transform:  bool = True,
+
+    def __init__(
+        self,
+        n_bins: int = None,
+        transform: bool = True,
         ensure_trf: bool = False,
         ensure_enc: bool = False,
-        add_iv:     bool = False,                 
-        incl_miss:  bool = True, 
-        th_discrete: int = 20
+        add_iv: bool = False,
+        incl_miss: bool = True,
+        th_discrete: int = 20,
     ):
-        self.bins        = n_bins
-        self.transform   = transform
-        self.ensure_trf  = ensure_trf
-        self.ensure_enc  = ensure_enc
-        self.add_iv      = add_iv
-        self.incl_miss   = incl_miss
-        self.th_discrete = th_discrete    
-    # ─────────────────────────────────────────────────────────────────────────────────────────────        
-    
+        self.bins = n_bins
+        self.transform = transform
+        self.ensure_trf = ensure_trf
+        self.ensure_enc = ensure_enc
+        self.add_iv = add_iv
+        self.incl_miss = incl_miss
+        self.th_discrete = th_discrete
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     @staticmethod
     def _woe_pdf(
-        y_true: pSe|NDArray, 
-        x:      pSe|NDArray, 
+        y_true: pSe | NDArray,
+        x: pSe | NDArray,
         transform: bool = True,
-        add_iv:    bool = False
+        add_iv: bool = False,
     ) -> tuple[pSe, pDF, int]:
         """
         Compute WOE encoding and optionally transform the feature.
@@ -132,11 +135,12 @@ class Encoding:
             woe = IV.extend(woe)
         return x_t, woe, len(woe)
 
-    def _transform(self, 
-        y_true: pSe|NDArray, 
-        x: pSe|NDArray, 
-        is_missing: bool, 
-        transform: bool = None
+    def _transform(
+        self,
+        y_true: pSe | NDArray,
+        x: pSe | NDArray,
+        is_missing: bool,
+        transform: bool = None,
     ):
         """
         Apply missing-value handling and delegate to WOE encoding.
@@ -167,10 +171,10 @@ class Encoding:
         """
         if is_missing:
             x = TypeStandard.cat_fill_missing(x)
-        trf = self.transform if transform is None else transform        
+        trf = self.transform if transform is None else transform
         return self._woe_pdf(y_true, x, trf, self.add_iv)
-    
-    def _return_continuous(self, y_true: pSe|NDArray, x: pSe|NDArray, u:int):
+
+    def _return_continuous(self, y_true: pSe | NDArray, x: pSe | NDArray, u: int):
         """
         Return the feature as-is for continuous (unbinned) path.
 
@@ -200,7 +204,7 @@ class Encoding:
         return x, woe, u
 
     @staticmethod
-    def _to_se(y_true: pSe|NDArray, x: pSe|NDArray) -> pSe:
+    def _to_se(y_true: pSe | NDArray, x: pSe | NDArray) -> pSe:
         """
         Ensure the feature is a Series with aligned index.
 
@@ -224,12 +228,14 @@ class Encoding:
             return x
         i = y_true.index if isinstance(y_true, pSe) else None
         return pSe(x, index=i)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────        
-    
-    def process(self, 
-        y_true: pSe|NDArray, 
-        x:      pSe|NDArray,
-    ) -> tuple[pSe|None, pDF|None, int|None]:
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def process(
+        self,
+        y_true: pSe | NDArray,
+        x: pSe | NDArray,
+    ) -> tuple[pSe | None, pDF | None, int | None]:
         """
         Analyze the feature and return WOE-encoded output.
 
@@ -268,55 +274,59 @@ class Encoding:
             - **int | None**: Number of bins/categories.
             - **(None, None, None)**: Feature has insufficient
               variance to be useful.
-        """          
-        x = self._to_se(y_true, x)        
+        """
+        x = self._to_se(y_true, x)
         bins = self.bins
 
-        is_num_type = ( x.dtype in TypeDef.numeric )
-        is_missing  = self.incl_miss and ( x.isnull().sum() > 0 )
-        
+        is_num_type = x.dtype in TypeDef.numeric
+        is_missing = self.incl_miss and (x.isnull().sum() > 0)
+
         # NUM Vars discretization condition
         # ─────────────────────────────────────────────────
         u = Pd.get_len_unique_values(x)
-        c = ( u < self.th_discrete ) # discreate NUM vars → use cut instead of qcut
+        c = u < self.th_discrete  # discreate NUM vars → use cut instead of qcut
 
-        if u < 2 and ( not is_missing ):
+        if u < 2 and (not is_missing):
             if not (self.ensure_trf or self.ensure_enc):
-                return tuple([None]*3)
-                        
+                return tuple([None] * 3)
+
             return self._transform(y_true, x, is_missing)
-        
-        # ─── (a) Categorical/Object FE 
+
+        # ─── (a) Categorical/Object FE
         # → Encoding to be able directly compute Gini
         # ─────────────────────────────────────────────────
-        if ( not is_num_type ):
+        if not is_num_type:
             return self._transform(y_true, x, is_missing)
 
-        # ─── (b) NUM FE 
-        # → Requested orig. values with missing part 
+        # ─── (b) NUM FE
+        # → Requested orig. values with missing part
         # → Approximate orig.values by woe + missing
         # ─────────────────────────────────────────────────
-        if ( bins is None ) and ( is_missing ):
+        if (bins is None) and (is_missing):
             bins = min(self.th_discrete, u)
-            c = ( bins == u )
+            c = bins == u
 
-        # ─── (b.1) orig 
+        # ─── (b.1) orig
         # → Continuous fe
         # ─────────────────────────────────────────────────
         if not bins:
             return self._return_continuous(y_true, x, u)
 
         # ─── (b.2) bins
-        # → Binning Applied 
+        # → Binning Applied
         # → Encoding thus Missing part can be included directly
         # ─────────────────────────────────────────────────
-        if c: x = Pd.cut(x,  bins, duplicates='drop') 
-        else: x = Pd.qcut(x, bins, duplicates='drop') 
+        if c:
+            x = Pd.cut(x, bins, duplicates="drop")
+        else:
+            x = Pd.qcut(x, bins, duplicates="drop")
 
         return self._transform(y_true, x, is_missing)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────        
 
-    def encode(self, d:pSe|pDF, encoding:pDF, x:str, xT:str, vtype:str=None
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def encode(
+        self, d: pSe | pDF, encoding: pDF, x: str, xT: str, vtype: str = None
     ) -> pSe | tuple[pSe, pSe]:
         """
         Apply a pre-computed WOE encoding to new data.
@@ -346,7 +356,7 @@ class Encoding:
         pSe | tuple[pSe, pSe]
             Series of target WOE labels (categorical dtype),
             same length as input.
-            Additional series from first data 
+            Additional series from first data
             transformation when ensure_trf = True.
         """
         if isinstance(d, pDF):
@@ -357,7 +367,8 @@ class Encoding:
 
         return self._encode(d, encoding, x, xT, vtype)
 
-    def _encode(self, d:pSe, encoding:pDF, x:str, xT:str, vtype:str = None
+    def _encode(
+        self, d: pSe, encoding: pDF, x: str, xT: str, vtype: str = None
     ) -> pSe | tuple[pSe, pSe]:
         """
         Core binning transform — routes to numerical or categorical.
@@ -371,19 +382,15 @@ class Encoding:
           is assigned to the bin group that lists it as a
           component).
         """
-        is_num = (
-            vtype == VarType.N 
-            if vtype is not None else 
-            d.dtype in TypeDef.numeric
-        )
+        is_num = vtype == VarType.N if vtype is not None else d.dtype in TypeDef.numeric
         if is_num:
             trf = Binning.transform_numerical_data(d, encoding, x)
         else:
-            trf = Binning.transform_categorical_data(d, encoding, x)  
+            trf = Binning.transform_categorical_data(d, encoding, x)
 
         enc = Binning.data_mapping(trf, encoding, x, xT)
-        
+
         if not self.ensure_trf:
             return enc
-        
+
         return enc, trf

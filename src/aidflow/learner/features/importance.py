@@ -35,94 +35,88 @@ Consensus Metrics
   simultaneously.
 """
 
-from ...deps.data           import  pDF, pSe, np
-from ...deps.data_view      import  itables_html
-from ...deps.ml.glm         import  LogisticRegression
-from ...deps.ml.diag        import  (
-                                    Explainer,
-                                    TreeExplainer,
-                                    LinearExplainer,
-                                    permutation_importance,
-                                    )
-from ...deps.ml.stats       import  kendalltau
-from ...deps.display        import  display
-from ...deps.types          import  (
-                                    Literal, 
-                                    NDArray, 
-                                    )
+from ...deps.data import pDF, pSe, np
+from ...deps.data_view import itables_html
+from ...deps.ml.glm import LogisticRegression
+from ...deps.ml.diag import (
+    Explainer,
+    TreeExplainer,
+    LinearExplainer,
+    permutation_importance,
+)
+from ...deps.ml.stats import kendalltau
+from ...deps.display import display
+from ...deps.types import (
+    Literal,
+    NDArray,
+)
 
-from ...core.factory        import  (
-                                    Dataclass, 
-                                    DictClass
-                                    )
-from ...core.interop        import  Pd
-from ...core.display        import  Display
-from ...core.accessor       import  Format
+from ...core.factory import Dataclass, DictClass
+from ...core.interop import Pd
+from ...core.display import Display
+from ...core.accessor import Format
 
-from ...ml.models           import  (
-                                    ModelUtils, 
-                                    ModelView
-                                    )
-from ...ml.models.ablation  import  (
-                                    LBL as LBL_FA,
-                                    FeatureAblation as _FeatureAblation
-                                    )
-from ...ml.tests            import  TestSampleDiff
-from ...ml.sampling         import  DataUtils
+from ...ml.models import ModelUtils, ModelView
+from ...ml.models.ablation import LBL as LBL_FA, FeatureAblation as _FeatureAblation
+from ...ml.tests import TestSampleDiff
+from ...ml.sampling import DataUtils
 
-from ...utils.builtins      import  List
-from ...display.style       import  (
-                                    TableStyle, 
-                                    ItablesStyle
-                                    )
+from ...utils.builtins import List
+from ...display.style import TableStyle, ItablesStyle
 
-from .estimator             import  FeatureEstimator
-from .sampling              import  SamplingMixin
+from .estimator import FeatureEstimator
+from .sampling import SamplingMixin
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # LOCAL CONSTANTS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class LBL(DictClass):
-    F  = 'Feature'
-    A  = 'Ablation_ΔGini'
-    P  = 'Permutation_ΔGini'
-    S  = 'SHAP_ΔLog_of_odds'
-    IS = 'SignificantΔ'
-    C  = 'Consensus'
-    CS = 'Consistency'
-    STD= lambda x: f's({x})'
+    F = "Feature"
+    A = "Ablation_ΔGini"
+    P = "Permutation_ΔGini"
+    S = "SHAP_ΔLog_of_odds"
+    IS = "SignificantΔ"
+    C = "Consensus"
+    CS = "Consistency"
+    STD = lambda x: f"s({x})"
+
 
 class MTD(DictClass):
-    A = 'ablation'
-    P = 'permutation'
-    S = 'shap'
+    A = "ablation"
+    P = "permutation"
+    S = "shap"
+
 
 class VIEW(DictClass):
-    AS = 'assessment_shap_fig'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+    AS = "assessment_shap_fig"
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # FEATURE BASE
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class FeatureUtils:
-    
+
     @staticmethod
-    def is_agg_shap_fig(kwargs:dict) -> bool:
-        """FeatureImportance run indicator."""        
-        return kwargs.get(VIEW.AS, False)    
+    def is_agg_shap_fig(kwargs: dict) -> bool:
+        """FeatureImportance run indicator."""
+        return kwargs.get(VIEW.AS, False)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureBase:
     """
     Base class for single-method feature importance assessment.
 
     Provides the common contract for all importance methods:
-    model resolution, feature detection, result storage, and display formatting. 
+    model resolution, feature detection, result storage, and display formatting.
     Subclasses implement the `_fit` method with their specific computation.
-    
+
     Parameters
     -----------
     model : LogisticRegression = None
@@ -133,51 +127,60 @@ class FeatureBase:
         Seed for reproducibility.
     """
 
-    def __init__(self,
-        model:          LogisticRegression = None,
-        random_state:   int   = 42,
-        kwargs:         dict  = None
+    def __init__(
+        self,
+        model: LogisticRegression = None,
+        random_state: int = 42,
+        kwargs: dict = None,
     ):
-        self.model   = model
-        self.random  = random_state
+        self.model = model
+        self.random = random_state
         self._set_init()
 
         self._is_agg = FeatureUtils.is_agg_shap_fig(kwargs or {})
         self._est = FeatureEstimator(model, random_state=random_state)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @property
     def features(self):
         """Returns Feature effect result."""
         return self.result
-        
+
     def show_result(self) -> None:
         """Display the formatted importance table."""
         self._show_result()
 
-    def _show_result(self, format:dict=None) -> None:
-        display( Pd.style(
-            self.result, 
-            format_cols = format, 
-            properties  = {'subset':LBL.F, 'width':'400px', 'text-align':'left'}
-        ))        
+    def _show_result(self, format: dict = None) -> None:
+        display(
+            Pd.style(
+                self.result,
+                format_cols=format,
+                properties={"subset": LBL.F, "width": "400px", "text-align": "left"},
+            )
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _set_init(self) -> None:
         self.result = []
         self.fig = None
 
-    def _set_fes(self, X:pDF) -> None:
+    def _set_fes(self, X: pDF) -> None:
         self._fes = DataUtils.get_fes(X)
 
     def _set_figure(self, fig) -> None:
         self.fig = fig
 
-    def _set_result(self, result:dict|pDF, sort_by:str=None, ascending:bool=True) -> None:        
+    def _set_result(
+        self, result: dict | pDF, sort_by: str = None, ascending: bool = True
+    ) -> None:
         if not sort_by:
             self.result = result
             return
-        self.result = pDF(result).sort_values(sort_by, ascending=ascending).reset_index(drop=True)    
+        self.result = (
+            pDF(result).sort_values(sort_by, ascending=ascending).reset_index(drop=True)
+        )
 
     def _is_fitted(self) -> bool:
         if self.model is None:
@@ -185,23 +188,21 @@ class FeatureBase:
         if self._est.get_model() is not self.model:
             return False
         p = lambda x: getattr(self.model, x, None) is not None
-        return (
-            p('coef_') or p('_Booster')
-        )  
-    
-    def _set_model(self, X:pDF, y:pSe) -> None:
+        return p("coef_") or p("_Booster")
+
+    def _set_model(self, X: pDF, y: pSe) -> None:
         if self._is_fitted():
             return
-        self.model = self._fit_model(X, y)  
+        self.model = self._fit_model(X, y)
 
-    def _fit_model(self, X:pDF, y:pSe):
+    def _fit_model(self, X: pDF, y: pSe):
         m = self._est.get_estimator_instance(X)
-        return m.fit(X,y)
-  
-    def _fit(self, X:pDF, y:pSe):
-        raise NotImplemented('Worker class must implement "_fit()" method.')
-    
-    def fit(self, X:pDF, y:pSe, *args, **kwargs):
+        return m.fit(X, y)
+
+    def _fit(self, X: pDF, y: pSe):
+        raise NotImplementedError('Worker class must implement "_fit()" method.')
+
+    def fit(self, X: pDF, y: pSe, *args, **kwargs):
         """
         Execute the feature importance assessment.
         Resolves the model, detects features, and stores the sorted result.
@@ -223,9 +224,10 @@ class FeatureBase:
         self._set_model(X, y)
         res = self._fit(X, y, *args, **kwargs)
         self._set_result(**res)
-        return self     
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return self
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -276,17 +278,17 @@ class FeatureAblation(FeatureBase):
         Seed for reproducibility.
     """
 
-    def __init__(self, 
-        model:          LogisticRegression = None,
-        alpha:          float = 0.05,
-        random_state:   int = 42,
-
-        **kwargs
+    def __init__(
+        self,
+        model: LogisticRegression = None,
+        alpha: float = 0.05,
+        random_state: int = 42,
+        **kwargs,
     ):
         super().__init__(model, random_state, kwargs)
         self.alpha = alpha
         self._fa = None
-    
+
     def get_fa_instance(self) -> None | _FeatureAblation:
         """
         Retrieve the cached ablation solver for fast re-evaluation.
@@ -310,21 +312,21 @@ class FeatureAblation(FeatureBase):
             not been called yet.
         """
         return self._fa
-        
-    def _get_result(self,  
-        X:pDF, y:pSe, train_setup: tuple[pDF, pSe] | _FeatureAblation
+
+    def _get_result(
+        self, X: pDF, y: pSe, train_setup: tuple[pDF, pSe] | _FeatureAblation
     ) -> pDF:
-        eval_set = ([X,y],)
+        eval_set = ([X, y],)
 
         if isinstance(train_setup, _FeatureAblation):
             self._fa = train_setup
             return self._fa.update(eval_set)
-        
-        self._fa = _FeatureAblation(self.model, self.alpha)
-        return self._fa.evaluate(*train_setup, eval_set = eval_set)
 
-    def _fit(self, 
-        X:pDF, y:pSe, train_setup: tuple[pDF, pSe] | _FeatureAblation
+        self._fa = _FeatureAblation(self.model, self.alpha)
+        return self._fa.evaluate(*train_setup, eval_set=eval_set)
+
+    def _fit(
+        self, X: pDF, y: pSe, train_setup: tuple[pDF, pSe] | _FeatureAblation
     ) -> dict:
         """
         Compute ablation importance for all features.
@@ -345,12 +347,11 @@ class FeatureAblation(FeatureBase):
                 on a different eval set without recomputation.
         """
         res = self._get_result(X, y, train_setup)
-        return dict(
-            result = res.rename(
-                columns = {LBL_FA.A: LBL.A, LBL_FA.IS: LBL.IS}
-            )
-        )
+        return dict(result=res.rename(columns={LBL_FA.A: LBL.A, LBL_FA.IS: LBL.IS}))
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureAttributionSHAP(FeatureBase):
     """
@@ -380,18 +381,20 @@ class FeatureAttributionSHAP(FeatureBase):
     verbose : bool, default=True
         Controls output display.
     """
-    def __init__(self, 
-        model: LogisticRegression = None, 
-        random_state: int = 42, 
+
+    def __init__(
+        self,
+        model: LogisticRegression = None,
+        random_state: int = 42,
         verbose: bool = True,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(model, random_state, kwargs)
         self.verbose = verbose
 
-    def _plot(self, X:pDF, shap_vals:NDArray) -> None:
+    def _plot(self, X: pDF, shap_vals: NDArray) -> None:
         """Summary plot (Beeswarm is richer than bar)."""
-        if not ( self.verbose or self._is_agg ):
+        if not (self.verbose or self._is_agg):
             return
         fig = ModelView.shap_plot(X, shap_vals, self._fes, show=False)
         if self._is_agg:
@@ -399,26 +402,28 @@ class FeatureAttributionSHAP(FeatureBase):
             return
         display(fig)
 
-    def _shap_vals(self, X:pDF) -> NDArray:
+    def _shap_vals(self, X: pDF) -> NDArray:
         """
         The shap's internal auto choice of proper Explainer works well.
          - respects directly implemented .shap_values()
          - tree-based with structure by the tree (100x faster)
          - logit-based with structure by X
         """
-        if hasattr(self.model, 'shap_values'):
+        if hasattr(self.model, "shap_values"):
             return self.model.shap_values(X)
-        
-        try:    explainer:TreeExplainer   = Explainer(self.model)
-        except: explainer:LinearExplainer = Explainer(self.model,X)
-        return  explainer.shap_values(X)
+
+        try:
+            explainer: TreeExplainer = Explainer(self.model)
+        except:
+            explainer: LinearExplainer = Explainer(self.model, X)
+        return explainer.shap_values(X)
 
     @staticmethod
-    def _verify_binary(shap_vals:NDArray) -> None:
+    def _verify_binary(shap_vals: NDArray) -> None:
         if len(shap_vals.shape) != 2:
-            raise TypeError('AIG SAFETY ► Binary Target variable is expected.')
-    
-    def _fit(self, X:pDF, _) -> dict:
+            raise TypeError("AIG SAFETY ► Binary Target variable is expected.")
+
+    def _fit(self, X: pDF, _) -> dict:
         """
         Compute mean absolute SHAP values per feature.
 
@@ -433,18 +438,21 @@ class FeatureAttributionSHAP(FeatureBase):
         shap_vals = self._shap_vals(X)
         self._verify_binary(shap_vals)
         means = np.abs(shap_vals).mean(axis=0)  # mean absolute SHAP value per feature
-        
+
         self._plot(X, shap_vals)
 
         return dict(
-            result = {
-                LBL.F:  self._fes,
-                LBL.S:  means,
+            result={
+                LBL.F: self._fes,
+                LBL.S: means,
             },
-            sort_by = LBL.S,
-            ascending = False
+            sort_by=LBL.S,
+            ascending=False,
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeaturePermutation(FeatureBase):
     """
@@ -483,12 +491,13 @@ class FeaturePermutation(FeatureBase):
         Controls output display.
     """
 
-    def __init__(self, 
-        model: LogisticRegression = None, 
-        alpha : int = 0.05,
+    def __init__(
+        self,
+        model: LogisticRegression = None,
+        alpha: int = 0.05,
         n_repeats: int = 5,
-        random_state: int = 42, 
-        **kwargs
+        random_state: int = 42,
+        **kwargs,
     ):
         super().__init__(model, random_state, kwargs)
         self.alpha = alpha
@@ -499,15 +508,19 @@ class FeaturePermutation(FeatureBase):
         NOTE This has a potential to kill silently os threading.
         e.g. For trees setting it to -1 → silent crawling death for OS.
         """
-        if ModelUtils.is_tree(self.model):       return  1 # explicit note ▲
-        if not ModelUtils.is_n_jobs(self.model): return -1 # safe as no spawn of n_jobs possible
+        if ModelUtils.is_tree(self.model):
+            return 1  # explicit note ▲
+        if not ModelUtils.is_n_jobs(self.model):
+            return -1  # safe as no spawn of n_jobs possible
         return 1
-    
-    def _significance(self, means:NDArray, stds:NDArray, n_samples:int) -> NDArray:
-        sig = TestSampleDiff(self.alpha).t_test(means=means, n_samples=n_samples, stds=stds)
+
+    def _significance(self, means: NDArray, stds: NDArray, n_samples: int) -> NDArray:
+        sig = TestSampleDiff(self.alpha).t_test(
+            means=means, n_samples=n_samples, stds=stds
+        )
         return sig & (means < 0)
-    
-    def _fit(self, X:pDF, y:pSe) -> dict:
+
+    def _fit(self, X: pDF, y: pSe) -> dict:
         """
         Compute permutation importance for all features.
 
@@ -519,29 +532,27 @@ class FeaturePermutation(FeatureBase):
             Target vector (evaluation sample).
         """
         perm = permutation_importance(
-            self.model, X, y, 
-            n_repeats    = self.n_repeats, 
-            random_state = self.random, 
-            scoring      = 'roc_auc',
-            n_jobs       = 1#self._n_jobs()
+            self.model,
+            X,
+            y,
+            n_repeats=self.n_repeats,
+            random_state=self.random,
+            scoring="roc_auc",
+            n_jobs=1,  # self._n_jobs()
         )
-        means = -2*perm.importances_mean # avg δGini 
-        stds  =  2*perm.importances_std  # std δGini 
-        sig   = self._significance(means, stds, self.n_repeats)
+        means = -2 * perm.importances_mean  # avg δGini
+        stds = 2 * perm.importances_std  # std δGini
+        sig = self._significance(means, stds, self.n_repeats)
         lbl_s = LBL.STD(LBL.P)
 
         return dict(
-            result = {
-                LBL.F:  self._fes,
-                LBL.P:  means,  
-                lbl_s:  stds,   
-                LBL.IS: sig
-            },
-            sort_by = LBL.P,
-            ascending = True
+            result={LBL.F: self._fes, LBL.P: means, lbl_s: stds, LBL.IS: sig},
+            sort_by=LBL.P,
+            ascending=True,
         )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -572,12 +583,16 @@ class FeatureImportanceResult:
     method_results : dict
         Raw per-method results (DataFrames keyed by method
         name: `'ablation'`, `'permutation'`, `'shap'`).
-    """    
-    ranks:          pDF 
+    """
+
+    ranks: pDF
     pairwise_ranks: pDF
-    kendall_w:      float
+    kendall_w: float
     method_results: dict
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ImportanceFitter:
     """
@@ -616,39 +631,40 @@ class ImportanceFitter:
     """
 
     implemented_methods = {
-        MTD.A:  dict( m=FeatureAblation,        c=LBL.A, a=True  ),
-        MTD.P:  dict( m=FeaturePermutation,     c=LBL.P, a=True  ), 
-        MTD.S:  dict( m=FeatureAttributionSHAP, c=LBL.S, a=False )
-    }               # m = method class, c = sorting col, a=ascending
+        MTD.A: dict(m=FeatureAblation, c=LBL.A, a=True),
+        MTD.P: dict(m=FeaturePermutation, c=LBL.P, a=True),
+        MTD.S: dict(m=FeatureAttributionSHAP, c=LBL.S, a=False),
+    }  # m = method class, c = sorting col, a=ascending
 
-    def __init__(self, 
-        model:     LogisticRegression = None,  
-        methods:   list|Literal['ablation', 'permutation', 'shap'] = None, 
-        params:    dict  = None,
-        shap_fig:  bool  = True,
+    def __init__(
+        self,
+        model: LogisticRegression = None,
+        methods: list | Literal["ablation", "permutation", "shap"] = None,
+        params: dict = None,
+        shap_fig: bool = True,
     ):
-        self.model      = model
-        self.shap_fig   = shap_fig
+        self.model = model
+        self.shap_fig = shap_fig
 
         self._set_params(params)
         self._set_methods(methods)
 
-        self.method_result = {}        
+        self.method_result = {}
         self.method_figure = {}
-        self._fa_instance  = None  
+        self._fa_instance = None
 
-    def _set_params(self, params:dict) -> None:
-        """Merge user parameters with defaults."""        
+    def _set_params(self, params: dict) -> None:
+        """Merge user parameters with defaults."""
         default = dict(
-            model        = self.model,
-            alpha        = 0.05,
-            n_repeats    = 5,
-            random_state = 42,
-            verbose      = False,
-        )                   
+            model=self.model,
+            alpha=0.05,
+            n_repeats=5,
+            random_state=42,
+            verbose=False,
+        )
         default[VIEW.AS] = self.shap_fig
         self.params = default | (params or {})
-    
+
     def _set_methods(self, methods):
         """
         Resolve and validate the method list.
@@ -661,17 +677,19 @@ class ImportanceFitter:
         ValueError
             If any requested method is not in the implemented
             methods registry.
-        """        
+        """
         im = list(self.implemented_methods)
         if methods is None:
             self.methods = im
-        else: 
+        else:
             self.methods = List.ensure(methods)
         self.methods = list(self.methods)
         if not all(m in im for m in self.methods):
-            raise ValueError(f"Unknown method(s) in: {self.methods} → implemented: {im}")
+            raise ValueError(
+                f"Unknown method(s) in: {self.methods} → implemented: {im}"
+            )
 
-    def _get_method(self, method:str) -> tuple[FeatureBase, str, str]:
+    def _get_method(self, method: str) -> tuple[FeatureBase, str, str]:
         """
         Resolve a method name to its implementation.
 
@@ -679,14 +697,13 @@ class ImportanceFitter:
         -------
         tuple
             (method_class, sort_column, ascending_flag)
-        """        
+        """
         m_c = self.implemented_methods[method]
-        return m_c['m'], m_c['c'], m_c['a']
-    
-    def _run_method(self, 
-        method:str, 
-        data: tuple[pDF, pSe] | tuple[pDF, pSe, tuple[pDF,pSe]]
-    ) -> tuple[pDF,str,bool]:
+        return m_c["m"], m_c["c"], m_c["a"]
+
+    def _run_method(
+        self, method: str, data: tuple[pDF, pSe] | tuple[pDF, pSe, tuple[pDF, pSe]]
+    ) -> tuple[pDF, str, bool]:
         """
         Execute a single importance method and return its result.
 
@@ -707,29 +724,34 @@ class ImportanceFitter:
         -------
         tuple
             (result_df, sort_column, ascending_flag, figure)
-        """        
-        m,c,a = self._get_method(method)
+        """
+        m, c, a = self._get_method(method)
         mf: FeatureBase = m(**self.params).fit(*data)
-        df  = mf.result
+        df = mf.result
         fig = mf.fig
         self._set_ablation(mf)
         return df, c, a, fig
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _set_ablation(self, mf:FeatureBase) -> None:
+    def _set_ablation(self, mf: FeatureBase) -> None:
         """
         Cache the ablation solver instance for fast re-evaluation.
 
         If the method is ablation, stores its internal solver
         so subsequent calls can reuse it (prediction-only, no
         recompute).
-        """        
+        """
         if not isinstance(mf, FeatureAblation):
             return
         self._fa_instance = mf.get_fa_instance()
 
-    def _get_data(self,
-        method: str, X:pDF, y:pSe, ablation_train: None | tuple[pDF, pSe] | _FeatureAblation
+    def _get_data(
+        self,
+        method: str,
+        X: pDF,
+        y: pSe,
+        ablation_train: None | tuple[pDF, pSe] | _FeatureAblation,
     ) -> tuple[pDF, pSe]:
         """
         Prepare the method-specific input data.
@@ -756,22 +778,23 @@ class ImportanceFitter:
         """
         if method != MTD.A:
             return X, y
-        
+
         if ablation_train is None or len(ablation_train) != 2:
             raise ValueError(
-                'AIG SAFETY ► When ablation method is selected, training pair (X,y) '
-                'must be provided.'
+                "AIG SAFETY ► When ablation method is selected, training pair (X,y) "
+                "must be provided."
             )
 
         # provide fast route to ablt result
         if self._fa_instance is not None:
             ablation_train = self._fa_instance
 
-        return X, y, ablation_train # eval_set X,y + train (X,y) | fitted FA    
+        return X, y, ablation_train  # eval_set X,y + train (X,y) | fitted FA
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def process(self, 
-        X:pDF, y:pSe, ablation_train: None | tuple[pDF, pSe] | _FeatureAblation
+
+    def process(
+        self, X: pDF, y: pSe, ablation_train: None | tuple[pDF, pSe] | _FeatureAblation
     ) -> pDF:
         """
         Execute all selected methods and collect per-feature ranks.
@@ -803,9 +826,12 @@ class ImportanceFitter:
             self.method_result[method] = df
             self.method_figure[method] = fig
             df = df.set_index(LBL.F)
-            ranks[method] = df[col].rank(ascending=order, method='average')
+            ranks[method] = df[col].rank(ascending=order, method="average")
         return ranks
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ImportanceRanking:
     """
@@ -834,14 +860,15 @@ class ImportanceRanking:
         retained.
     """
 
-    def __init__(self,
-        methods:   list|Literal['ablation', 'permutation', 'shap'],
-        top_k:     int = None,                  
+    def __init__(
+        self,
+        methods: list | Literal["ablation", "permutation", "shap"],
+        top_k: int = None,
     ):
         self.methods = methods
-        self.top_k   = top_k
+        self.top_k = top_k
 
-    def subset(self, ranks:pDF) -> pDF:
+    def subset(self, ranks: pDF) -> pDF:
         """
         Restrict to the top-k features (by consensus rank).
 
@@ -857,13 +884,13 @@ class ImportanceRanking:
             across methods).
         """
         if self.top_k is None:
-           return ranks
+            return ranks
         top_features = set()
         for col in ranks.columns:
             top_features.update(ranks[col].nsmallest(self.top_k).index)
         return ranks.loc[top_features]
-    
-    def consistency(self, ranks:pDF) -> pDF:
+
+    def consistency(self, ranks: pDF) -> pDF:
         """
         Compute consensus rank and consistency score.
 
@@ -884,12 +911,12 @@ class ImportanceRanking:
             columns added, sorted by consensus.
         """
         ranks[LBL.C] = ranks.median(axis=1)
-        scale_to_0_1 = (len(ranks) - 1)**2
-        mse_per_fe   = (ranks[self.methods].sub(ranks[LBL.C], axis=0)**2).mean(axis=1)
+        scale_to_0_1 = (len(ranks) - 1) ** 2
+        mse_per_fe = (ranks[self.methods].sub(ranks[LBL.C], axis=0) ** 2).mean(axis=1)
         ranks[LBL.CS] = 1 - (mse_per_fe / scale_to_0_1).round(3)
         return ranks.sort_values([LBL.C, self.methods[0]])
-    
-    def kendalltau(self, ranks:pDF) -> pDF:
+
+    def kendalltau(self, ranks: pDF) -> pDF:
         """
         Compute pairwise Kendall τ between all methods.
 
@@ -910,11 +937,11 @@ class ImportanceRanking:
         """
         pairwise = pDF(index=self.methods, columns=self.methods, dtype=float)
         for m1 in self.methods:
-            for m2 in self.methods:                
+            for m2 in self.methods:
                 pairwise.loc[m1, m2] = kendalltau(ranks[m1], ranks[m2])[0]
         return pairwise.round(3)
-    
-    def kendall_w(self, ranks:pDF) -> float:
+
+    def kendall_w(self, ranks: pDF) -> float:
         """
         Compute Kendall W — multi-rater agreement across all methods.
 
@@ -935,9 +962,9 @@ class ImportanceRanking:
         """
         w = ranks[self.methods].var(axis=1).mean()
         w = 1 - w / (ranks[self.methods].max().max() - ranks[self.methods].min().min())
-        return round(w,3)
+        return round(w, 3)
 
-    def process(self, ranks:pDF) -> tuple[pDF, pDF, float]:
+    def process(self, ranks: pDF) -> tuple[pDF, pDF, float]:
         """
         Execute the full rank aggregation pipeline.
 
@@ -959,14 +986,17 @@ class ImportanceRanking:
             - **pairwise**: Pairwise Kendall τ matrix.
             - **kendall_w**: Global agreement score (0–1).
         """
-        ranks_    = self.subset(ranks)
-        ranks_    = self.consistency(ranks_)
-        pairwise  = self.kendalltau(ranks_)
+        ranks_ = self.subset(ranks)
+        ranks_ = self.consistency(ranks_)
+        pairwise = self.kendalltau(ranks_)
         kendall_w = self.kendall_w(ranks_)
 
         return ranks_, pairwise, kendall_w
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-    
+
+
 class FeatureImportance(SamplingMixin):
     """
     Multi-Method Feature Importance Consensus Engine.
@@ -1050,26 +1080,28 @@ class FeatureImportance(SamplingMixin):
     (SHAP vs. ablation), or interactions (permutation vs. SHAP).
     """
 
-    def __init__(self, 
-        model:     LogisticRegression = None,  
-        top_k:     int = None, 
-        methods:   list|Literal['ablation', 'permutation', 'shap'] = None, 
-        params:    dict  = None,
-        verbose:   bool  = True,
-        shap_fig:  bool  = True,
-        dash_type: Literal['main','full','fig'] = 'main',
-        dash_title: dict | None = None
+    def __init__(
+        self,
+        model: LogisticRegression = None,
+        top_k: int = None,
+        methods: list | Literal["ablation", "permutation", "shap"] = None,
+        params: dict = None,
+        verbose: bool = True,
+        shap_fig: bool = True,
+        dash_type: Literal["main", "full", "fig"] = "main",
+        dash_title: dict | None = None,
     ):
-        self.fitter  = ImportanceFitter(model, methods, params, shap_fig)
+        self.fitter = ImportanceFitter(model, methods, params, shap_fig)
         self.ranking = ImportanceRanking(self.fitter.methods, top_k)
 
-        self.verbose    = verbose
-        self.dash_type  = dash_type
+        self.verbose = verbose
+        self.dash_type = dash_type
         self.dash_title = dash_title
 
         self.dash = []
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     @property
     def result(self) -> FeatureImportanceResult:
         """
@@ -1086,12 +1118,13 @@ class FeatureImportance(SamplingMixin):
             - `method_results`: Raw per-method DataFrames.
         """
         return self._result
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def show_dash(self) -> None:
         """Display the assessment output once FeatureImportance was fitted."""
-        self.dash.show() 
-        
+        self.dash.show()
+
     def update_dash_title(self, title: dict) -> None:
         """
         Update the display title.
@@ -1101,7 +1134,7 @@ class FeatureImportance(SamplingMixin):
         """
         self.dash_title = self.dash_title | title
 
-    def _create_dash(self, extras:pSe|pDF=None) -> None:
+    def _create_dash(self, extras: pSe | pDF = None) -> None:
         """
         Construct the display output.
 
@@ -1114,21 +1147,22 @@ class FeatureImportance(SamplingMixin):
             features.
         """
         self.dash = FeatureImportanceDash(
-            im_result   = self._result,
-            methods     = self.fitter.methods,
-            results     = self.fitter.method_result,
-            figures     = self.fitter.method_figure,
-            dash_type   = self.dash_type,
-            dash_title  = self.dash_title
+            im_result=self._result,
+            methods=self.fitter.methods,
+            results=self.fitter.method_result,
+            figures=self.fitter.method_figure,
+            dash_type=self.dash_type,
+            dash_title=self.dash_title,
         )
         self.dash.create(extras)
         if not self.verbose:
             return
-        self.show_dash() 
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
+        self.show_dash()
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _features_order(ranks:pDF, features_order:list) -> pDF:
+    def _features_order(ranks: pDF, features_order: list) -> pDF:
         """
         Order features by custom order.
 
@@ -1140,21 +1174,23 @@ class FeatureImportance(SamplingMixin):
             return ranks.sort_values(by=LBL.C)
         return ranks.loc[features_order]
 
-    def _get_ablation_subsample(self, train_set: tuple[pDF, pSe] | None
+    def _get_ablation_subsample(
+        self, train_set: tuple[pDF, pSe] | None
     ) -> tuple[pDF, pSe] | None:
         """
         Subsample ablation training set according to sensitivity subsampling setup.
         """
         if train_set is None:
-            return None        
+            return None
         return self._get_subsample(*train_set, self.fitter.params)
-    
-    def fit(self, 
-        X: pDF, 
-        y: pSe, 
+
+    def fit(
+        self,
+        X: pDF,
+        y: pSe,
         ablation_train: tuple[pDF, pSe] = None,
-        features_order: list = None, 
-        dash_extras: pSe|pDF = None 
+        features_order: list = None,
+        dash_extras: pSe | pDF = None,
     ):
         """
         Compute feature importance consensus across all methods.
@@ -1189,20 +1225,23 @@ class FeatureImportance(SamplingMixin):
             Fitted instance with `.result` (consensus package)
             set.
         """
-        X_,y_ = self._get_subsample(X, y, self.fitter.params)
+        X_, y_ = self._get_subsample(X, y, self.fitter.params)
         abl_t = self._get_ablation_subsample(ablation_train)
-        ranks = self.fitter.process(X_, y_, abl_t)        
+        ranks = self.fitter.process(X_, y_, abl_t)
         ranks, pairwise, kendall_w = self.ranking.process(ranks)
-        
+
         self._result = FeatureImportanceResult(
-            ranks           = self._features_order(ranks, features_order),
-            pairwise_ranks  = pairwise,
-            kendall_w       = kendall_w,
-            method_results  = self.fitter.method_result
+            ranks=self._features_order(ranks, features_order),
+            pairwise_ranks=pairwise,
+            kendall_w=kendall_w,
+            method_results=self.fitter.method_result,
         )
         self._create_dash(dash_extras)
         return self
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureImportanceDash:
     """
@@ -1212,75 +1251,78 @@ class FeatureImportanceDash:
     output (tables, figures) from the assessment results.
     """
 
-    def __init__(self, 
-        im_result:  FeatureImportanceResult,         
-        methods:    list, 
-        results:    dict,
-        figures:    dict,
-        dash_type:  Literal['main','full','fig'] = 'main',
-        dash_title: dict | None = None
+    def __init__(
+        self,
+        im_result: FeatureImportanceResult,
+        methods: list,
+        results: dict,
+        figures: dict,
+        dash_type: Literal["main", "full", "fig"] = "main",
+        dash_title: dict | None = None,
     ):
-        self.im_result  = im_result
-        self.methods    = methods
-        self.results    = results       
-        self.figures    = figures
+        self.im_result = im_result
+        self.methods = methods
+        self.results = results
+        self.figures = figures
 
-        self.dash_type  = dash_type
+        self.dash_type = dash_type
         self.dash_title = dash_title or dict(
-            main  = 'Feature Effect by Method',
-            shap  = 'Feature Shap Effect on Model Output',
-            table = 'Feature Effect by Method',
+            main="Feature Effect by Method",
+            shap="Feature Shap Effect on Model Output",
+            table="Feature Effect by Method",
         )
 
-        self.dash = []  
+        self.dash = []
 
-    def _table(self, tables:list, titles:list, t:int=1) -> None:
-        self.dash.append( 
+    def _table(self, tables: list, titles: list, t: int = 1) -> None:
+        self.dash.append(
             TableStyle.combine_pdf_to_html(
-            tables, titles, 
-            tables_per_block = t,
-            h_cols_per_row   = 1, 
-            h_gap_horizontal = 20,
-            show = False
-        ))
-    
-    def _title(self, t:str) -> None:
+                tables,
+                titles,
+                tables_per_block=t,
+                h_cols_per_row=1,
+                h_gap_horizontal=20,
+                show=False,
+            )
+        )
+
+    def _title(self, t: str) -> None:
         t_ = t
-        if t in ['main', 'shap', 'table']:
-            t_:str = self.dash_title.get(t)
+        if t in ["main", "shap", "table"]:
+            t_: str = self.dash_title.get(t)
         if not t_:
-            self.dash.append('<br>')
-            return    
+            self.dash.append("<br>")
+            return
         self.dash.append(
             Format.title(t_.upper(), style=Format.StyleStats(), show=False)
         )
 
     @staticmethod
-    def _add_extras(effect:pDF, extras:pSe|pDF = None) -> list:
+    def _add_extras(effect: pDF, extras: pSe | pDF = None) -> list:
         if extras is None:
             return []
         if not isinstance(extras, (pDF, pSe)):
-            print('AIG SAFETY ► Provided extras must be pDF|pSe type ► skipping.')
+            print("AIG SAFETY ► Provided extras must be pDF|pSe type ► skipping.")
             return []
         fes = [x for x in effect.index if x not in extras.index]
         if fes:
             print(
-            'AIG SAFETY ► Provided extras for Importance overview does not '
-            f'align ► skipping join\nFollowing index values are missing:\n{fes}'
+                "AIG SAFETY ► Provided extras for Importance overview does not "
+                f"align ► skipping join\nFollowing index values are missing:\n{fes}"
             )
             return []
-        
+
         if isinstance(extras, pDF):
             c = extras.columns.to_list()
-        else: 
-            c = extras.name or 'Extras'
+        else:
+            c = extras.name or "Extras"
         effect[c] = extras.loc[effect.index]
         return List.ensure(c)
 
-    def _data(self, extras:pSe|pDF = None) -> pDF:        
+    def _data(self, extras: pSe | pDF = None) -> pDF:
         result = self.im_result.method_results
         effect = pDF(index=self.im_result.ranks.index)
-        sig    = pSe(False, index = effect.index)
+        sig = pSe(False, index=effect.index)
 
         for d in result.values():
             d = d.set_index(LBL.F)
@@ -1289,58 +1331,55 @@ class FeatureImportanceDash:
                 sig |= d[LBL.IS]
 
         ext = self._add_extras(effect, extras)
-        
+
         if any([x in result for x in (MTD.A, MTD.P)]):
             effect[LBL.IS] = sig
 
         keep = [LBL.IS, LBL.A, LBL.P, LBL.S] + ext
 
-        effect = (
-            effect[[x for x in keep if x in effect.columns]]
-            .reset_index(names=LBL.F)
+        effect = effect[[x for x in keep if x in effect.columns]].reset_index(
+            names=LBL.F
         )
         effect[LBL.F] = Pd.str_max_len(effect[LBL.F], 35)
-        sig_highlight = {'subset':LBL.IS, 'color':['#B50064', '#1DA889']} 
+        sig_highlight = {"subset": LBL.IS, "color": ["#B50064", "#1DA889"]}
 
-        return Pd.style(effect, 
-            format = {'precision':3},
-            color  = sig_highlight if LBL.IS in effect.columns else None,
+        return Pd.style(
+            effect,
+            format={"precision": 3},
+            color=sig_highlight if LBL.IS in effect.columns else None,
             # properties  = {'subset':LBL.F, 'max-width':'270px', 'text-align':'left'}
         )
 
-    def _main(self, extras: pSe|pDF = None) -> None:
-        if self.dash_type == 'fig':
+    def _main(self, extras: pSe | pDF = None) -> None:
+        if self.dash_type == "fig":
             return
-        self._title('main')
-        data  = self._data(extras)    
-        form  = [{"targets": "_all", "createdCell": ItablesStyle.bool_color(LBL.IS)}]
-        css   = "thead th { font-size: 10.5px !important; }"
-        html  = itables_html(data, columnDefs=form, update_css=css)
+        self._title("main")
+        data = self._data(extras)
+        form = [{"targets": "_all", "createdCell": ItablesStyle.bool_color(LBL.IS)}]
+        css = "thead th { font-size: 10.5px !important; }"
+        html = itables_html(data, columnDefs=form, update_css=css)
         self.dash.append(html)
 
     def _full(self) -> None:
-        if self.dash_type != 'full':
+        if self.dash_type != "full":
             return
         if len(self.methods) > 1:
             schema = Dataclass.schema(FeatureImportanceResult)
-            self._title('Feature Ranking Consistency')
+            self._title("Feature Ranking Consistency")
             self._table(
-                [self.im_result[r] for r in (schema.ranks, schema.pairwise_ranks)], 
-                ['Feature Ranking by Method', 'Feature Order Consistency by Kendall τ'], 
-                2
+                [self.im_result[r] for r in (schema.ranks, schema.pairwise_ranks)],
+                ["Feature Ranking by Method", "Feature Order Consistency by Kendall τ"],
+                2,
             )
-        self._title('table')
-        self._table(
-            list( self.results.values() ), 
-            self.methods
-        )            
+        self._title("table")
+        self._table(list(self.results.values()), self.methods)
 
     def _fig(self) -> None:
-        if self.figures.get(MTD.S) is not None:  
-            self._title('shap')
+        if self.figures.get(MTD.S) is not None:
+            self._title("shap")
             self.dash.append(self.figures[MTD.S])
 
-    def create(self, extras: pSe|pDF = None) -> None:
+    def create(self, extras: pSe | pDF = None) -> None:
         """
         Construct the full display output.
 
@@ -1351,9 +1390,11 @@ class FeatureImportanceDash:
         """
         self._main(extras)
         self._full()
-        self._fig()        
+        self._fig()
 
     def show(self) -> None:
         """Render and display the formatted output."""
         Display.construct(self.dash)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

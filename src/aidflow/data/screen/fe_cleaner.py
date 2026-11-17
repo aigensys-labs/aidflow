@@ -39,55 +39,41 @@ Requires the Data Loader stage to be completed (provides the
 standardized dataset + variable type inference).
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pa, pDF, pSe
+from ...deps.common import wraps
+from ...deps.data import pa, pDF, pSe
 
-from ...core.parameters         import  (
-                                        PRM,
-                                        AIG,
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBaseDual, 
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.interop            import  (
-                                        Arrow,
-                                        DataFrame,
-                                        TypeStandard
-                                        )
-from ...core.io                 import  ModelIO
-from ...core.standard           import  TypeDef
+from ...core.parameters import PRM, AIG, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBaseDual,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.interop import Arrow, DataFrame, TypeStandard
+from ...core.io import ModelIO
+from ...core.standard import TypeDef
 
-from .fitters.fe_standardizer   import  (
-                                        FeatureStandardizer,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitResult,
-                                        FitStats                                    
-                                        )
+from .fitters.fe_standardizer import (
+    FeatureStandardizer,
+    FitParamsBase,
+    FitParamsCfg,
+    FitResult,
+    FitStats,
+)
 
 MODEL = AIGFLOW.Data.fe_cleaner
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► QUALITY STANDARDS ► Learn and Ensure Features Standards & Types'
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = (
+    "AIG DATA STAGE ► QUALITY STANDARDS ► Learn and Ensure Features Standards & Types"
+)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -95,7 +81,10 @@ DESC  = 'AIG DATA STAGE ► QUALITY STANDARDS ► Learn and Ensure Features Stan
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'FeStandardizer'
+
+    AIG = "FeStandardizer"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -105,43 +94,47 @@ class REG(DictClass):
 @Dataclass.mapping
 class CleanParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.SCREEN.miss.param       : (params.max_miss,  'Maximum Missing'      ),
-        PRM.SCREEN.mode.param       : (params.max_1val,  'Maximum 1 Value'      ),
-        PRM.SCREEN.var.param        : (params.max_var,   'Maximum Variability'  ),
-        PRM.SCREEN.corr.param       : (params.max_corr,  'Maximum Correlation'  ),
-        PRM.SCREEN.cat.param        : (params.cat_max,   'Maximum Categories'   ),
-        PRM.SCREEN.downcast.param   : (params.downcast,  'Float64 Downcast'     ),
-    } 
+    setup = {
+        PRM.SCREEN.miss.param: (params.max_miss, "Maximum Missing"),
+        PRM.SCREEN.mode.param: (params.max_1val, "Maximum 1 Value"),
+        PRM.SCREEN.var.param: (params.max_var, "Maximum Variability"),
+        PRM.SCREEN.corr.param: (params.max_corr, "Maximum Correlation"),
+        PRM.SCREEN.cat.param: (params.cat_max, "Maximum Categories"),
+        PRM.SCREEN.downcast.param: (params.downcast, "Float64 Downcast"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """           
+    """
 
     @FREG.register(REG.AIG)
     class FeatureStandardizerFitter(FitParamsBase):
 
-        config: dict|FitParamsCfg = FitParamsCfg(
-            time_var     = None,
-            time_format  = None,
-            new_time_var = AIG.time_var.value,
-            flow_vars    = ['TARGET', AIG.time_var.value],
-            verbose      = True
+        config: dict | FitParamsCfg = FitParamsCfg(
+            time_var=None,
+            time_format=None,
+            new_time_var=AIG.time_var.value,
+            flow_vars=["TARGET", AIG.time_var.value],
+            verbose=True,
         )
 
         @property
         def _model(self) -> FeatureStandardizer:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> FeatureStandardizer:            
-            setup  = dict(params) | config
+            return self.model
+
+        def _build(self, params: FitParamsBase, config: dict) -> FeatureStandardizer:
+            setup = dict(params) | config
             return FeatureStandardizer(**setup)
 
         def get_result(self) -> FitResult:
@@ -149,23 +142,28 @@ class FitOptions(FitRegOpt):
 
         def get_stats(self) -> FitStats:
             return self._model.stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
     """Fitter params input design."""
+
     fe_types: pSe
+
 
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """  
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
-    
-    def fit(self, data:pDF):
+
+    def fit(self, data: pDF):
         """
         Learns variables types and standards.
 
@@ -173,29 +171,30 @@ class Fitter(FitterBase[FitParams]):
         ----------
         data :    Input Data for quality screening.
         verbose : bool → True shows dashboard and stats.
-        """       
+        """
         self.model.fit(data, self.params.fe_types)
         self.result: FitResult = self.model.get_result()
-        self.stats:  FitStats  = self.model.get_stats()
+        self.stats: FitStats = self.model.get_stats()
         self._init_dash()
         return self
 
-    def transform(self, data:pDF) -> pDF:
-        """ 
-        Data Quality between Train/OOT/Production may change format or 
+    def transform(self, data: pDF) -> pDF:
+        """
+        Data Quality between Train/OOT/Production may change format or
         missing vars in new data compared to Train.
 
         Parameters
         ----------
         data :    New Data to apply trained dtypes and behavior.
-                
+
         Returns
         -------
-        Transformed Data Standardized to expected variables types 
-        """            
+        Transformed Data Standardized to expected variables types
+        """
         return self.model.transform(data)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -204,61 +203,68 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResCols:
     """Transfomer output design."""
-    vars_types:     pSe
-    vars_all:       list
-    vars_num:       list
-    vars_cat:       list
-    vars_dropped:   list
+
+    vars_types: pSe
+    vars_all: list
+    vars_num: list
+    vars_cat: list
+    vars_dropped: list
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
-    """ 
+    """
 
     ModelFitter = Fitter
 
-    def _fit_data(self, inputs:"FeCleanerInput"):
+    def _fit_data(self, inputs: "FeCleanerInput"):
         return inputs.train_set
-    
+
     def _set_cols(self):
         res = self.fitter.result
-        return TransResCols(     
-            vars_types   = self._get_dtypes(res),       
-            vars_all     = res.vars_all,
-            vars_num     = res.numeric,
-            vars_cat     = res.object,
-            vars_dropped = res.vars_dropped
-        ) 
-    
+        return TransResCols(
+            vars_types=self._get_dtypes(res),
+            vars_all=res.vars_all,
+            vars_num=res.numeric,
+            vars_cat=res.object,
+            vars_dropped=res.vars_dropped,
+        )
+
     @staticmethod
     def _get_dtypes(res: FitResult) -> pSe:
         """Aligns dtypes with transform() → object to category."""
-        dt  = res.vars_type.copy()
-        obj = [x for x,t in dt.items() if t in TypeDef.object and x in res.object]
+        dt = res.vars_type.copy()
+        obj = [x for x, t in dt.items() if t in TypeDef.object and x in res.object]
         dt[obj] = TypeDef.category[0]
         return dt
-    
-    def transform(self, data:pDF) -> TransResData:
+
+    def transform(self, data: pDF) -> TransResData:
         """
         1. Applies trained standard to all columns
-        2. Transforms all obj cols to category 
+        2. Transforms all obj cols to category
         """
         data = self.fitter.transform(data)
         cols = [x for x in self.cols.vars_cat if x in data.columns]
-        TypeStandard.obj_to_cat(data, cols)      
-        return TransResData(data = data)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        TypeStandard.obj_to_cat(data, cols)
+        return TransResData(data=data)
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -267,39 +273,41 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
+
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
     Transformer - Fitter before execution begins.
-    """ 
-    
-    MODEL  = MODEL
-    DESC   = DESC
-    
-    Config  = FitParamsCfg
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = CleanParamsMapping
 
-    ModelTransformer = Transformer    
-    # ─────────────────────────────────────────────────────────────────────────────────────────────          
-        
-    def get_choice(self, fx_choice:str, inputs:"FeCleanerInput"):
-        defaults  = self.Config(
-            time_var     = self.setup.yy_mm,
-            time_format  = self.setup.yy_mm_format,
-            new_time_var = AigParam.di(inputs.time_var, self.setup.time_var),
-            verbose      = AigParam.di(inputs.verbose, self.setup.verbose),
-            flow_vars    = self.setup.flow_vars,
-        ) 
-        fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)     
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
-    def get_params(self, fx_choice:str, inputs:"FeCleanerInput", params:dict):
-        params = self.get_fit_params(fx_choice, inputs.fx_params, params)
-        fit = FitParams(fe_types = inputs.dtypes, **params)        
-        return fit, self.setup
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+    ModelTransformer = Transformer
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
+    def get_choice(self, fx_choice: str, inputs: "FeCleanerInput"):
+        defaults = self.Config(
+            time_var=self.setup.yy_mm,
+            time_format=self.setup.yy_mm_format,
+            new_time_var=AigParam.di(inputs.time_var, self.setup.time_var),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+            flow_vars=self.setup.flow_vars,
+        )
+        fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
+        return RegGet.choice(fx_choice, fx_config)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "FeCleanerInput", params: dict):
+        params = self.get_fit_params(fx_choice, inputs.fx_params, params)
+        fit = FitParams(fe_types=inputs.dtypes, **params)
+        return fit, self.setup
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -334,9 +342,11 @@ class FeCleanerInput(ModelInput):
     the same pass — catching drift early before any modelling
     begins.
     """
-    train_set:  pDF
-    test_set:   pDF
-    dtypes:     pSe
+
+    train_set: pDF
+    test_set: pDF
+    dtypes: pSe
+
 
 @Dataclass.base
 class FeCleanerResult(ModelResult):
@@ -387,25 +397,33 @@ class FeCleanerResult(ModelResult):
     complete audit trail. Each entry records the feature name,
     its original type, and the specific reason for removal.
     """
-    data:         pDF
-    dtypes:       pSe
-    dropped:      list
-    features:     list
+
+    data: pDF
+    dtypes: pSe
+    dropped: list
+    features: list
     num_features: list
     cat_features: list
+
 
 @Dataclass.base
 class FeCleanerResultTest:
     """Model Output Test Data Design."""
+
     data: pDF
+
 
 @Dataclass.base(dynamic_params=True)
 class FeCleanerResultDual(FeCleanerResult):
     """Model Output Dual (Train-Test) Design."""
+
     test_data: DataFrame
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class FeatureCleaner(Processor, ModelBaseDual):     
+
+class FeatureCleaner(Processor, ModelBaseDual):
     """
     Feature Cleaner — Data Quality Screening & Type Enforcement.
 
@@ -487,46 +505,47 @@ class FeatureCleaner(Processor, ModelBaseDual):
     >>> result.features      # All surviving features
     >>> result.num_features  # Numeric features
     >>> result.cat_features  # Categorical features
-    >>> result.dropped       # Removed features + reasons    
+    >>> result.dropped       # Removed features + reasons
     """
 
     def _save(self, save_path) -> None:
         features = {
-            'features':     self.cols.vars_all, 
-            'num_features': self.cols.vars_num, 
-            'cat_features': self.cols.vars_cat
+            "features": self.cols.vars_all,
+            "num_features": self.cols.vars_num,
+            "cat_features": self.cols.vars_cat,
         }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
 
-    def _to_pd(self, data:pDF) -> pDF:
+    def _to_pd(self, data: pDF) -> pDF:
         """
         Manages memory allocation and data offloading during the screening phase.
 
         Behavior:
         - offload == False:
-            Retains data in PyArrow format for as long as possible (until after 
-            `obs_stabilizer` drops unnecessary rows). Test data remains in Arrow 
+            Retains data in PyArrow format for as long as possible (until after
+            `obs_stabilizer` drops unnecessary rows). Test data remains in Arrow
             format to maintain a minimal footprint throughout the pipeline.
         - offload == True:
-            Optimized for aggressive memory recovery. Immediately after data cleaning, 
-            data is converted to native Pandas dtypes, and all underlying Arrow arrays 
+            Optimized for aggressive memory recovery. Immediately after data cleaning,
+            data is converted to native Pandas dtypes, and all underlying Arrow arrays
             are cleared (`None` + GC).
-            Especially effective when cleaner drops a large number of columns 
-            or applying aggressive precision downcasting (e.g., float64 to float32/16), 
+            Especially effective when cleaner drops a large number of columns
+            or applying aggressive precision downcasting (e.g., float64 to float32/16),
             as it severs references to the uncompressed parent arrays.
 
         Rationale:
-            Downstream ML libraries (e.g., LightGBM, Scikit-Learn) do not natively 
-            support `ArrowDtype` and trigger on-the-fly conversions during training. 
-            Converting data *after* observation filtering/subsampling and severing 
+            Downstream ML libraries (e.g., LightGBM, Scikit-Learn) do not natively
+            support `ArrowDtype` and trigger on-the-fly conversions during training.
+            Converting data *after* observation filtering/subsampling and severing
             the Arrow reference chains prevents severe memory spikes during model fitting.
         """
         if self.setup.offload:
             return Arrow.to_safe_datatype(data)
         return data
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def fit(self, inputs:FeCleanerInput, fx_choice:str = REG.AIG, **params):
+    def fit(self, inputs: FeCleanerInput, fx_choice: str = REG.AIG, **params):
         """
         Execute the full data quality screening and type enforcement.
 
@@ -551,26 +570,20 @@ class FeatureCleaner(Processor, ModelBaseDual):
             The fitted instance with clean feature set and
             type mapping available.
         """
-        verify = ( 
-            len(inputs.train_set) and 
-            len(inputs.test_set)  and 
-            len(inputs.dtypes) 
-        )
+        verify = len(inputs.train_set) and len(inputs.test_set) and len(inputs.dtypes)
 
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs, 
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data: pDF | pa.Table, subset:list=None) -> FeCleanerResult:
+    def transform(self, data: pDF | pa.Table, subset: list = None) -> FeCleanerResult:
         """
         Apply the trained type standards to new data.
 
@@ -579,8 +592,8 @@ class FeatureCleaner(Processor, ModelBaseDual):
         data : pDF
             Input data to clean and type-enforce.
         subset : list, optional
-            Specific features to process and return. 
-            Default = None: all trained features. 
+            Specific features to process and return.
+            Default = None: all trained features.
 
         Returns
         -------
@@ -591,25 +604,26 @@ class FeatureCleaner(Processor, ModelBaseDual):
 
         c_all = self.cols.vars_all
         c_sub = subset or data.columns
-        cols  = [x for x in c_sub if x in c_all]
+        cols = [x for x in c_sub if x in c_all]
 
         miss = c_all if not cols else None
-        df = self.processor.transform(data[cols], verify = miss)
+        df = self.processor.transform(data[cols], verify=miss)
 
         return FeCleanerResult(
-            data         = df.data, 
-            dtypes       = self.cols.vars_types, 
-            dropped      = self.cols.vars_dropped,
-            features     = self.cols.vars_all, 
-            num_features = self.cols.vars_num, 
-            cat_features = self.cols.vars_cat, 
-        )    
+            data=df.data,
+            dtypes=self.cols.vars_types,
+            dropped=self.cols.vars_dropped,
+            features=self.cols.vars_all,
+            num_features=self.cols.vars_num,
+            cat_features=self.cols.vars_cat,
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def transform_dual(self, inputs:FeCleanerInput) -> FeCleanerResultDual:
+
+    def transform_dual(self, inputs: FeCleanerInput) -> FeCleanerResultDual:
         """
         Applies the cleaning logic to a provided dataframe.
-        
+
         Mandatory match of signature methods fit - transform_dual for dual-set processing.
 
         Parameters
@@ -625,32 +639,32 @@ class FeatureCleaner(Processor, ModelBaseDual):
         df = self.processor.transform(inputs.train_set)
         dt = self.processor.transform(inputs.test_set)
 
-        self._result = FeCleanerResultTest(
-            data = self._to_pd(dt.data)
-        )
-        
-        return FeCleanerResultDual(
-            data         = self._to_pd(df.data), 
-            test_data    = lambda: DataFrame(self._result.data),
-            dtypes       = self.cols.vars_types, 
-            dropped      = self.cols.vars_dropped,
-            features     = self.cols.vars_all, 
-            num_features = self.cols.vars_num, 
-            cat_features = self.cols.vars_cat, 
-        )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        self._result = FeCleanerResultTest(data=self._to_pd(dt.data))
 
+        return FeCleanerResultDual(
+            data=self._to_pd(df.data),
+            test_data=lambda: DataFrame(self._result.data),
+            dtypes=self.cols.vars_types,
+            dropped=self.cols.vars_dropped,
+            features=self.cols.vars_all,
+            num_features=self.cols.vars_num,
+            cat_features=self.cols.vars_cat,
+        )
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → CLEANING → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class OptionUI(OptionUIBase):
-    title   = 'DATA CLEANING PANEL'
-    split   = 3
+    title = "DATA CLEANING PANEL"
+    split = 3
     Mapping = CleanParamsMapping
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -658,20 +672,20 @@ class OptionUI(OptionUIBase):
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class FeatureCleanerUI(ModelUIBase):
     """
-    AIG Flow Data Quality Screening.    
+    AIG Flow Data Quality Screening.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Responsible for cleaning the raw datasets, enforcing data types, 
-    and identifying feature sets (numerical vs categorical).    
+
+    Responsible for cleaning the raw datasets, enforcing data types,
+    and identifying feature sets (numerical vs categorical).
     """
-    
-    Model  = FeatureCleaner
+
+    Model = FeatureCleaner
     Option = OptionUI
 
     @wraps(FeatureCleaner.fit)
     def fit(self, *args, **kwargs):
         """Cleaner fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(), **kwargs)
+        self.model_ui.fit(*args, ui_params=self._get_ui_fit_defaults(), **kwargs)
         return self
 
     @wraps(FeatureCleaner.transform)
@@ -679,5 +693,8 @@ class FeatureCleanerUI(ModelUIBase):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> FeCleanerResultDual: return self.model_ui.fitted
+    def fitted(self) -> FeCleanerResultDual:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

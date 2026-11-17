@@ -9,7 +9,7 @@ Thank you for your interest in AIDflow.
 git clone https://github.com/aigensys-labs/aidflow.git
 cd aidflow
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install -e ".[all,dev]"
 ```
 
 ## Reporting Issues

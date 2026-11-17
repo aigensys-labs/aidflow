@@ -1,26 +1,16 @@
 """
 Low-level infrastructure pandas data ops and structural manipulation tools.
 
-Type-Aware Data Manipulation with specialized helpers designed specifically for 
+Type-Aware Data Manipulation with specialized helpers designed specifically for
 ML pipeline requirements.
 """
 
-from ...deps.common      import  (
-                                math,
-                                wraps, 
-                                contextmanager
-                                )
-from ...deps.data       import  (
-                                np, 
-                                pd, pDF, pSe,
-                                pd_Styler
-                                )
-from ...deps.types      import  ArrayLike
-from ...utils.builtins  import  List
-from ..standard         import  (
-                                VarStd, 
-                                TypeDef
-                                )
+from ...deps.common import math, wraps, contextmanager
+from ...deps.data import np, pd, pDF, pSe, pd_Styler
+from ...deps.types import ArrayLike
+from ...utils.builtins import List
+from ..standard import VarStd, TypeDef
+
 
 class GetValue:
     """
@@ -79,23 +69,32 @@ class GetValue:
     ... def get_coefficient(self, df, x):
     ...     return x  # x is the feature name, returns the coefficient
     """
-    attr_name = "__get_df_val_of_col_at_x_fast"
-    registry  = "__getatloop_name_space__"
 
-    def __init__(self, df:pDF, at_x:str, no_match=None, verbose:bool=True, to_raise:bool=True):
+    attr_name = "__get_df_val_of_col_at_x_fast"
+    registry = "__getatloop_name_space__"
+
+    def __init__(
+        self,
+        df: pDF,
+        at_x: str,
+        no_match=None,
+        verbose: bool = True,
+        to_raise: bool = True,
+    ):
         self.id = id(df)
-        self.at_x = at_x            
+        self.at_x = at_x
 
         self.no_match = no_match
-        self.verbose  = verbose
+        self.verbose = verbose
         self.to_raise = to_raise
 
-        self.is_unique = df[at_x].is_unique            
+        self.is_unique = df[at_x].is_unique
         if self.is_unique:
-                self.dx = df.set_index(at_x)
-        else: self.dx = df
-    
-    def __call__(self, x, of_col:str|list|None):
+            self.dx = df.set_index(at_x)
+        else:
+            self.dx = df
+
+    def __call__(self, x, of_col: str | list | None):
         """
         Retrieve value(s) where `at_x == x`.
 
@@ -115,50 +114,58 @@ class GetValue:
               (or raises if `to_raise=True`).
         """
         if of_col is None:
-            of_col = self.dx.columns            
+            of_col = self.dx.columns
         if self.is_unique:
-            return self._unique(x, of_col)            
+            return self._unique(x, of_col)
         return self._not_unique(x, of_col)
-    
-    def _unique(self, x:str, of_col:str|list|None):
+
+    def _unique(self, x: str, of_col: str | list | None):
         """
         Unique values provides fast match via .at (1col) - %timeit on small/medium df 20-100x.
         For list of cols → .loc with ~2x-5x (given .set_index) while returning scalar/vector.
         """
-        if isinstance(of_col, str): 
-                fx = self.dx.at
-        else: fx = self.dx.loc            
-        try:    
+        if isinstance(of_col, str):
+            fx = self.dx.at
+        else:
+            fx = self.dx.loc
+        try:
             return fx[x, of_col]
-        except: 
+        except:
             return self.no_match
-            
-    def _not_unique(self, x, of_col:str|list|None):
-        """Non-unique value provides standard .loc match while returning vector/matrix."""
-        if isinstance(of_col, str): 
-                m = 'pd.Series instead of scalar'
-        else: m = 'pd.DataFrame instead of pd.Series'
-        m = f'AIG SAFETY ► Pd.GetValue operates on non-unique values → Returning object is {m}.'
-        if self.to_raise: raise ValueError(m)
-        if self.verbose:  print(m)
-        return self.dx.loc[self.dx[self.at_x]==x, of_col]                    
 
-    
+    def _not_unique(self, x, of_col: str | list | None):
+        """Non-unique value provides standard .loc match while returning vector/matrix."""
+        if isinstance(of_col, str):
+            m = "pd.Series instead of scalar"
+        else:
+            m = "pd.DataFrame instead of pd.Series"
+        m = f"AIG SAFETY ► Pd.GetValue operates on non-unique values → Returning object is {m}."
+        if self.to_raise:
+            raise ValueError(m)
+        if self.verbose:
+            print(m)
+        return self.dx.loc[self.dx[self.at_x] == x, of_col]
+
     @classmethod
-    def value(cls, 
-        df:pDF, at_x:str, x:str, of_col:str|list|None=None, to_raise:bool=True
+    def value(
+        cls,
+        df: pDF,
+        at_x: str,
+        x: str,
+        of_col: str | list | None = None,
+        to_raise: bool = True,
     ):
         """
-        Helper to get one value(s) only from df → mainly for checks. 
+        Helper to get one value(s) only from df → mainly for checks.
         `Otherwise use instance of GetValue to obtain fast look-up by caching.`
-        
+
         Instance use case leveraging performance boost:
         >>> get_fast = GetValue(df, at_x)
         >>> for x in values_of_X:
         >>>     value_of_col_at_x = get_fast(x, of_col)
 
-        Applied logic   
-        -------------         
+        Applied logic
+        -------------
         a : Scalar → df.set_index(at_x).at[x, of_col]  → `of_col >> str  >> at_x has unique values only >> 10-100x boost`.
         b : Vector → df.set_index(at_x).loc[x, of_col] → `of_col >> list >> at_x has unique values only >> 2-5x boost`.
         c : Vector | Matrix → df.loc[df[at_x]==x, of_col] → `NON-unique values in at_x` with standard performance.
@@ -169,15 +176,15 @@ class GetValue:
         at_x :      Column which serves the row condition as at_x==x.
         x :         Value for a row condition as at_x == x.
         of_col :    Column(s) which value(s) is returned.
-        to_raise :  True → raise when non-unique at_x==x is present 
-                    thus different type would be returned 
+        to_raise :  True → raise when non-unique at_x==x is present
+                    thus different type would be returned
                     → Series instead of Scalar Value | DataFrame instead of Series.
 
         Returns
         -------
         a : of_col is str → `Scalar Value` of of_col from row at_x==x.
         b : of_col is a list of cols → `Vector of Values` (pd.Series).
-        c : `Vector (of_col is str) | Matrix (pd.DataFrame - of_col as list)` if 
+        c : `Vector (of_col is str) | Matrix (pd.DataFrame - of_col as list)` if
             `non-unique at_x==x occurs <<>> and  to_raise=False`.
 
         Examples
@@ -191,44 +198,49 @@ class GetValue:
         ...     getter(f, 'coeff')
         """
         return cls(df, at_x, to_raise=to_raise)(x, of_col)
-    
+
     # ─── API for AIG Worker Instances ───
-    def _is_df_same(self, df:pDF) -> bool:
+    def _is_df_same(self, df: pDF) -> bool:
         """Check whether cached DataFrame is the same object in memory."""
         return self.id == id(df)
-    
+
     @classmethod
-    def _get_name(cls, method_name:str=None) -> str:
+    def _get_name(cls, method_name: str = None) -> str:
         """Generate a unique cached-lookup attribute name."""
-        return f"{cls.attr_name}_{method_name or 'default'}" 
-    
+        return f"{cls.attr_name}_{method_name or 'default'}"
+
     @classmethod
     def _register_method(cls, instance, name) -> None:
         """Register a cached lookup name in the instance's namespace tracker."""
         if not hasattr(instance, cls.registry):
             setattr(instance, cls.registry, set())
         getattr(instance, cls.registry).add(name)
-    
+
     @classmethod
-    def _set_lookup(cls, instance, name:str, df:pDF, at_x:str, to_raise:bool):
+    def _set_lookup(cls, instance, name: str, df: pDF, at_x: str, to_raise: bool):
         """Initialize and attach a cached `GetValue` instance to the worker."""
         fast_lookup = cls(df, at_x, to_raise=to_raise)
         setattr(instance, name, fast_lookup)
         return fast_lookup
-    
+
     @classmethod
-    def _register_lookup(cls, instance, name:str, df:pDF, at_x:str, to_raise:bool):
+    def _register_lookup(cls, instance, name: str, df: pDF, at_x: str, to_raise: bool):
         """Retrieve or create the cached lookup for the worker instance."""
         if not hasattr(instance, name):
             cls._register_method(instance, name)
             return cls._set_lookup(instance, name, df, at_x, to_raise)
         return getattr(instance, name)
-    
+
     @classmethod
-    def _value(cls, 
-        instance, 
-        df:pDF, at_x:str, x:str, of_col:str|list|None, 
-        _name:str=None, to_raise:bool=True
+    def _value(
+        cls,
+        instance,
+        df: pDF,
+        at_x: str,
+        x: str,
+        of_col: str | list | None,
+        _name: str = None,
+        to_raise: bool = True,
     ):
         """
         <O(1)> vs. <O(N)> `df.loc[df[at_x]==x, of_col].iloc[0]`.
@@ -236,61 +248,67 @@ class GetValue:
         Wrap for worker instance of GetAtLoop for repeated lookups in loops.
         Cached data auto-refreshes if the DataFrame changes.
 
-        Memory cost: keeps a per-instance cached df.set_index(at_x).      
+        Memory cost: keeps a per-instance cached df.set_index(at_x).
         """
         name = cls._get_name(_name)
         fast_lookup = cls._register_lookup(instance, name, df, at_x, to_raise)
         if not fast_lookup._is_df_same(df):
-            fast_lookup = cls._set_lookup(instance, name, df, at_x, to_raise)                 
+            fast_lookup = cls._set_lookup(instance, name, df, at_x, to_raise)
         return fast_lookup(x, of_col)
 
     @classmethod
-    def at_x_of_col(cls, at_x:str, of_col:str|list|None=None, to_raise:bool=True):
+    def at_x_of_col(
+        cls, at_x: str, of_col: str | list | None = None, to_raise: bool = True
+    ):
         """
         Decorator: attach Pd.GetValue behavior directly to worker methods.
         Otherwise, can be passed dynamically when calling the method using GetValue._value.
 
         Usage
         -----
-        The decorator applies as: 
+        The decorator applies as:
         >>> @Pd.GetValue.at_x_of_col(at_x:str, of_col <optional>)
         >>> def(df: pDF, x: str, of_col <optional>):
         >>>     ...
 
-        Return logic   
-        -------------         
-        a : Scalar → df.set_index(at_x).at[x, of_col]  
+        Return logic
+        -------------
+        a : Scalar → df.set_index(at_x).at[x, of_col]
             → `of_col >> str  >> at_x has unique values only >> 10-100x boost`.
 
-        b : Vector → df.set_index(at_x).loc[x, of_col] 
+        b : Vector → df.set_index(at_x).loc[x, of_col]
             → `of_col >> list >> at_x has unique values only >> 2-5x boost`.
-            
-        c : Vector | Matrix → df.loc[df[at_x]==x, of_col] 
+
+        c : Vector | Matrix → df.loc[df[at_x]==x, of_col]
             → `NON-unique values in at_x` with standard performance.
 
         Parameters
         ----------
         at_x :      Column which serves the row condition as at_x==x.
         of_col :    Column(s) which value(s) is returned.
-        to_raise :  True → raise when non-unique at_x==x is present 
-                    thus different type would be returned 
+        to_raise :  True → raise when non-unique at_x==x is present
+                    thus different type would be returned
                     → Series instead of Scalar Value | DataFrame instead of Series.
 
         Returns
         -------
         a : of_col is str → `Scalar Value` of of_col from row at_x==x.
         b : of_col is a list of cols → `Vector of Values` (pd.Series).
-        c : `Vector (of_col is str) | Matrix (pd.DataFrame - of_col as list)` if 
+        c : `Vector (of_col is str) | Matrix (pd.DataFrame - of_col as list)` if
             `non-unique at_x==x occurs <<>> and  to_raise=False`.
         """
         _of_col = of_col
+
         def decor(fx):
             name = fx.__name__
+
             @wraps(fx)
-            def wrapper(instance, df:pDF, x:str, of_col:str|list|None=None):
+            def wrapper(instance, df: pDF, x: str, of_col: str | list | None = None):
                 target_col = of_col or _of_col
                 return cls._value(instance, df, at_x, x, target_col, name, to_raise)
+
             return wrapper
+
         return decor
 
     @classmethod
@@ -307,7 +325,7 @@ class GetValue:
         for name in list(reg):
             if hasattr(instance, name):
                 delattr(instance, name)
-        reg.clear()      
+        reg.clear()
 
     @classmethod
     @contextmanager
@@ -327,8 +345,11 @@ class GetValue:
         try:
             yield
         finally:
-            cls.clear_cache(instance)        
+            cls.clear_cache(instance)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Pd:
     """
@@ -351,9 +372,9 @@ class Pd:
       mode-to-numeric transformation.
     - **Display**: DataFrame styling for reports and diagnostics.
     """
-    
+
     @staticmethod
-    def stable_sort(data:pDF, sortby:str|list, **kwargs) -> pDF:
+    def stable_sort(data: pDF, sortby: str | list, **kwargs) -> pDF:
         """
         Deterministic sort using stable mergesort algorithm.
 
@@ -376,12 +397,13 @@ class Pd:
         pDF
             Sorted DataFrame (new object; original unchanged).
         """
-        return data.sort_values(by=sortby, kind='mergesort', **kwargs)  
+        return data.sort_values(by=sortby, kind="mergesort", **kwargs)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-        
+
     @staticmethod
     @wraps(pd.concat)
-    def concat(dfs:list[pDF|pSe|None], **kwargs) -> pDF|None:
+    def concat(dfs: list[pDF | pSe | None], **kwargs) -> pDF | None:
         """
         Null/empty-safe DataFrame concatenation.
 
@@ -409,26 +431,27 @@ class Pd:
         -----
         This is the standard concatenation primitive used by
         the data encoder to merge WOE features with raw data.
-        """        
+        """
         data = [d for d in dfs if (d is not None) and (not d.empty)]
-        if data or isinstance(dfs[0], pSe):  
-            return pd.concat(data, **kwargs)    
-        
-        E = pDF()    
+        if data or isinstance(dfs[0], pSe):
+            return pd.concat(data, **kwargs)
+
+        E = pDF()
         for d in dfs:
-            if d is None: 
+            if d is None:
                 continue
             cols = [c for c in d.columns if c not in E.columns]
             if cols:
                 E[cols] = None
-                
+
         if not len(E.columns):
             return None
-        return E        
+        return E
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def notnull(df:pDF, *args, all_=True) -> pSe:
+    def notnull(df: pDF, *args, all_=True) -> pSe:
         """
         Multi-column `notnull` mask.
 
@@ -446,17 +469,17 @@ class Pd:
         -------
         pSe
             Boolean mask.
-        """        
-        m = df[args[0]].notnull()    
+        """
+        m = df[args[0]].notnull()
         for x in args[1:]:
             if all_:
-                m &= df[x].notnull()    
+                m &= df[x].notnull()
             else:
                 m |= df[x].notnull()
         return m
-    
+
     @staticmethod
-    def isnull(df:pDF, *args, all_=True) -> pSe:
+    def isnull(df: pDF, *args, all_=True) -> pSe:
         """
         Multi-column `isnull` mask.
 
@@ -474,18 +497,19 @@ class Pd:
         -------
         pSe
             Boolean mask.
-        """        
-        m = df[args[0]].isnull()    
+        """
+        m = df[args[0]].isnull()
         for x in args[1:]:
             if all_:
-                m &= df[x].isnull()    
+                m &= df[x].isnull()
             else:
                 m |= df[x].isnull()
         return m
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def move_column_inplace(df:pDF, col:list|str, pos:list|int) -> pDF:
+    def move_column_inplace(df: pDF, col: list | str, pos: list | int) -> pDF:
         """
         Reposition column(s) within the DataFrame in-place.
 
@@ -497,24 +521,25 @@ class Pd:
             Column name(s) to move.
         pos : int | list
             Target position(s). Negative indices count from the end.
-        """        
+        """
         if isinstance(col, str):
             col = [col]
         if isinstance(pos, int):
             pos = [pos]
         lcs = len(df.columns)
-        for i,p in enumerate(pos):
-            if p < 0: 
+        for i, p in enumerate(pos):
+            if p < 0:
                 pos[i] = lcs + p
         for i in range(len(col)):
             c = df.pop(col[i])
             df.insert(pos[i], c.name, c)
 
         return df
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
-    def get_time_resolution(t:pSe) -> str:
+    def get_time_resolution(t: pSe) -> str:
         """
         Infer the temporal resolution of a time Series.
 
@@ -543,46 +568,43 @@ class Pd:
         Panel data (duplicate timestamps) is handled by filtering
         zero-difference gaps before inference.
         """
-        d  = t.sort_values().diff().dropna()
-        d  = d[d > pd.Timedelta(0)] # panel data → elimination of same tu
-        
+        d = t.sort_values().diff().dropna()
+        d = d[d > pd.Timedelta(0)]  # panel data → elimination of same tu
+
         # space data → irrelevant tu
         if not len(d):
-            return 'D'
+            return "D"
 
         ts = d.median().total_seconds()
-        
-        units = {
-            'D': 86400,
-            'h':  3600,
-            'min':  60,
-            's':     1
-        }
-        
+
+        units = {"D": 86400, "h": 3600, "min": 60, "s": 1}
+
         tolerance = 0.05
 
         # 1. Standard TU tolerance
         for u, s in units.items():
             lb = s * (1 - tolerance)
             ub = s * (1 + tolerance)
-            
+
             if lb <= ts <= ub:
                 return u
-        
-        # 2. If it doesn't fit any standard, try to check if it's a multiple 
+
+        # 2. If it doesn't fit any standard, try to check if it's a multiple
         # of one (e.g., data every 4 hours)
         for u, s in units.items():
-            if ts % s < (s * tolerance): 
+            if ts % s < (s * tolerance):
                 return u
-        
-        raise ValueError('AIG SAFETY'
-            '\n► Time variable resolution cannot be determined.'
-            '\n► Supported time formats: day, hour, minute, second.'
+
+        raise ValueError(
+            "AIG SAFETY"
+            "\n► Time variable resolution cannot be determined."
+            "\n► Supported time formats: day, hour, minute, second."
         )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
-    def get_num_precision(x:pSe|float|int) -> int:
+    def get_num_precision(x: pSe | float | int) -> int:
         """
         Determine the maximum decimal precision of a numeric Series or scalar.
 
@@ -600,23 +622,33 @@ class Pd:
         ------
         ValueError
             If the input is not a numeric dtype.
-        """        
+        """
         if isinstance(x, float):
-            return len( str(x).rstrip('0').split('.')[-1] )
+            return len(str(x).rstrip("0").split(".")[-1])
         if isinstance(x, int):
-            return 0 
-        
+            return 0
+
         dtype = x.dtype.name.lower()
-        if any(x in dtype for x in ('float', 'double')):
-            return int( x.fillna(0).astype(str).str.rstrip('0').str.split('.').str[-1].str.len().max() )
-        elif 'int' in dtype:
+        if any(x in dtype for x in ("float", "double")):
+            return int(
+                x.fillna(0)
+                .astype(str)
+                .str.rstrip("0")
+                .str.split(".")
+                .str[-1]
+                .str.len()
+                .max()
+            )
+        elif "int" in dtype:
             return 0
         else:
-            raise ValueError('AIG SAFETY ► ONLY NUMERIC DATA TYPE CAN BE PASSED TO PRECISION DETERMINATION')
+            raise ValueError(
+                "AIG SAFETY ► ONLY NUMERIC DATA TYPE CAN BE PASSED TO PRECISION DETERMINATION"
+            )
 
     @classmethod
-    def cut_correct_precision(cls, 
-        d:pSe, p:int, min_left:int|float = None, max_right:int|float = None
+    def cut_correct_precision(
+        cls, d: pSe, p: int, min_left: int | float = None, max_right: int | float = None
     ) -> pSe:
         """
         Correct interval boundary precision errors introduced by `pd.qcut` / `pd.cut`.
@@ -646,49 +678,53 @@ class Pd:
             Non-categorical inputs are returned unchanged.
         """
         cat = d.dtype
-        
-        if cat.name != 'category':
+
+        if cat.name != "category":
             return d
-            
+
         def correct(x):
-            if   fl: return -np.inf if min_left is None else min_left  # r = ( x-a )
-            elif lr: return np.inf if max_right is None else max_right
-            pa = p+1
-            a  = math.pow(10,-pa)
-            return round(x+a, pa)
-        
-        def closed(int_:pd.Interval):
+            if fl:
+                return -np.inf if min_left is None else min_left  # r = ( x-a )
+            elif lr:
+                return np.inf if max_right is None else max_right
+            pa = p + 1
+            a = math.pow(10, -pa)
+            return round(x + a, pa)
+
+        def closed(int_: pd.Interval):
             c = int_.closed
-            if not lr:    return c 
-            if c=='left': return c
-            return 'neither'            
-        
-        intervals = cat.categories           
-        intervals = [int_  for int_ in intervals if isinstance(int_, pd.Interval)]
-        mapping   = {}        
-        
-        l = len(intervals)-1
-        
+            if not lr:
+                return c
+            if c == "left":
+                return c
+            return "neither"
+
+        intervals = cat.categories
+        intervals = [int_ for int_ in intervals if isinstance(int_, pd.Interval)]
+        mapping = {}
+
+        l = len(intervals) - 1
+
         for i, int_ in enumerate(intervals):
-            adj = False        
-            ilr = {'l': int_.left, 'r':int_.right}        
+            adj = False
+            ilr = {"l": int_.left, "r": int_.right}
 
-            for k,x in ilr.items():
-                fl = ( i == 0 and k == 'l' )    # first left
-                lr = ( i == l and k == 'r' )    # last right
+            for k, x in ilr.items():
+                fl = i == 0 and k == "l"  # first left
+                lr = i == l and k == "r"  # last right
 
-                if ( cls.get_num_precision(x) > p ) or any([fl,lr]):
+                if (cls.get_num_precision(x) > p) or any([fl, lr]):
                     ilr[k] = correct(x)
-                    adj = True        
-            if adj: 
-                mapping[int_] = pd.Interval(ilr['l'], ilr['r'], closed=closed(int_))
-            
+                    adj = True
+            if adj:
+                mapping[int_] = pd.Interval(ilr["l"], ilr["r"], closed=closed(int_))
+
         if mapping:
-            d = d.cat.rename_categories(mapping)        
-        return d    
+            d = d.cat.rename_categories(mapping)
+        return d
 
     @staticmethod
-    def _cut_correct_empty_map(v:pSe) -> dict:
+    def _cut_correct_empty_map(v: pSe) -> dict:
         """
         Build a category remapping for empty bins produced by `pd.cut`.
 
@@ -704,33 +740,34 @@ class Pd:
         -------
         dict
             Mapping of original → corrected category.
-        """        
-        v:pDF = v.sort_index().reset_index()
-        v.columns = ['x','c']
-        
-        o = v['x'].to_dict()
+        """
+        v: pDF = v.sort_index().reset_index()
+        v.columns = ["x", "c"]
+
+        o = v["x"].to_dict()
         m = {}
 
-        e = v.loc[v['c']==0,'x']
-        v = v.loc[v['c']!=0,'x']        
-        vi= v.index
+        e = v.loc[v["c"] == 0, "x"]
+        v = v.loc[v["c"] != 0, "x"]
+        vi = v.index
         v = v.to_dict()
-        
-        for i in e.index:                        
-            i_ = vi[np.argmin(abs(vi-i))]
+
+        for i in e.index:
+            i_ = vi[np.argmin(abs(vi - i))]
             v_ = v[i_]
             e_ = e[i]
             if i > i_:
-                  l,r = v_, e_
-            else: l,r = e_, v_
+                l, r = v_, e_
+            else:
+                l, r = e_, v_
             v[i_] = pd.Interval(l.left, r.right, closed=r.closed)
-            m[o[i_]] = v[i_]        
-        
-        a = {o[i]:o[i] for i in o}
+            m[o[i_]] = v[i_]
+
+        a = {o[i]: o[i] for i in o}
         return a | m
-    
+
     @classmethod
-    def _cut_correct_empty(cls, d:pSe, v:pSe) -> pSe:
+    def _cut_correct_empty(cls, d: pSe, v: pSe) -> pSe:
         """
         Apply empty-bin correction to a categorical Series.
 
@@ -745,15 +782,15 @@ class Pd:
         -------
         pSe
             Series with empty intervals merged into neighbors.
-        """        
+        """
         m = cls._cut_correct_empty_map(v)
-        t = d.dtype        
-        if t.name != 'category':
+        t = d.dtype
+        if t.name != "category":
             return d.map(m)
         return d.cat.rename_categories(m)
-    
+
     @classmethod
-    def cut_correct_empty(cls, d:pSe) -> pSe:
+    def cut_correct_empty(cls, d: pSe) -> pSe:
         """
         Correct empty intervals (zero observations) caused by `pd.cut`.
 
@@ -772,23 +809,24 @@ class Pd:
             Corrected Series. Unchanged if no empty bins exist.
         """
         v = d.value_counts()
-        if not any(v==0):
+        if not any(v == 0):
             return d
-        return cls._cut_correct_empty(d,v)
-    
+        return cls._cut_correct_empty(d, v)
+
     @staticmethod
-    def _is_cut_lbl_str(kwargs:dict) -> bool:
+    def _is_cut_lbl_str(kwargs: dict) -> bool:
         """Check if `labels` kwarg contains string labels (skip correction)."""
-        l = kwargs.get('labels')
+        l = kwargs.get("labels")
         return (l is not None) and isinstance(l[0], str)
-    
+
     @classmethod
-    def qcut(cls, 
-        d: pSe, 
+    def qcut(
+        cls,
+        d: pSe,
         bins: int,
-        min_left: int|float = None, 
-        max_right:int|float = None, 
-        **kwargs
+        min_left: int | float = None,
+        max_right: int | float = None,
+        **kwargs,
     ) -> pSe:
         """
         Quantile-based binning with corrected interval boundaries.
@@ -815,19 +853,20 @@ class Pd:
         pSe
             Categorical Series with corrected interval categories.
         """
-        p = cls.get_num_precision(d)+1
+        p = cls.get_num_precision(d) + 1
         d = pd.qcut(d, bins, **kwargs)
         if cls._is_cut_lbl_str(kwargs):
             return d
         return cls.cut_correct_precision(d, p, min_left, max_right)
 
     @classmethod
-    def cut(cls, 
-        d: pSe, 
-        bins: int|ArrayLike, 
-        min_left: int|float = None, 
-        max_right: int|float = None, 
-        **kwargs
+    def cut(
+        cls,
+        d: pSe,
+        bins: int | ArrayLike,
+        min_left: int | float = None,
+        max_right: int | float = None,
+        **kwargs,
     ) -> pSe:
         """
         Fixed-width binning with corrected interval boundaries.
@@ -855,16 +894,17 @@ class Pd:
         pSe
             Categorical Series with corrected, non-empty interval categories.
         """
-        p = cls.get_num_precision(d)+1
+        p = cls.get_num_precision(d) + 1
         d = pd.cut(d, bins, **kwargs)
         if cls._is_cut_lbl_str(kwargs):
             return d
         d = cls.cut_correct_precision(d, p, min_left, max_right)
         return cls.cut_correct_empty(d)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
-    def get_len_unique_values(d:pSe, include_missing=False) -> int:
+    def get_len_unique_values(d: pSe, include_missing=False) -> int:
         """
         Count unique values in a Series, with optional missing-value exclusion.
 
@@ -884,16 +924,17 @@ class Pd:
         int
             Number of unique values.
         """
-        if ( d.dtype.name.lower() == 'category' ):
+        if d.dtype.name.lower() == "category":
             d = d.cat.categories
-        else: 
+        else:
             d = np.unique(d)
         l = len(d)
         if include_missing:
             return l
-        if ( VarStd.MISSING in d ) or ( np.nan in d ):
-            return l-1        
+        if (VarStd.MISSING in d) or (np.nan in d):
+            return l - 1
         return l
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
@@ -914,19 +955,19 @@ class Pd:
         -------
         pDF
             Constructed DataFrame.
-        """        
+        """
         return pDF(dict(zip(cols, vals)), index=index)
-    
+
     @staticmethod
     def style(
-        df: pDF, 
-        hide_axis: int|list = None, 
-        bold_cols: str|list = None, 
-        format_cols:   dict = None,
-        format:        dict = None,
-        color:         dict = None,
-        properties:    dict = None
-    ) -> pDF|pd_Styler:
+        df: pDF,
+        hide_axis: int | list = None,
+        bold_cols: str | list = None,
+        format_cols: dict = None,
+        format: dict = None,
+        color: dict = None,
+        properties: dict = None,
+    ) -> pDF | pd_Styler:
         """
         Apply display styling to a DataFrame for reports and diagnostics.
 
@@ -936,7 +977,7 @@ class Pd:
         - format      = {precision=3, thousands=".", decimal=","}
         - color       = {'subset':col, 'condition':fx | None for bool, 'color': ['green','red'] | 'green'}
         - properties  = {'subset':col, 'width':'400px', 'text-align':'left'}
-        
+
         Parameters
         ----------
         df : pDF
@@ -958,44 +999,50 @@ class Pd:
         Returns
         -------
         pDF | pd_Styler
-            Styled output. Original `pDF` if no args provided.            
+            Styled output. Original `pDF` if no args provided.
         """
-        if not any([hide_axis is not None, bold_cols, format_cols, format, color, properties]):
+        if not any(
+            [hide_axis is not None, bold_cols, format_cols, format, color, properties]
+        ):
             return df
         if not isinstance(df, pd_Styler):
-            df = df.style        
-        if hide_axis is not None:      
+            df = df.style
+        if hide_axis is not None:
             for h in List.ensure(hide_axis):
                 df = df.hide(axis=h)
-        if bold_cols is not None:      
-            df = df.map(lambda x:'font-weight: 600', subset=bold_cols)
-        if format_cols is not None: 
+        if bold_cols is not None:
+            df = df.map(lambda x: "font-weight: 600", subset=bold_cols)
+        if format_cols is not None:
             df = df.format(format_cols)
         if format is not None:
             df = df.format(**format)
-        if color is not None:        
-            cfx = color.pop('condition', lambda x: x)
-            col = color.pop('color', None)
-            if col is None:             col = [None, 'color: #B50064;']
-            elif isinstance(col, str):  col = [None, f'color:{col};']
-            else:                       col = [f'color:{col[0]}', f'color:{col[1]}']
+        if color is not None:
+            cfx = color.pop("condition", lambda x: x)
+            col = color.pop("color", None)
+            if col is None:
+                col = [None, "color: #B50064;"]
+            elif isinstance(col, str):
+                col = [None, f"color:{col};"]
+            else:
+                col = [f"color:{col[0]}", f"color:{col[1]}"]
             df = df.map(lambda v: col[1] if cfx(v) else col[0], **color)
         if properties is not None:
             df = df.set_properties(**properties)
-            align = properties.get('text-align')
+            align = properties.get("text-align")
             if align:
-                ca = dict(selector='th', props=[('text-align', align)])
+                ca = dict(selector="th", props=[("text-align", align)])
                 df = df.set_table_styles([ca])
         return df
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
     def sort_values_by_array(
-        df: pDF, 
-        x:  str, 
-        order_array: pSe|list|tuple, 
-        reset_index: bool=True, 
-        **kwargs
+        df: pDF,
+        x: str,
+        order_array: pSe | list | tuple,
+        reset_index: bool = True,
+        **kwargs,
     ) -> pDF:
         """
         Sort a DataFrame by a column using an explicit value order.
@@ -1027,13 +1074,11 @@ class Pd:
         All values in `df[x]` must be present in `order_array`.
         Missing values will be placed at the end.
         """
-        sort = lambda x: pd.Categorical(
-            x, categories=order_array, ordered=True
-        )
+        sort = lambda x: pd.Categorical(x, categories=order_array, ordered=True)
         return df.sort_values(x, key=sort, ignore_index=reset_index, **kwargs)
-    
+
     @staticmethod
-    def create_cat_from_codes(d:pSe, categories:list|tuple=None) -> pSe:
+    def create_cat_from_codes(d: pSe, categories: list | tuple = None) -> pSe:
         """
         Sort a DataFrame by a column using an explicit value order.
 
@@ -1068,10 +1113,10 @@ class Pd:
             d = d.astype(int)
         if categories is None:
             categories = d.unique()
-        return pSe(pd.Categorical.from_codes(d, categories=categories), index = d.index)
+        return pSe(pd.Categorical.from_codes(d, categories=categories), index=d.index)
 
     @staticmethod
-    def cat_mode_to_num(data:pDF) -> pDF:
+    def cat_mode_to_num(data: pDF) -> pDF:
         """
         Transform categorical (object-dtype) columns to binary indicator
         of the mode value.
@@ -1091,23 +1136,23 @@ class Pd:
             Copy with object columns replaced by mode indicators.
             Non-object columns are unchanged.
         """
-        vars = data.dtypes         
-        vari = vars.index        
-        cat  = [vari[i] for i,x in enumerate(vars) if x in TypeDef.object]
-        
+        vars = data.dtypes
+        vari = vars.index
+        cat = [vari[i] for i, x in enumerate(vars) if x in TypeDef.object]
+
         if not cat:
             return data
 
         c = data[cat].describe(include=[object])
-        mode = c.loc['top']
-        
+        mode = c.loc["top"]
+
         d = data.copy()
         d[cat] = (d[cat] == mode).astype(int)
-                                
+
         return d
-    
+
     @staticmethod
-    def str_max_len(d:pSe, max_len=35, extension='...') -> pSe:        
+    def str_max_len(d: pSe, max_len=35, extension="...") -> pSe:
         """
         Enforce maximum string length with truncation indicator.
 
@@ -1131,12 +1176,15 @@ class Pd:
         if d.str.len().max() > max_len:
             d = d.apply(lambda x: x[:max_len] + extension if len(x) > max_len else x)
         return d
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class DataFrame:
     """
-    Read-only DataFrame proxy. Transparent delegation to pd.DataFrame for all read access; 
-    writes raise RuntimeError. 
+    Read-only DataFrame proxy. Transparent delegation to pd.DataFrame for all read access;
+    writes raise RuntimeError.
     Distinct type identity → isinstance against pd.DataFrame returns False.
 
     **Not Accepted by Offload.**
@@ -1149,20 +1197,20 @@ class DataFrame:
         return getattr(self._internal_dataframe, name)
 
     def __setattr__(self, name, value):
-        if name == '_internal_dataframe':
+        if name == "_internal_dataframe":
             object.__setattr__(self, name, value)
         else:
             setattr(self._internal_dataframe, name, value)
-    
+
     def __delitem__(self, key):
         del self._internal_dataframe[key]
 
     def __setitem__(self, key, value):
         self._internal_dataframe[key] = value
-    
+
     def __getitem__(self, key):
         return self._internal_dataframe[key]
-    
+
     def __len__(self):
         return len(self._internal_dataframe)
 
@@ -1192,4 +1240,6 @@ class DataFrame:
         df = pDF()
         df.__setstate__(state)
         self._internal_dataframe = df
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

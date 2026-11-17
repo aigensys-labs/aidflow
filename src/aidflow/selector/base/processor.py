@@ -7,72 +7,64 @@ that all selector Fitters must fulfill when processing their inputs,
 specifically around agent validation and minimum-count enforcement.
 """
 
-from ...deps.data                           import  pDF
-from ...deps.types                          import  (
-                                                    Generic, 
-                                                    TypeVar
-                                                    )
-from ...core.structure                      import  AIGFLOW
-from ...core.factory                        import  Dataclass
-from ...core.base                           import  FitterDataBase
+from ...deps.data import pDF
+from ...deps.types import Generic, TypeVar
+from ...core.structure import AIGFLOW
+from ...core.factory import Dataclass
+from ...core.base import FitterDataBase
 
-from ...learner.agents.agent1_predictor     import  (
-                                                    Agent1Predictor,
-                                                    Agent1PredictorUI
-                                                    )
-from ...learner.agents.agent2_predictor     import  (
-                                                    Agent2Predictor,
-                                                    Agent2PredictorUI
-                                                    )
-from ...learner.agents.agent3_predictor     import  (
-                                                    Agent3Predictor,
-                                                    Agent3PredictorUI
-                                                    )
-from ...learner.agents.agent4_predictor     import  (
-                                                    Agent4Predictor,
-                                                    Agent4PredictorUI
-                                                    )
+from ...learner.agents.agent1_predictor import Agent1Predictor, Agent1PredictorUI
+from ...learner.agents.agent2_predictor import Agent2Predictor, Agent2PredictorUI
+from ...learner.agents.agent3_predictor import Agent3Predictor, Agent3PredictorUI
+from ...learner.agents.agent4_predictor import Agent4Predictor, Agent4PredictorUI
 
-DEPS  = [
-    AIGFLOW.Training.agent1, 
-    AIGFLOW.Training.agent2, 
-    AIGFLOW.Training.agent3, 
-    AIGFLOW.Training.agent4
+DEPS = [
+    AIGFLOW.Training.agent1,
+    AIGFLOW.Training.agent2,
+    AIGFLOW.Training.agent3,
+    AIGFLOW.Training.agent4,
 ]
 
 agent_type = (
-    Agent1Predictor | Agent1PredictorUI | 
-    Agent2Predictor | Agent2PredictorUI | 
-    Agent3Predictor | Agent3PredictorUI | 
-    Agent4Predictor | Agent4PredictorUI
+    Agent1Predictor
+    | Agent1PredictorUI
+    | Agent2Predictor
+    | Agent2PredictorUI
+    | Agent3Predictor
+    | Agent3PredictorUI
+    | Agent4Predictor
+    | Agent4PredictorUI
 )
 
-AGENTS = {a: m for a,m in enumerate(DEPS, 1)}
+AGENTS = {a: m for a, m in enumerate(DEPS, 1)}
 
 
 class SelectorGenericInput:
-    agents: list|tuple
+    agents: list | tuple
+
 
 class SelectorGenericParams:
     predictors: type
 
-SelectorInputT = TypeVar('SelectorInputT', bound=SelectorGenericInput)
-SelectorParamT = TypeVar('SelectorParamT', bound=SelectorGenericParams)
+
+SelectorInputT = TypeVar("SelectorInputT", bound=SelectorGenericInput)
+SelectorParamT = TypeVar("SelectorParamT", bound=SelectorGenericParams)
+
 
 class FitterSelectionBase(Generic[SelectorInputT, SelectorParamT], FitterDataBase):
     """
     Selection phase Input Base to provide flexible input functionality.
-    
+
     Subclass Contract:
     - SelectionInput : type
     - agents_condition: int
 
     Where `agents_condition` verifies whether optional agents parameter is met on count.
-    
+
     NOTE that defined SelectionInput must contain `agents` parameter.
     """
 
-    SelectionInput : type
+    SelectionInput: type
     agents_condition: int = 1
 
     def __init__(self, params: SelectorParamT):
@@ -80,8 +72,8 @@ class FitterSelectionBase(Generic[SelectorInputT, SelectorParamT], FitterDataBas
         self._verify_inputs()
 
     def _verify_inputs(self):
-        self._verify_input_params(self.SelectionInput, 'agents')
-        self._verify_input_params(self.prm, 'predictors')
+        self._verify_input_params(self.SelectionInput, "agents")
+        self._verify_input_params(self.prm, "predictors")
 
     @staticmethod
     def _verify_input_params(inputs: type, param: str) -> None:
@@ -93,12 +85,13 @@ class FitterSelectionBase(Generic[SelectorInputT, SelectorParamT], FitterDataBas
         raise ValueError(
             f'AIG SAFETY ► FitterSelectionBase expects "{param}" among paramters in {n}.'
         )
-    
-    def _get_fitted_agents(self, agents:list) -> list:
+
+    def _get_fitted_agents(self, agents: list) -> list:
         """Validate and filter the agents list to fitted subset only."""
-        from ..predict.adapter import PredictorAdapter        
+        from ..predict.adapter import PredictorAdapter
+
         adapter: PredictorAdapter = self.prm.predictors
-        
+
         agents_ = []
         for a in agents:
             pa = adapter.get_agent(a, none_raises=False)
@@ -106,46 +99,46 @@ class FitterSelectionBase(Generic[SelectorInputT, SelectorParamT], FitterDataBas
                 agents_.append(a)
 
         return agents_
-            
+
     def _set_agents(self, inputs: SelectorInputT) -> None:
         """
         Validate and filter the agents list, enforcing minimum count.
 
         Filters out unknown agent IDs (with a warning) and raises
         a safety error if the remaining valid agents fall below
-        the strategy-specific `agents_condition`.   
-        """        
+        the strategy-specific `agents_condition`.
+        """
         agents = [a for a in inputs.agents if a in AGENTS]
         agents = self._get_fitted_agents(agents)
 
         c = [a for a in inputs.agents if a not in AGENTS]
-        if c: 
-            print(f'Unkown agents requested: {c} ► using subset of known agents: {agents}')
-        
-        if len(agents) < self.agents_condition:
-            name = self.SelectionInput.__name__.split('Input')[0]
-            raise ValueError(
-                f'AIG SAFETY ► {name.capitalize()} is possible for {self.agents_condition} '
-                f'and more agents, please extend the subset of current agent {agents}'
+        if c:
+            print(
+                f"Unkown agents requested: {c} ► using subset of known agents: {agents}"
             )
-        
+
+        if len(agents) < self.agents_condition:
+            name = self.SelectionInput.__name__.split("Input")[0]
+            raise ValueError(
+                f"AIG SAFETY ► {name.capitalize()} is possible for {self.agents_condition} "
+                f"and more agents, please extend the subset of current agent {agents}"
+            )
+
         self.agents = agents
 
-    def _align_input_agents(self, inputs: SelectorInputT) -> SelectorInputT:    
+    def _align_input_agents(self, inputs: SelectorInputT) -> SelectorInputT:
         """
         Validate and reconstruct the input with aligned agent list.
 
         Ensures the input is of the correct type, filters unknown
         agents, enforces the minimum count, and returns a fresh
         `SelectionInput` instance with the corrected `agents` field.
-        """    
+        """
         self._set_agents(inputs)
-        
-        return self.SelectionInput(
-            **(dict(inputs) | dict(agents = self.agents))
-        )
-                
-    def get_inputs(self, inputs: SelectorInputT | pDF, kwargs:dict) -> SelectorInputT:
+
+        return self.SelectionInput(**(dict(inputs) | dict(agents=self.agents)))
+
+    def get_inputs(self, inputs: SelectorInputT | pDF, kwargs: dict) -> SelectorInputT:
         """
         Resolve and validate the selector input from flexible sources.
 
@@ -184,19 +177,19 @@ class FitterSelectionBase(Generic[SelectorInputT, SelectorParamT], FitterDataBas
             >>>
             >>> # Form 2: Raw data + kwargs
             >>> validated = selector.get_inputs(df, agents=[1, 2, 3], threshold=0.5)
-        """        
+        """
         if isinstance(inputs, self.SelectionInput):
             return self._align_input_agents(inputs)
-        
+
         if isinstance(inputs, pDF):
             n = Dataclass.get_names(self.SelectionInput)[0]
-            d = {n :inputs} | kwargs
+            d = {n: inputs} | kwargs
             p = self.SelectionInput(**d)
             return self._align_input_agents(p)
-        
+
         n = self.SelectionInput.__name__
         raise TypeError(
-            'AIG SAFETY ► Unkown inputs:'
-            f'\n - {n} provides direct paramaterization of both data and agents params'
-            '\n - or inputs can be provided as .process(data, agents=[...])'
+            "AIG SAFETY ► Unkown inputs:"
+            f"\n - {n} provides direct paramaterization of both data and agents params"
+            "\n - or inputs can be provided as .process(data, agents=[...])"
         )

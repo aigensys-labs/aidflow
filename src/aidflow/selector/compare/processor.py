@@ -46,49 +46,39 @@ criterion — not a single metric, but a holistic assessment across
 predictive power, stability, calibration, and operational risk.
 """
 
-from ...deps.data                   import  np, pDF, pSe
-from ...deps.plots                  import  go
-from ...deps.types                  import  (
-                                            Literal,
-                                            Callable, 
-                                            ArrayLike
-                                            )
-from ...core.base                   import  FitterModelBase
-from ...core.factory                import  (
-                                            Dataclass, 
-                                            DictClass
-                                            )
-from ...core.foundation             import  AigParam
-from ...core.display                import  Display
-from ...core.interop                import  Pd
-from ...ml.metrics                  import  (
-                                            LBL as LBL_M,
-                                            DiagnosticsResult,
-                                            SeparationDiagnostics,
-                                            GiniLiftPlot as GLP
-                                            )
-from ...ml.models.calibration       import  (
-                                            LBL as LBL_C,
-                                            CalibrationAssessment,
-                                            CalibrationPlot
-                                            )
-from ...ml.models.transition        import  (
-                                            LBL as LBL_T,
-                                            ModelsCrossTransition,
-                                            ModelCrossDivergence
-                                            )
-from ...learner.features.importance import  (
-                                            MTD as FI_M, 
-                                            LBL as FI_L,
-                                            FeatureImportanceResult
-                                            )
-from ...display.style               import  TableStyle
+from ...deps.data import np, pDF, pSe
+from ...deps.plots import go
+from ...deps.types import Literal, Callable, ArrayLike
+from ...core.base import FitterModelBase
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.display import Display
+from ...core.interop import Pd
+from ...ml.metrics import (
+    LBL as LBL_M,
+    DiagnosticsResult,
+    SeparationDiagnostics,
+    GiniLiftPlot as GLP,
+)
+from ...ml.models.calibration import (
+    LBL as LBL_C,
+    CalibrationAssessment,
+    CalibrationPlot,
+)
+from ...ml.models.transition import (
+    LBL as LBL_T,
+    ModelsCrossTransition,
+    ModelCrossDivergence,
+)
+from ...learner.features.importance import (
+    MTD as FI_M,
+    LBL as FI_L,
+    FeatureImportanceResult,
+)
+from ...display.style import TableStyle
 
-from ..base.processor               import  (
-                                            AGENTS,
-                                            FitterSelectionBase
-                                            )
-from ..predict.adapter              import  PredictorAdapter
+from ..base.processor import AGENTS, FitterSelectionBase
+from ..predict.adapter import PredictorAdapter
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -96,28 +86,34 @@ from ..predict.adapter              import  PredictorAdapter
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class LBL(DictClass):
     """Scoring dimension labels and display names."""
-    N  = lambda x: f'Agent {x}'
-    A  = 'alpha_level'
-    S  = 'Total'
-    U  = 'Underestimated'
-    O  = 'Overestimated'
+
+    N = lambda x: f"Agent {x}"
+    A = "alpha_level"
+    S = "Total"
+    U = "Underestimated"
+    O = "Overestimated"
+
 
 class STAT(DictClass):
     """Per-agent performance and operational metric keys."""
-    FE  = 'fe_exposure'
-    FX  = 'fe_max_impact'
-    FS  = 'fe_selected'
-    GT  = 'gini_test'
-    IV  = 'IV_test'
-    KS  = 'KS_test'
-    PR  = 'positive_rate'
+
+    FE = "fe_exposure"
+    FX = "fe_max_impact"
+    FS = "fe_selected"
+    GT = "gini_test"
+    IV = "IV_test"
+    KS = "KS_test"
+    PR = "positive_rate"
+
 
 class RANK(DictClass):
     """Scoring dimension identifiers."""
-    PE = 'performance'
-    CA = 'calibration'
-    AE = 'audited'
-    AO = 'auditor'
+
+    PE = "performance"
+    CA = "calibration"
+    AE = "audited"
+    AO = "auditor"
+
 
 class MAP(DictClass):
     """
@@ -128,23 +124,27 @@ class MAP(DictClass):
     - The default weights for each metric in the final score.
     - The direction (higher/lower is better) for each metric.
     """
-    D = 'higher_is_better'
-    W = 'WEIGHT'
-    S = 'TOTAL_WEIGHTED_SCORE'
+
+    D = "higher_is_better"
+    W = "WEIGHT"
+    S = "TOTAL_WEIGHTED_SCORE"
 
     COL = {
-        STAT.GT:  'eval_test_gini',
-        STAT.IV:  'eval_test_grid_iv',
-        STAT.KS:  'eval_test_grid_ks',
-        RANK.CA:  'eval_model_calibration',
-        STAT.FE:  'ops_features_exposure',     
-        STAT.FX:  'ops_feature_max_impact',
-        LBL.U:    'audit_underestimated_risk',
-        LBL.O:    'audit_overrestimated_risk',
-        LBL.S:    'audit_agent_as_cross_auditor'    
+        STAT.GT: "eval_test_gini",
+        STAT.IV: "eval_test_grid_iv",
+        STAT.KS: "eval_test_grid_ks",
+        RANK.CA: "eval_model_calibration",
+        STAT.FE: "ops_features_exposure",
+        STAT.FX: "ops_feature_max_impact",
+        LBL.U: "audit_underestimated_risk",
+        LBL.O: "audit_overrestimated_risk",
+        LBL.S: "audit_agent_as_cross_auditor",
     }
-    WEIGHT = dict(zip(COL.values(), [1.0]*len(COL)))
+    WEIGHT = dict(zip(COL.values(), [1.0] * len(COL)))
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 @Dataclass.base
 class ComparatorParamsBase:
@@ -162,10 +162,12 @@ class ComparatorParamsBase:
     metric_weight : dict, default={equal weights}
         Per-metric weights for the composite score.
         Higher weight = more influence on the final ranking.
-    """    
-    alpha:        float = 0.05
-    proba_bins:     int = 10
+    """
+
+    alpha: float = 0.05
+    proba_bins: int = 10
     metric_weight: dict = Dataclass.field(MAP.WEIGHT)
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class ComparatorParamsCfg:
@@ -181,14 +183,17 @@ class ComparatorParamsCfg:
     preprocess : bool | None, default=None
         If True, apply the full encoding pipeline to input data
         before prediction.
-    """    
+    """
+
     predictors: PredictorAdapter
-    target:     str
-    preprocess: bool|None = None
+    target: str
+    preprocess: bool | None = None
+
 
 @Dataclass.base
 class ComparatorParams(ComparatorParamsBase, ComparatorParamsCfg):
     """Woker params input design."""
+
 
 @Dataclass.base
 class ComparatorInput:
@@ -202,8 +207,10 @@ class ComparatorInput:
     agents : tuple | list
         Which agents to compare. Default: all registered.
     """
-    data:   pDF 
-    agents: tuple|list = tuple(AGENTS)
+
+    data: pDF
+    agents: tuple | list = tuple(AGENTS)
+
 
 @Dataclass.base
 class ComparatorResult:
@@ -223,11 +230,13 @@ class ComparatorResult:
     calibration : dict
         Per-agent calibration assessment (predicted vs observed
         by bin, with significance flags).
-    """    
-    comparison:  pDF
-    scoring:     pDF
-    lift:        dict
+    """
+
+    comparison: pDF
+    scoring: pDF
+    lift: dict
     calibration: dict
+
 
 @Dataclass.base
 class ComparatorStats:
@@ -261,20 +270,24 @@ class ComparatorStats:
         Weighted composite score matrix.
     ordered : list
         Agent ranking (best first).
-    """    
-    crosstab:    dict
+    """
+
+    crosstab: dict
     significant: dict
-    divergance:  dict
+    divergance: dict
     diverge_sum: dict
     performance: dict
-    summary:     dict
-    fpr_tpr:     dict
-    lift:        dict
+    summary: dict
+    fpr_tpr: dict
+    lift: dict
     calibration: dict
-    comparison:  pDF
-    scoring:     pDF
-    ordered:     list
+    comparison: pDF
+    scoring: pDF
+    ordered: list
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class PredictorStats:
     """
@@ -291,11 +304,12 @@ class PredictorStats:
     preprocess : bool, default=True
         Apply the full encoding pipeline before prediction.
     """
-    def __init__(self, predictors: PredictorAdapter, preprocess:bool=True):
+
+    def __init__(self, predictors: PredictorAdapter, preprocess: bool = True):
         self.predictors = predictors
         self.preprocess = preprocess
-                    
-    def predict(self, data:pDF, agents:tuple[int, ...]) -> dict[int, pSe]:
+
+    def predict(self, data: pDF, agents: tuple[int, ...]) -> dict[int, pSe]:
         """
         Obtain probability predictions from all requested agents.
 
@@ -316,18 +330,16 @@ class PredictorStats:
             pa = self.predictors.get_agent(a)
             pred[a] = pa.predict(data, preprocess=self.preprocess).squeeze()
         return pred
-    
+
     @staticmethod
-    def proba_array(pred:pDF|pSe) -> pSe:
+    def proba_array(pred: pDF | pSe) -> pSe:
         """Ensure prediction output is a 1-D Series."""
         if isinstance(pred, pDF):
             return pred.squeeze()
         return pred
 
-    def get_stats(self, 
-        target: pSe, 
-        pred:   dict[int, pSe], 
-        agents: tuple[int, ...]
+    def get_stats(
+        self, target: pSe, pred: dict[int, pSe], agents: tuple[int, ...]
     ) -> dict[int, dict]:
         """
         Compute per-agent performance and operational statistics.
@@ -351,31 +363,34 @@ class PredictorStats:
         dict[int, dict]
             {agent_key: {metric_key: value}}
         """
-        stats  = {}
+        stats = {}
         for a in AGENTS:
             if a not in agents:
                 continue
-            
+
             model = self.predictors.get_agent(a)
 
             fes = model.cols.selected
 
             imp: FeatureImportanceResult = model.report.feature_importance
             imp = imp.method_results[FI_M.P].set_index(FI_L.F)[FI_L.P]
-            
+
             diag = SeparationDiagnostics().evaluate(target, self.proba_array(pred[a]))
 
             stats[a] = {
-                STAT.GT: diag.gini, 
+                STAT.GT: diag.gini,
                 STAT.IV: diag.IV,
                 STAT.KS: diag.KS,
-                STAT.FE: imp, 
+                STAT.FE: imp,
                 STAT.FS: fes,
-                STAT.PR: diag.PR
+                STAT.PR: diag.PR,
             }
 
-        return stats  
+        return stats
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Scoring:
     """
@@ -414,19 +429,20 @@ class Scoring:
     to prioritize certain dimensions (e.g., stability over raw
     performance).
     """
+
     # active metrics with setup of higher_is_better (True/False)
     METRIC = {
-        RANK.PE : {            
+        RANK.PE: {
             STAT.GT: True,  # positive scale (how far from optim agent is)
             STAT.IV: True,  # positive scale (how far from optim agent is)
             STAT.KS: True,  # positive scale (how far from optim agent is)
-            STAT.FE: False, # positive scale (number of effective fes)
+            STAT.FE: False,  # positive scale (number of effective fes)
             STAT.FX: True,  # negative scale (negative impact to performance)
         },
-        RANK.CA: None,      # direct scale with meaning 
+        RANK.CA: None,  # direct scale with meaning
         RANK.AE: {
-            LBL.U: False,   # positive scale (how much risk agent did not see)
-            LBL.O: True     # negative scale (how much agent overestimated risk)
+            LBL.U: False,  # positive scale (how much risk agent did not see)
+            LBL.O: True,  # negative scale (how much agent overestimated risk)
         },
         # Turned off as it captures different type of info than the rest
         # Agent as an auditor provides info how agent sees risk differently
@@ -466,7 +482,7 @@ class Scoring:
         p = p / np.sum(p)
         entropy = -np.sum(p * np.log(p + 1e-12))
         return np.exp(entropy)
-    
+
     @staticmethod
     def _ops_max(gini_permutation: pSe) -> int:
         """
@@ -491,7 +507,7 @@ class Scoring:
             The minimum (most negative) permutation Gini value.
         """
         return gini_permutation.min()
-    
+
     @classmethod
     def performance(cls, fe_stat: dict[int, list]) -> pDF:
         """
@@ -510,18 +526,18 @@ class Scoring:
         -------
         pDF
             Performance scores per agent (rows = agents, cols = metrics).
-        """       
+        """
         fe = {}
         for a, x in fe_stat.items():
             fe[a] = {
                 STAT.GT: x[STAT.GT],
                 STAT.IV: x[STAT.IV],
                 STAT.KS: x[STAT.KS],
-                STAT.FE:  cls._ops_exposure(x[STAT.FE]),
-                STAT.FX:  cls._ops_max(x[STAT.FE]),
+                STAT.FE: cls._ops_exposure(x[STAT.FE]),
+                STAT.FX: cls._ops_max(x[STAT.FE]),
             }
         return pDF(fe).T
-    
+
     @staticmethod
     def calibration(calibration: dict[int, pDF]) -> pSe:
         """
@@ -582,12 +598,13 @@ class Scoring:
         return {RANK.AE: pDF(audited).T, RANK.AO: pDF(auditor).T}
 
     @classmethod
-    def process(cls,
-        stats:   dict[int, dict],
-        calib:   dict[int, pDF],
-        div_sum: dict[int, dict[str, pDF]], 
-        alpha:   float
-    ) -> dict[str, pSe|pDF]:
+    def process(
+        cls,
+        stats: dict[int, dict],
+        calib: dict[int, pDF],
+        div_sum: dict[int, dict[str, pDF]],
+        alpha: float,
+    ) -> dict[str, pSe | pDF]:
         """
         Compute the raw (unstandardized) scores across all dimensions.
 
@@ -613,11 +630,11 @@ class Scoring:
         summary[RANK.CA] = cls.calibration(calib)
         summary[RANK.AE] = audit[RANK.AE]
         summary[RANK.AO] = audit[RANK.AO]
-        summary[LBL.A]   = alpha
+        summary[LBL.A] = alpha
         return summary
 
     @staticmethod
-    def _standardize(scores:pSe, higher_is_better:bool|None=True) -> pSe:
+    def _standardize(scores: pSe, higher_is_better: bool | None = True) -> pSe:
         """
         Leader-Anchored Proportional Scaling.
 
@@ -637,8 +654,8 @@ class Scoring:
         pSe
             Standardized scores (best = 1.0, others in (0, 1]).
         """
-        
-        # stats with natural scale and meaning 
+
+        # stats with natural scale and meaning
         if higher_is_better == None:
             return scores
 
@@ -650,13 +667,13 @@ class Scoring:
                 higher_is_better = not higher_is_better
             else:
                 scores = scores - scores.min()
-        
-        scores = scores.where(scores!=0, 1e-9)
+
+        scores = scores.where(scores != 0, 1e-9)
 
         if higher_is_better:
-             scores = 1 / scores
+            scores = 1 / scores
 
-        return scores.min() / scores    
+        return scores.min() / scores
 
     @staticmethod
     def _data_map(scores: dict) -> pDF:
@@ -664,9 +681,9 @@ class Scoring:
         m = MAP.COL
         c = {k: m[k] for k in scores if k in m}
         return pDF(scores).rename(columns=c).T
-    
+
     @staticmethod
-    def _weights(norm:pDF, weights:dict|None) -> pDF:
+    def _weights(norm: pDF, weights: dict | None) -> pDF:
         """
         Apply metric weights and compute the total weighted score.
 
@@ -681,23 +698,25 @@ class Scoring:
         -------
         pDF
             Scores with weight column and total score row.
-        """        
-        w = np.array([[weights[k]] if k in weights or {} else 1.0 for k in norm.index])        
-        norm.loc[:,MAP.W] = w
-        norm.loc[MAP.S,:] = (norm*w).sum() / w.sum() 
+        """
+        w = np.array([[weights[k]] if k in weights or {} else 1.0 for k in norm.index])
+        norm.loc[:, MAP.W] = w
+        norm.loc[MAP.S, :] = (norm * w).sum() / w.sum()
         norm.loc[MAP.S, MAP.W] = np.nan
         return norm
-    
+
     @staticmethod
-    def _order(data:pDF) -> pDF:
+    def _order(data: pDF) -> pDF:
         """Order rows by canonical metric order."""
         m = MAP.COL.values()
         o = [c for c in m if c in data.index]
         x = [x for x in data.index if x not in o]
-        return data.loc[o+x]
-            
+        return data.loc[o + x]
+
     @classmethod
-    def standardize(cls, summary: dict[str, pSe|pDF], weights:dict=None) -> tuple[pDF, pDF]:
+    def standardize(
+        cls, summary: dict[str, pSe | pDF], weights: dict = None
+    ) -> tuple[pDF, pDF]:
         """
         Compute the final standardized scoring table.
 
@@ -718,10 +737,11 @@ class Scoring:
         tuple[pDF, pDF]
             (scoring_table, overview_table)
         """
-        def add(metric:str, scores:pSe, direction:bool|None) -> None:
+
+        def add(metric: str, scores: pSe, direction: bool | None) -> None:
             orig[metric] = scores
             norm[metric] = cls._standardize(scores, direction)
-            
+
             d = direction if isinstance(direction, bool) else True
             direct.append(d)
 
@@ -739,8 +759,8 @@ class Scoring:
         d = cls._weights(d, weights)
 
         o = cls._data_map(orig)
-        o.loc[MAP.S,:] = d.loc[MAP.S,:]
-        o.loc[:,MAP.D] = direct + [True]
+        o.loc[MAP.S, :] = d.loc[MAP.S, :]
+        o.loc[:, MAP.D] = direct + [True]
 
         return cls._order(d), cls._order(o)
 
@@ -757,11 +777,14 @@ class Scoring:
         -------
         list
             Agent keys ranked by total score (best first).
-        """            
+        """
         r = score.loc[MAP.S]
         a = [a for a in AGENTS if a in r.index]
-        return r[a].sort_values(ascending=False).index.to_list()    
+        return r[a].sort_values(ascending=False).index.to_list()
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
     """
@@ -783,12 +806,13 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
     ----------
     params : ComparatorParams
         Comparison configuration.
-    """    
-    SelectionInput:  type = ComparatorInput
+    """
+
+    SelectionInput: type = ComparatorInput
     agents_condition: int = 2
 
     stats: ComparatorStats = None
-    
+
     def __init__(self, params: ComparatorParams):
         super().__init__(params)
         self.predictor = PredictorStats(self.prm.predictors, self.prm.preprocess)
@@ -797,9 +821,10 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
         """Merge default weights with user-specified overrides."""
         default = MAP.WEIGHT
         return default | self.prm.metric_weight
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
 
-    def predict(self, data:pDF) -> dict[int, pSe]:
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def predict(self, data: pDF) -> dict[int, pSe]:
         """
         Obtain probability predictions from all requested agents.
 
@@ -813,9 +838,9 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
         dict[int, pSe]
             {agent_key: probability_series}
         """
-        return self.predictor.predict(data, self.agents)  
-        
-    def _bins(self, a:int, pred:pSe) -> tuple[pSe, dict]:
+        return self.predictor.predict(data, self.agents)
+
+    def _bins(self, a: int, pred: pSe) -> tuple[pSe, dict]:
         """
         Discretize one agent's probabilities into quantile bins.
 
@@ -830,14 +855,16 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
         -------
         tuple
             (binned_series, bin_category_mapping)
-        """        
-        b = Pd.qcut(pred, self.prm.proba_bins, min_left=0, max_right=1, duplicates='drop')
-        m = {q:i for i,q in enumerate(b.cat.categories)}
+        """
+        b = Pd.qcut(
+            pred, self.prm.proba_bins, min_left=0, max_right=1, duplicates="drop"
+        )
+        m = {q: i for i, q in enumerate(b.cat.categories)}
         b = b.cat.rename_categories(m)
         b.name = LBL.N(a)
         return b, m
 
-    def binning(self, pred:dict[int, pSe]) -> tuple[dict[int, pSe], dict[int, dict]]:
+    def binning(self, pred: dict[int, pSe]) -> tuple[dict[int, pSe], dict[int, dict]]:
         """
         Discretize all agents' probabilities into quantile bins.
 
@@ -856,8 +883,8 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
             pa = self.predictor.proba_array(pred[a])
             bins[a], mapping[a] = self._bins(a, pa)
         return bins, mapping
-              
-    def model_stats(self, target:pSe, pred:dict) -> tuple[dict[int, dict]]:
+
+    def model_stats(self, target: pSe, pred: dict) -> tuple[dict[int, dict]]:
         """
         Compute per-agent performance metrics for scoring.
 
@@ -877,17 +904,18 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
         prs = {}
         for a in self.agents:
             prs[a] = stats[a].pop(STAT.PR, None)
-        return stats, prs    
-    
+        return stats, prs
+
     @staticmethod
-    def _calib(calib:dict) -> dict:
+    def _calib(calib: dict) -> dict:
         """Returns agents calibration assessment data only."""
         c = {**calib}
         c.pop(LBL_C.A, None)
         return c
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
-    def process(self, inputs: ComparatorInput | pDF, **kwargs) -> None:        
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def process(self, inputs: ComparatorInput | pDF, **kwargs) -> None:
         """
         Execute the full multi-agent comparison pipeline.
 
@@ -911,21 +939,21 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
             Additional arguments.
         """
         inputs_ = self.get_inputs(inputs, kwargs)
-        target  = inputs_.data[self.prm.target]
-        
+        target = inputs_.data[self.prm.target]
+
         pred = self.predict(inputs_.data)
-        bins,  mapping = self.binning(pred)
+        bins, mapping = self.binning(pred)
         stats, fpr_tpr = self.model_stats(target, pred)
 
-        cal   = CalibrationAssessment(self.prm.alpha, self.prm.proba_bins, kind='uniform')
+        cal = CalibrationAssessment(self.prm.alpha, self.prm.proba_bins, kind="uniform")
         calib = cal.process(target, pred)
 
         cc = ModelsCrossTransition(self.prm.alpha)
         x_tab = cc.process(target, bins)
-        diff  = cc.get_sig_diff(x_tab)
+        diff = cc.get_sig_diff(x_tab)
         total = cc.get_totals(x_tab, mapping)
 
-        div   = ModelCrossDivergence.process(diff, x_tab)
+        div = ModelCrossDivergence.process(diff, x_tab)
         div_s = ModelCrossDivergence.get_summary(div)
 
         summary = Scoring.process(stats, self._calib(calib), div_s, self.prm.alpha)
@@ -933,21 +961,24 @@ class Fitter(FitterSelectionBase[ComparatorInput, ComparatorParams]):
         ordered = Scoring.get_ordered_agents(score)
 
         self.stats = ComparatorStats(
-            crosstab    = x_tab,
-            significant = diff,
-            divergance  = div,
-            diverge_sum = div_s,
-            performance = stats,
-            summary     = summary,
-            fpr_tpr     = fpr_tpr,
-            lift        = total,
-            calibration = calib,        
-            comparison  = overview,
-            scoring     = score,
-            ordered     = ordered
+            crosstab=x_tab,
+            significant=diff,
+            divergance=div,
+            diverge_sum=div_s,
+            performance=stats,
+            summary=summary,
+            fpr_tpr=fpr_tpr,
+            lift=total,
+            calibration=calib,
+            comparison=overview,
+            scoring=score,
+            ordered=ordered,
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-    
+
+
 class ComparatorProcessor(FitterModelBase[Fitter]):
     """
     Multi-Agent Comparator — Public API for Model Selection Decision.
@@ -1014,10 +1045,11 @@ class ComparatorProcessor(FitterModelBase[Fitter]):
     >>> result.comparison  # original metric values
     >>> cmp.fitter.stats.ordered  # ['2', '1', '3'] (agent 2 recommended)
     """
-    
-    def __init__(self, *args, params: dict|ComparatorParams = None, **kwargs):
+
+    def __init__(self, *args, params: dict | ComparatorParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(ComparatorParams, params, args, kwargs)
         self._fitter = Fitter(self._params)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def process(self, inputs: ComparatorInput | pDF, **kwargs) -> ComparatorResult:
@@ -1039,157 +1071,168 @@ class ComparatorProcessor(FitterModelBase[Fitter]):
         self._fitter.process(inputs, **kwargs)
         stats: ComparatorStats = self.stats
         return ComparatorResult(
-            comparison  = stats.comparison,
-            scoring     = stats.scoring,
-            lift        = stats.lift,
-            calibration = stats.calibration
-        )  
+            comparison=stats.comparison,
+            scoring=stats.scoring,
+            lift=stats.lift,
+            calibration=stats.calibration,
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-  
+
+
 class ScoringStatsBase:
 
     def __init__(self, stats: ComparatorStats):
         if stats is None or not isinstance(stats, ComparatorStats):
-            raise ValueError('Populated ComparatorStats instance required prior calling plots.')
+            raise ValueError(
+                "Populated ComparatorStats instance required prior calling plots."
+            )
 
         self.stats = stats
-        self.agents = self._get_agents() 
-        self._name  = lambda x: LBL.N(x)
-        
-        scoring:pSe  = self._get_scoring().loc[MAP.S, self.agents]
-        self.rank    = scoring.rank(method='max', ascending=False)
+        self.agents = self._get_agents()
+        self._name = lambda x: LBL.N(x)
+
+        scoring: pSe = self._get_scoring().loc[MAP.S, self.agents]
+        self.rank = scoring.rank(method="max", ascending=False)
 
     def _get_agents(self) -> tuple:
         return tuple(self.stats.crosstab)
-    
+
     def _get_overview(self) -> pDF:
         return self.stats.comparison
-    
+
     def _get_scoring(self) -> pDF:
         return self.stats.scoring
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+
 class ScoringTheme(ScoringStatsBase):
-    
-    def __init__(self, stats: ComparatorStats, theme:int, is_idx:bool=False):
+
+    def __init__(self, stats: ComparatorStats, theme: int, is_idx: bool = False):
         super().__init__(stats)
         self.theme = theme
         self._is_idx = is_idx
 
-    def _mapping(self, a:int) -> int:
+    def _mapping(self, a: int) -> int:
         if not self._is_idx:
-            return a 
+            return a
         return self.agents[a]
 
-    def _opacity(self, agent:int, opacity:float):        
+    def _opacity(self, agent: int, opacity: float):
         if opacity is not None:
             return lambda x: x
-        
-        sco = self._get_scoring()
-        return lambda x, a=agent: round(sco.loc[x,a],2)
 
-    def get_color(self, a:int, opacity:float=None) -> str | Callable:
+        sco = self._get_scoring()
+        return lambda x, a=agent: round(sco.loc[x, a], 2)
+
+    def get_color(self, a: int, opacity: float = None) -> str | Callable:
         a_ = self._mapping(a)
         rank = self.rank[a_]
         op = self._opacity(a_, opacity)
 
         # High-Contrast Tech
-        if self.theme == 0: 
+        if self.theme == 0:
             c = {
-            1: lambda x: f'rgba(  0, 210, 150, {op(x)})', # Electric Mint
-            2: lambda x: f'rgba(255, 105,  95, {op(x)})', # Hi-Fi Coral
-            3: lambda x: f'rgba( 85,  80, 160, {op(x)})', # Cyber Indigo
-            4: lambda x: f'rgba(110, 120, 130, {op(x)})'  # Charcoal Slate            
-        }[rank]
+                1: lambda x: f"rgba(  0, 210, 150, {op(x)})",  # Electric Mint
+                2: lambda x: f"rgba(255, 105,  95, {op(x)})",  # Hi-Fi Coral
+                3: lambda x: f"rgba( 85,  80, 160, {op(x)})",  # Cyber Indigo
+                4: lambda x: f"rgba(110, 120, 130, {op(x)})",  # Charcoal Slate
+            }[rank]
 
         # Cyberpunk
-        if self.theme == 1: 
+        if self.theme == 1:
             c = {
-            1: lambda x: f'rgba(  5, 175, 120, {op(x)})', # Laser Emerald
-            2: lambda x: f'rgba(165,  75, 155, {op(x)})', # Electric Orchid
-            3: lambda x: f'rgba( 40, 140, 170, {op(x)})', # Baltic Cyan
-            4: lambda x: f'rgba( 85,  85, 100, {op(x)})'  # Dark Obsidian                
-        }[rank]
-        
+                1: lambda x: f"rgba(  5, 175, 120, {op(x)})",  # Laser Emerald
+                2: lambda x: f"rgba(165,  75, 155, {op(x)})",  # Electric Orchid
+                3: lambda x: f"rgba( 40, 140, 170, {op(x)})",  # Baltic Cyan
+                4: lambda x: f"rgba( 85,  85, 100, {op(x)})",  # Dark Obsidian
+            }[rank]
+
         # Quantum
-        if self.theme == 2: 
+        if self.theme == 2:
             c = {
-            1: lambda x: f'rgba( 15,  90, 185, {op(x)})', # Cobalt Blue
-            2: lambda x: f'rgba(190,  55,  90, {op(x)})', # Crimson Rose
-            3: lambda x: f'rgba( 95, 125,  65, {op(x)})', # Olive Forest
-            4: lambda x: f'rgba(185, 190, 195, {op(x)})'  # Pale Platinum                
-        }[rank]
-        
+                1: lambda x: f"rgba( 15,  90, 185, {op(x)})",  # Cobalt Blue
+                2: lambda x: f"rgba(190,  55,  90, {op(x)})",  # Crimson Rose
+                3: lambda x: f"rgba( 95, 125,  65, {op(x)})",  # Olive Forest
+                4: lambda x: f"rgba(185, 190, 195, {op(x)})",  # Pale Platinum
+            }[rank]
+
         # Warm
-        if self.theme == 3: 
+        if self.theme == 3:
             c = {
-            1: lambda x: f'rgba( 35, 120, 100, {op(x)})', # Imperial Jade
-            2: lambda x: f'rgba(215, 140,  45, {op(x)})', # Spiced Amber
-            3: lambda x: f'rgba(165,  80,  70, {op(x)})', # Venetian Red
-            4: lambda x: f'rgba(160, 155, 150, {op(x)})'  # Sandstone Gray                
-        }[rank]
-        
-        if self.theme == 4: 
+                1: lambda x: f"rgba( 35, 120, 100, {op(x)})",  # Imperial Jade
+                2: lambda x: f"rgba(215, 140,  45, {op(x)})",  # Spiced Amber
+                3: lambda x: f"rgba(165,  80,  70, {op(x)})",  # Venetian Red
+                4: lambda x: f"rgba(160, 155, 150, {op(x)})",  # Sandstone Gray
+            }[rank]
+
+        if self.theme == 4:
             c = {
-            1: lambda x: f'rgba(210, 105,  55, {op(x)})', # Terracotta Copper
-            2: lambda x: f'rgba( 30,  65, 110, {op(x)})', # Deep Ocean Navy
-            3: lambda x: f'rgba( 90, 145, 170, {op(x)})', # Sea Glass Blue
-            4: lambda x: f'rgba(170, 175, 180, {op(x)})'  # Soft Pebble                
-        }[rank]
-            
+                1: lambda x: f"rgba(210, 105,  55, {op(x)})",  # Terracotta Copper
+                2: lambda x: f"rgba( 30,  65, 110, {op(x)})",  # Deep Ocean Navy
+                3: lambda x: f"rgba( 90, 145, 170, {op(x)})",  # Sea Glass Blue
+                4: lambda x: f"rgba(170, 175, 180, {op(x)})",  # Soft Pebble
+            }[rank]
+
         # Tech
-        if self.theme == 5: 
+        if self.theme == 5:
             c = {
-            1: lambda x: f'rgba(33,  115, 115, {op(x)})', # Deep Teal
-            2: lambda x: f'rgba(70,  120, 150, {op(x)})', # Steel Blue
-            3: lambda x: f'rgba(120, 135, 145, {op(x)})', # Slate Gray
-            4: lambda x: f'rgba(175, 185, 190, {op(x)})', # Light Ash
-        }[rank]
+                1: lambda x: f"rgba(33,  115, 115, {op(x)})",  # Deep Teal
+                2: lambda x: f"rgba(70,  120, 150, {op(x)})",  # Steel Blue
+                3: lambda x: f"rgba(120, 135, 145, {op(x)})",  # Slate Gray
+                4: lambda x: f"rgba(175, 185, 190, {op(x)})",  # Light Ash
+            }[rank]
 
         # Muted
-        if self.theme == 6: 
+        if self.theme == 6:
             c = {
-            1: lambda x: f'rgba(195, 125,  60, {op(x)})', # Burnished Amber
-            2: lambda x: f'rgba( 70,  90, 130, {op(x)})', # Deep Indigo
-            3: lambda x: f'rgba(105, 120, 150, {op(x)})', # Twilight Blue
-            4: lambda x: f'rgba(140, 145, 160, {op(x)})', # Muted Ink
-        }[rank]
+                1: lambda x: f"rgba(195, 125,  60, {op(x)})",  # Burnished Amber
+                2: lambda x: f"rgba( 70,  90, 130, {op(x)})",  # Deep Indigo
+                3: lambda x: f"rgba(105, 120, 150, {op(x)})",  # Twilight Blue
+                4: lambda x: f"rgba(140, 145, 160, {op(x)})",  # Muted Ink
+            }[rank]
 
         # Monochromatic
-        if self.theme == 7: 
+        if self.theme == 7:
             c = {
-            1: lambda x: f'rgba( 25,  50,  90, {op(x)})', # Midnight Navy
-            2: lambda x: f'rgba( 60,  95, 140, {op(x)})', # Royal Slate
-            3: lambda x: f'rgba(110, 140, 180, {op(x)})', # Cadet Slate
-            4: lambda x: f'rgba(180, 195, 215, {op(x)})', # Ice Glaze
-        }[rank]
+                1: lambda x: f"rgba( 25,  50,  90, {op(x)})",  # Midnight Navy
+                2: lambda x: f"rgba( 60,  95, 140, {op(x)})",  # Royal Slate
+                3: lambda x: f"rgba(110, 140, 180, {op(x)})",  # Cadet Slate
+                4: lambda x: f"rgba(180, 195, 215, {op(x)})",  # Ice Glaze
+            }[rank]
 
         # Emerald & Earth Academic
-        if self.theme == 8: 
+        if self.theme == 8:
             c = {
-            1: lambda x: f'rgba( 45, 110,  85, {op(x)})', # Racing Green
-            2: lambda x: f'rgba(115, 135, 105, {op(x)})', # Olive Sage
-            3: lambda x: f'rgba(150, 135, 120, {op(x)})', # Warm Taupe
-            4: lambda x: f'rgba(175, 175, 170, {op(x)})'  # Driftwood Gray
-        }[rank]
+                1: lambda x: f"rgba( 45, 110,  85, {op(x)})",  # Racing Green
+                2: lambda x: f"rgba(115, 135, 105, {op(x)})",  # Olive Sage
+                3: lambda x: f"rgba(150, 135, 120, {op(x)})",  # Warm Taupe
+                4: lambda x: f"rgba(175, 175, 170, {op(x)})",  # Driftwood Gray
+            }[rank]
 
-        if opacity is not None: 
+        if opacity is not None:
             return c(opacity)
         return c
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
 class GiniLiftPlot(ScoringStatsBase):
-    
-    def __init__(self, stats: ComparatorStats, theme:int = 1):
+
+    def __init__(self, stats: ComparatorStats, theme: int = 1):
         super().__init__(stats)
         vis = self.rank.sort_values().index[0]
-        
+
         self._glp = GLP(
-            eval_stats    = self._eval_stats(stats), 
-            visible_agent = self._name(vis), 
-            theme         = ScoringTheme(stats, theme, is_idx=True)
+            eval_stats=self._eval_stats(stats),
+            visible_agent=self._name(vis),
+            theme=ScoringTheme(stats, theme, is_idx=True),
         )
-    
+
     def _eval_stats(self, stats: ComparatorStats) -> dict:
         es = {}
         for a in stats.performance:
@@ -1199,33 +1242,37 @@ class GiniLiftPlot(ScoringStatsBase):
             l = stats.lift[a][[LBL_T.T, LBL_T.C, LBL_T.W, LBL_T.L]]
             l.columns = [LBL_M.T, LBL_M.C, LBL_M.W, LBL_M.L]
 
-            es[self._name(a)] = DiagnosticsResult(                
-                obs     = int(l[LBL_M.C].sum()),
-                events  = int((l[LBL_M.T] * l[LBL_M.C]).sum()),
-                gini    = p[STAT.GT],
-                KS      = p[STAT.KS],
-                IV      = p[STAT.IV],
-                PR      = f,
-                lift    = l,
+            es[self._name(a)] = DiagnosticsResult(
+                obs=int(l[LBL_M.C].sum()),
+                events=int((l[LBL_M.T] * l[LBL_M.C]).sum()),
+                gini=p[STAT.GT],
+                KS=p[STAT.KS],
+                IV=p[STAT.IV],
+                PR=f,
+                lift=l,
             )
         return es
 
-    def gini(self, is_grid:bool=False) -> go.Figure:
+    def gini(self, is_grid: bool = False) -> go.Figure:
         return self._glp.gini(is_grid)
-    
-    def lift(self, is_grid:bool=False) -> go.Figure:
+
+    def lift(self, is_grid: bool = False) -> go.Figure:
         return self._glp.lift(is_grid)
 
-    def create(self, show:bool = True) -> go.Figure | None:
+    def create(self, show: bool = True) -> go.Figure | None:
         return self._glp.create(show)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ScoringSankey(ScoringStatsBase):
 
-    def __init__(self, 
-        stats: ComparatorStats, 
-        theme:  int = 2, 
-        header_color: str = 'rgba(70, 80, 90, 1.0)'
+    def __init__(
+        self,
+        stats: ComparatorStats,
+        theme: int = 2,
+        header_color: str = "rgba(70, 80, 90, 1.0)",
     ):
         super().__init__(stats)
         self._theme = ScoringTheme(stats, theme)
@@ -1235,258 +1282,280 @@ class ScoringSankey(ScoringStatsBase):
     def add_col_score(self) -> pDF:
         sco = self._get_scoring()
         sc_ = sco.loc[:, self.agents]
-        sc_ = sc_.clip(1e-6).copy() # clip 0 to avoid sankey colapsing
-        sc_[0] = 1                  # [0] = 1 → the header row
+        sc_ = sc_.clip(1e-6).copy()  # clip 0 to avoid sankey colapsing
+        sc_[0] = 1  # [0] = 1 → the header row
         return sc_[[0] + list(self.agents)]
 
     def labels(self) -> list:
-        org  = self._get_overview()
+        org = self._get_overview()
         cols = self._col_score.index
 
-        col = lambda l: '<br>'.join([x.capitalize() for x in l.split('_')])
+        col = lambda l: "<br>".join([x.capitalize() for x in l.split("_")])
         lbl = lambda a, l: (
             f'{f"<b>A{a} → </b>" if l == cols[0] else ''}'
             f"{'<b>' if l == cols[-1] else ''}"
-            f'{org.loc[l,a]:.3f}</b>'
+            f"{org.loc[l,a]:.3f}</b>"
         )
         return [
-            col(l) if a==0 else lbl(a, l) 
-            for l in cols for a in self._col_score.columns
+            col(l) if a == 0 else lbl(a, l)
+            for l in cols
+            for a in self._col_score.columns
         ]
-    
+
     def hover(self) -> list:
         d = self._get_overview().loc[:, MAP.D]
         o = self._get_overview().loc[:, self.agents]
         s = self._get_scoring().loc[:, self.agents]
 
-        mm  = lambda x,l: x.loc[l].max() if d.loc[l] else x.loc[l].min()
+        mm = lambda x, l: x.loc[l].max() if d.loc[l] else x.loc[l].min()
         col = lambda l: [
-            s.columns[s.loc[l] == s.loc[l].max()], 
-            mm(o,l), s.loc[l].max(), l
+            s.columns[s.loc[l] == s.loc[l].max()],
+            mm(o, l),
+            s.loc[l].max(),
+            l,
         ]
-        
-        lbl = lambda a,l: [a, o.loc[l,a], s.loc[l,a], l]
 
-        return [ 
-            col(l) if a==0 else lbl(a, l)
-            for l in self._col_score.index for a in self._col_score.columns 
+        lbl = lambda a, l: [a, o.loc[l, a], s.loc[l, a], l]
+
+        return [
+            col(l) if a == 0 else lbl(a, l)
+            for l in self._col_score.index
+            for a in self._col_score.columns
         ]
-        
+
     def values(self) -> ArrayLike:
         return self._col_score.to_numpy().flatten()
-    
+
     def chain(self) -> tuple[ArrayLike, ArrayLike]:
-        mx = int( len(self._col_score.columns) * len(self._col_score.index) )
+        mx = int(len(self._col_score.columns) * len(self._col_score.index))
         source = np.array(range(mx))
         target = source + len(self._col_score.columns)
         return source, target
-    
+
     def _colors(self) -> list:
         colors = [self._theme.get_color(a) for a in self.agents]
-        colors = [[self._header] + [c(x) for c in colors]  for x in self._get_scoring().index]
+        colors = [
+            [self._header] + [c(x) for c in colors] for x in self._get_scoring().index
+        ]
         return [c for x in colors for c in x]
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+
 class ScoringPlot(ScoringStatsBase):
-    
-    def __init__(self, stats: ComparatorStats, theme:int = 1):
+
+    def __init__(self, stats: ComparatorStats, theme: int = 1):
         super().__init__(stats)
         self._sankey = ScoringSankey(stats, theme)
-        self._theme  = ScoringTheme(stats, theme)
+        self._theme = ScoringTheme(stats, theme)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def radar(self, show:bool=True) -> go.Figure | None:        
+    def radar(self, show: bool = True) -> go.Figure | None:
         agents = self._get_agents()
         scores = self._get_scoring()
         values = self._get_overview().loc[scores.index]
 
-        fig = go.Figure()        
+        fig = go.Figure()
         vis = self.rank.sort_values().index
 
-        col = lambda l: ' '.join([x.capitalize() for x in l.split('_')[1:]])
+        col = lambda l: " ".join([x.capitalize() for x in l.split("_")[1:]])
         col = [col(x) for x in scores.index]
-        col[-1] = '<i>'+col[-1]+'</i>'
+        col[-1] = "<i>" + col[-1] + "</i>"
 
-        for a in agents:    
-            fig.add_trace(go.Scatterpolar(
-                r = scores[a].round(4),
-                theta   = col,
-                fill    = 'toself',
-                name    = self._name(a),
-                hoveron = 'points',
-                line    = dict(
-                    color = self._theme.get_color(a, 1.0),
-                    width = 2 
-                ),
-                fillcolor = self._theme.get_color(a, 0.3),
-                customdata    = values[a],
-                hovertemplate = "Score: %{r:.1%}, <br>Value: %{customdata:.4f}, <br>Metric: %{theta}",
-                visible = True if a in [vis[0], vis[-1]] else 'legendonly'
-        ))
+        for a in agents:
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=scores[a].round(4),
+                    theta=col,
+                    fill="toself",
+                    name=self._name(a),
+                    hoveron="points",
+                    line=dict(color=self._theme.get_color(a, 1.0), width=2),
+                    fillcolor=self._theme.get_color(a, 0.3),
+                    customdata=values[a],
+                    hovertemplate="Score: %{r:.1%}, <br>Value: %{customdata:.4f}, <br>Metric: %{theta}",
+                    visible=True if a in [vis[0], vis[-1]] else "legendonly",
+                )
+            )
 
         fig.update_layout(
-            height = 500,
-            legend = dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
-            margin = dict(t=20,r=0,b=0,l=0),
-            polar  = dict(        
-                angularaxis=dict(
-                    categoryarray = col,
-                    direction = 'clockwise'
-            ))
+            height=500,
+            legend=dict(
+                orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5
+            ),
+            margin=dict(t=20, r=0, b=0, l=0),
+            polar=dict(angularaxis=dict(categoryarray=col, direction="clockwise")),
         )
         if not show:
             return fig
         fig.show()
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-       
-    def sankey(self, show:bool=True) -> go.Figure | None:        
+
+    def sankey(self, show: bool = True) -> go.Figure | None:
         source, target = self._sankey.chain()
 
-        fig = go.Figure(go.Sankey(  
-            arrangement = "fixed",  
-
-            node = dict(
-                pad = 10,
-                thickness = 10,
-                line = dict(color = "rgba(0,0,0,0.1)", width = 0.5),
-                label = self._sankey.labels(),
-                color = "gainsboro",
-                hovertemplate = "%{label}<extra></extra>"
-            ),    
-
-            link = dict(
-                source = source,
-                target = target,
-                value  = self._sankey.values(),
-                color  = self._sankey._colors(),
-                customdata = self._sankey.hover(),
-                hovertemplate = (
-                    "<b>Agent: %{customdata[0]}</b><br>" +            
-                    "Raw Value: <b>%{customdata[1]:.3f}</b><br>" +
-                    "Standardized Score: %{customdata[2]:.1%}<br>"+
-                    "Metric Focus: %{customdata[3]}<extra></extra>"
+        fig = go.Figure(
+            go.Sankey(
+                arrangement="fixed",
+                node=dict(
+                    pad=10,
+                    thickness=10,
+                    line=dict(color="rgba(0,0,0,0.1)", width=0.5),
+                    label=self._sankey.labels(),
+                    color="gainsboro",
+                    hovertemplate="%{label}<extra></extra>",
                 ),
-                hoverlabel = dict(
-                bgcolor = "rgba(0, 0, 0, 1.0)",
-                font_size = 12,
-                font_family = "Arial"
-            ))
-        ))
+                link=dict(
+                    source=source,
+                    target=target,
+                    value=self._sankey.values(),
+                    color=self._sankey._colors(),
+                    customdata=self._sankey.hover(),
+                    hovertemplate=(
+                        "<b>Agent: %{customdata[0]}</b><br>"
+                        + "Raw Value: <b>%{customdata[1]:.3f}</b><br>"
+                        + "Standardized Score: %{customdata[2]:.1%}<br>"
+                        + "Metric Focus: %{customdata[3]}<extra></extra>"
+                    ),
+                    hoverlabel=dict(
+                        bgcolor="rgba(0, 0, 0, 1.0)", font_size=12, font_family="Arial"
+                    ),
+                ),
+            )
+        )
 
         fig.update_layout(
-            font_size = 11.5,
-            font_color = 'white',
-            height = 400, 
-            width  = 1050,
-            margin = dict(t=0,r=0,b=0,l=0)
+            font_size=11.5,
+            font_color="white",
+            height=400,
+            width=1050,
+            margin=dict(t=0, r=0, b=0, l=0),
         )
 
         if not show:
             return fig
         fig.show()
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-    
-class ScoringTable(ScoringStatsBase):
-    
-    _A = 'Agent'
-    _G = 'Group'
-    _D = 'Direction'
-    _W = 'Weight'
-    _M = 'Metric'
 
-    _C = ['IV', 'KS']
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
+
+class ScoringTable(ScoringStatsBase):
+
+    _A = "Agent"
+    _G = "Group"
+    _D = "Direction"
+    _W = "Weight"
+    _M = "Metric"
+
+    _C = ["IV", "KS"]
 
     @classmethod
-    def _capital(cls, x:str) -> str:
+    def _capital(cls, x: str) -> str:
         if x.upper() in cls._C:
             return x.upper()
         return x.capitalize()
-    
+
     def _metrics(self) -> pDF:
-        index   = self._get_overview().index.to_list()
-        index_  = [[self._capital(x) for x in m.split('_')] for m in index]
-        groups  = [x[0] for x in index_]
-        metrics = [' '.join(x[1:]) for x in index_]
+        index = self._get_overview().index.to_list()
+        index_ = [[self._capital(x) for x in m.split("_")] for m in index]
+        groups = [x[0] for x in index_]
+        metrics = [" ".join(x[1:]) for x in index_]
         d = self._get_overview()[MAP.D]
         w = self._get_scoring()[MAP.W]
-        return pDF({
-            self._G: groups, 
-            self._W: w,
-            self._D: ['Max' if x else 'Min' for x in d.values],
-            self._M: metrics, 
-        }, index = index)
-    
+        return pDF(
+            {
+                self._G: groups,
+                self._W: w,
+                self._D: ["Max" if x else "Min" for x in d.values],
+                self._M: metrics,
+            },
+            index=index,
+        )
+
     @staticmethod
     def _style_total() -> dict:
         return {
-            'subset': (MAP.S, slice(None)), 
-            'font-weight': '600', 
-            'background-color': "#d5daefdf"
+            "subset": (MAP.S, slice(None)),
+            "font-weight": "600",
+            "background-color": "#d5daefdf",
         }
-    
-    def _style_values(self, d:pDF, is_score:bool=False) -> pDF:
+
+    def _style_values(self, d: pDF, is_score: bool = False) -> pDF:
         agents = self.agents
-        col = lambda a: f'{self._A} {a}'
+        col = lambda a: f"{self._A} {a}"
 
         d_ = d.loc[:, agents]
         d_.columns = [col(a) for a in agents]
-        fc = '{:.1%}' if is_score else '{:.4f}'
+        fc = "{:.1%}" if is_score else "{:.4f}"
 
         return Pd.style(
-            d_, hide_axis = 0, 
-            format_cols = {col(a): fc for a in agents},
-            properties  = self._style_total()
+            d_,
+            hide_axis=0,
+            format_cols={col(a): fc for a in agents},
+            properties=self._style_total(),
         )
-    
+
     def _style_metrics(self) -> pDF:
         d = self._metrics()
         return Pd.style(
-            d, hide_axis = 0, 
-            bold_cols   = self._M,
-            format_cols = {self._W: '{:.2f}'},
-            properties  = self._style_total()
+            d,
+            hide_axis=0,
+            bold_cols=self._M,
+            format_cols={self._W: "{:.2f}"},
+            properties=self._style_total(),
         )
 
-    def create(self, show:bool=True):
+    def create(self, show: bool = True):
         d = [self._style_metrics()]
-        d = d + [self._style_values(d,i) for i,d in enumerate(
-            [self._get_overview(), self._get_scoring()]
-        )]
+        d = d + [
+            self._style_values(d, i)
+            for i, d in enumerate([self._get_overview(), self._get_scoring()])
+        ]
         t = TableStyle.combine_pdf_to_html(
-            d, ['Metrics', 'Values', 'Scoring'], 1, h_align='center', show=False
+            d, ["Metrics", "Values", "Scoring"], 1, h_align="center", show=False
         )
         if not show:
             return t
         Display.construct(t)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
 class ComparatorPlot:
-    
-    def __init__(self, 
-        stats: ComparatorStats, 
+
+    def __init__(
+        self,
+        stats: ComparatorStats,
         theme: int = 1,
-        dst_kind: Literal[1,2] = 2, 
-        bar_kind: Literal[1,2] = 2
-    ):        
+        dst_kind: Literal[1, 2] = 2,
+        bar_kind: Literal[1, 2] = 2,
+    ):
         self.stats = stats
         self.theme = theme
         self.dst_kind = dst_kind
         self.bar_kind = bar_kind
-        
-    def gini(self, show:bool=True) -> go.Figure | None:
-        return GiniLiftPlot(self.stats, theme = self.theme).create(show)
-    
-    def radar(self, show:bool=True) -> go.Figure | None:
-        return ScoringPlot(self.stats, theme = self.theme).radar(show)
 
-    def sankey(self, show:bool=True) -> go.Figure | None:
-        return ScoringPlot(self.stats, theme = self.theme).sankey(show)
-    
-    def calibration(self, show:bool=True) -> go.Figure | None:
+    def gini(self, show: bool = True) -> go.Figure | None:
+        return GiniLiftPlot(self.stats, theme=self.theme).create(show)
+
+    def radar(self, show: bool = True) -> go.Figure | None:
+        return ScoringPlot(self.stats, theme=self.theme).radar(show)
+
+    def sankey(self, show: bool = True) -> go.Figure | None:
+        return ScoringPlot(self.stats, theme=self.theme).sankey(show)
+
+    def calibration(self, show: bool = True) -> go.Figure | None:
         return CalibrationPlot(
-            self.stats.calibration, 
-            dst_kind = self.dst_kind, 
-            bar_kind = self.bar_kind,
-            graph_titles = {a: LBL.N(a) for a in self.stats.calibration} 
+            self.stats.calibration,
+            dst_kind=self.dst_kind,
+            bar_kind=self.bar_kind,
+            graph_titles={a: LBL.N(a) for a in self.stats.calibration},
         ).create(show)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

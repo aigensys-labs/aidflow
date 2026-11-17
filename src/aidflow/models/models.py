@@ -1,19 +1,15 @@
 """
 Centralized manifest of all available Fitter, Model and Dashboard implementations.
 
-This module serves as a high-level convenience layer that aggregates every 
-available model implementation within the framework. Upon import, it triggers 
-the automatic discovery and registration process, populating the `ModelRegistry` 
-and `DashRegistry` with all defined components. This ensures that any Fitter or 
-Dashboard added to the library is immediately available for selection and use 
+This module serves as a high-level convenience layer that aggregates every
+available model implementation within the framework. Upon import, it triggers
+the automatic discovery and registration process, populating the `ModelRegistry`
+and `DashRegistry` with all defined components. This ensures that any Fitter or
+Dashboard added to the library is immediately available for selection and use
 within the Model pipeline without requiring manual configuration.
 """
 
-from ..data.load import (
-    DataLoaderInput,
-    DataLoaderResult,
-    DataLoader
-)
+from ..data.load import DataLoaderInput, DataLoaderResult, DataLoader
 
 from ..data.screen import (
     FeCleanerInput,
@@ -24,7 +20,7 @@ from ..data.screen import (
     FeatureStabilizer,
     ObsStabilizerInput,
     ObsStabilizerResult,
-    ObservationStabilizer
+    ObservationStabilizer,
 )
 
 from ..data.encode import (
@@ -45,11 +41,7 @@ from ..data.encode import (
     WoeStabilizer,
 )
 
-from ..data.transform import (
-    DataEncoderInput,
-    DataEncoderResult,
-    DataEncoder
-)
+from ..data.transform import DataEncoderInput, DataEncoderResult, DataEncoder
 
 from ..learner.agents import (
     Agent1Input,
@@ -63,35 +55,31 @@ from ..learner.agents import (
     Agent3Predictor,
     Agent4Input,
     Agent4Result,
-    Agent4Predictor
+    Agent4Predictor,
 )
 
 from ..selector.predict import (
     AgentsPredictorInput,
     AgentsPredictorResult,
-    AgentsPredictor
+    AgentsPredictor,
 )
 
 from ..selector.compare import (
     AgentsComparatorInput,
     AgentsComparatorResult,
-    AgentsComparator
+    AgentsComparator,
 )
 
 from ..selector.transition import (
     AgentsTransitionInput,
     AgentsTransitionResult,
-    AgentsTransition
+    AgentsTransition,
 )
 
-from ..selector.select import (
-    AgentSelectorInput,
-    AgentSelectorResult,
-    AgentSelector
-)
+from ..selector.select import AgentSelectorInput, AgentSelectorResult, AgentSelector
 
 from ..selector.select.agent import (
     AgentPredictorInput,
     AgentPredictorResult,
-    AgentPredictor
+    AgentPredictor,
 )

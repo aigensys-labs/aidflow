@@ -37,15 +37,12 @@ Usage Flow
 4. Inspect ``stats`` for comparative metrics.
 """
 
-from ...deps.data                   import  pDF                                           
-from ...core.base                   import  FitterModelBase
-from ...core.foundation             import  AigParam
-from ...core.factory                import  Dataclass
-from ..base.processor               import  (
-                                            AGENTS, 
-                                            FitterSelectionBase
-                                            )
-from .adapter                       import  PredictorAdapter                                            
+from ...deps.data import pDF
+from ...core.base import FitterModelBase
+from ...core.foundation import AigParam
+from ...core.factory import Dataclass
+from ..base.processor import AGENTS, FitterSelectionBase
+from .adapter import PredictorAdapter
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -61,8 +58,10 @@ class PredictorParamsBase:
     predictors : PredictorAdapter
         The adapter holding all trained agent instances. Must be
         populated before calling ``transform``.
-    """    
+    """
+
     predictors: PredictorAdapter = None
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class PredictorParamsCfg:
@@ -80,13 +79,16 @@ class PredictorParamsCfg:
         (feature cleaning → discretization → WOE) to the input
         data before prediction. If None or False, the input
         data is assumed to already be in the model-ready format.
-    """    
-    target:     str
-    preprocess: bool|None = None
+    """
+
+    target: str
+    preprocess: bool | None = None
+
 
 @Dataclass.base
 class PredictorParams(PredictorParamsBase, PredictorParamsCfg):
     """Woker params input design."""
+
 
 @Dataclass.base
 class PredictorInput:
@@ -102,8 +104,10 @@ class PredictorInput:
         Subset of agents to predict with. If None, all registered
         agents are used.
     """
-    data:   pDF 
-    agents: tuple|list|None = tuple(AGENTS)
+
+    data: pDF
+    agents: tuple | list | None = tuple(AGENTS)
+
 
 @Dataclass.base
 class PredictorResult:
@@ -124,11 +128,13 @@ class PredictorResult:
         Agent 3 predictions.
     agent4 : pDF | None
         Agent 4 predictions.
-    """    
-    agent1: pDF|None = None
-    agent2: pDF|None = None
-    agent3: pDF|None = None
-    agent4: pDF|None = None
+    """
+
+    agent1: pDF | None = None
+    agent2: pDF | None = None
+    agent3: pDF | None = None
+    agent4: pDF | None = None
+
 
 @Dataclass.base
 class PredictorStats:
@@ -149,12 +155,16 @@ class PredictorStats:
         Agent 3 stats.
     agent4 : pDF
         Agent 4 stats.
-    """    
+    """
+
     agent1: pDF = None
     agent2: pDF = None
     agent3: pDF = None
     agent4: pDF = None
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Fitter(FitterSelectionBase[PredictorInput, PredictorParams]):
     """
@@ -174,11 +184,11 @@ class Fitter(FitterSelectionBase[PredictorInput, PredictorParams]):
     params : PredictorParams
         Adapter configuration (predictors, target, preprocess).
     """
-    
-    SelectionInput : type = PredictorInput
+
+    SelectionInput: type = PredictorInput
     agents_condition: int = 1
 
-    def predict(self, agent:str, data:pDF) -> pDF:
+    def predict(self, agent: str, data: pDF) -> pDF:
         """
         Obtain a probability prediction from a single trained agent.
 
@@ -197,9 +207,10 @@ class Fitter(FitterSelectionBase[PredictorInput, PredictorParams]):
             identically to the input.
         """
         pa = self.prm.predictors.get_agent(agent)
-        return pa.predict(data, preprocess = self.prm.preprocess)
+        return pa.predict(data, preprocess=self.prm.preprocess)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _get_agents(self, inputs: PredictorInput) -> dict:
         """
         Resolve requested agents to result field names.
@@ -225,16 +236,17 @@ class Fitter(FitterSelectionBase[PredictorInput, PredictorParams]):
             field (naming mismatch).
         """
         super()._set_agents(inputs)
-                
+
         r = Dataclass.get_names(PredictorResult)
-        
-        def n(a:str) -> str:
+
+        def n(a: str) -> str:
             v = [x for x in r if x[-1] == str(a)]
             if len(v) == 1:
                 return v[0]
-            raise ValueError('AIG SAFETY ► Unexpected agent name mismatch!')
+            raise ValueError("AIG SAFETY ► Unexpected agent name mismatch!")
 
         return {a: n(a) for a in self.agents}
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def transform(self, inputs: PredictorInput | pDF, **kwargs) -> PredictorResult:
@@ -263,21 +275,26 @@ class Fitter(FitterSelectionBase[PredictorInput, PredictorParams]):
             One prediction DataFrame per requested agent.
         """
         inputs_ = self.get_inputs(inputs, kwargs)
-        agents  = self._get_agents(inputs_)
+        agents = self._get_agents(inputs_)
 
         pred = {}
         for a, r in agents.items():
             pred[r] = self.predict(AGENTS[a], inputs_.data)
 
-        t:pDF = inputs_.data[[self.prm.target]]
+        t: pDF = inputs_.data[[self.prm.target]]
 
-        self.stats = PredictorStats(**{
-            r: t.assign(**{'Prediction': pred[r]}).describe() 
-            for r in agents.values()
-        })
+        self.stats = PredictorStats(
+            **{
+                r: t.assign(**{"Prediction": pred[r]}).describe()
+                for r in agents.values()
+            }
+        )
 
         return PredictorResult(**pred)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class PredictorProcessor(FitterModelBase[Fitter]):
     """
@@ -325,12 +342,12 @@ class PredictorProcessor(FitterModelBase[Fitter]):
     >>> result.agent2  # GBM predictions  # doctest: +SKIP
     >>> pred.fitter.stats  # comparative describe() per agent  # doctest: +SKIP
     """
-    
-    def __init__(self, *args, params: dict|PredictorParams = None, **kwargs):
+
+    def __init__(self, *args, params: dict | PredictorParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(PredictorParams, params, args, kwargs)
         self._fitter = Fitter(self._params)
 
-    def predict(self, agent:str, data:pDF) -> pDF:
+    def predict(self, agent: str, data: pDF) -> pDF:
         """
         Predict with a single agent.
 
@@ -347,7 +364,7 @@ class PredictorProcessor(FitterModelBase[Fitter]):
             Predicted probability, indexed identically to input.
         """
         return self._fitter.predict(agent, data)
-    
+
     def transform(self, inputs: PredictorInput | pDF, **kwargs) -> PredictorResult:
         """
         Predict with all (or selected) agents.
@@ -365,4 +382,6 @@ class PredictorProcessor(FitterModelBase[Fitter]):
             One prediction DataFrame per requested agent.
         """
         return self._fitter.transform(inputs, **kwargs)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

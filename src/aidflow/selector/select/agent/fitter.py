@@ -52,31 +52,21 @@ Supported Model Backends
 - **XGBoost** (GBM): Same protocol as LightGBM.
 """
 
-from ....deps.data                              import  pd, pDF, pSe
-from ....deps.types                             import  NDArray
+from ....deps.data import pd, pDF, pSe
+from ....deps.types import NDArray
 
-from ....core.base                              import  (
-                                                        FitterTrainBase, 
-                                                        FitterModelBase
-                                                        )
-from ....core.factory                           import  Dataclass
-from ....core.foundation                        import  AigParam
+from ....core.base import FitterTrainBase, FitterModelBase
+from ....core.factory import Dataclass
+from ....core.foundation import AigParam
 
-from ....ml.models                              import  (
-                                                        Logit,
-                                                        LGB, 
-                                                        XGB
-                                                        )
-from ....ml.sampling                            import  Sampling
-from ....ml.metrics                             import  (
-                                                        DiagnosticsResult,
-                                                        SeparationDiagnostics
-                                                        )
-from ....learner.agents.fitters.glm_selector    import  FitParams as FitParams_GLM
-from ....learner.agents.fitters.gbm_selector    import  FitParams as FitParams_GBM
+from ....ml.models import Logit, LGB, XGB
+from ....ml.sampling import Sampling
+from ....ml.metrics import DiagnosticsResult, SeparationDiagnostics
+from ....learner.agents.fitters.glm_selector import FitParams as FitParams_GLM
+from ....learner.agents.fitters.gbm_selector import FitParams as FitParams_GBM
 
-from ...predict.adapter                         import  PredictorAdapter
-                                        
+from ...predict.adapter import PredictorAdapter
+
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # SELECTION → PRODUCTION MODEL
@@ -98,8 +88,10 @@ class FitParamsBase:
         This agent's hyperparameters and feature list are
         inherited. The user's feature subset (if any) is
         applied via the `features` argument to `fit`.
-    """        
-    agent_choice: int|str = 1
+    """
+
+    agent_choice: int | str = 1
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -120,13 +112,16 @@ class FitParamsCfg:
         parameters. GLM agents ignore this (they use full data
         for fitting; validation is diagnostics-only).
     """
+
     predictors: PredictorAdapter
-    target:     str
-    val_size:   float = None
+    target: str
+    val_size: float = None
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -142,8 +137,10 @@ class FitResult:
         Features that were in the training agent but removed
         by the user's curation decision.
     """
+
     features_selected: list
-    features_dropped:  list
+    features_dropped: list
+
 
 @Dataclass.base
 class FitStats:
@@ -158,7 +155,9 @@ class FitStats:
         early-stopping validation split. For GLM agents, this
         is a stratified sample of the full training data.
     """
+
     diagnostics: DiagnosticsResult = None
+
 
 @Dataclass.base
 class FitDashLink:
@@ -175,8 +174,12 @@ class FitDashLink:
         Validation set row indices (for metric display and
         per-row diagnostics).
     """
+
     train_val_idx: pd.Index
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Fitter(FitterTrainBase):
     """
@@ -218,25 +221,27 @@ class Fitter(FitterTrainBase):
     ----------
     params : FitParams
         Champion agent identifier and pipeline references.
-    """       
+    """
+
     _model: Logit | LGB | XGB = None
 
     def __init__(self, params: FitParams):
-        self.prm = params        
+        self.prm = params
         a = params.agent_choice
 
-        self.is_gbm  = params.predictors.is_gbm(a)
-        agent_model  = params.predictors.get_agent(a).model
+        self.is_gbm = params.predictors.is_gbm(a)
+        agent_model = params.predictors.get_agent(a).model
         model_fitter = agent_model.fitter.model
 
         self.orig_params: FitParams_GLM | FitParams_GBM = model_fitter.params
 
-        self.orig_features    = model_fitter.features
+        self.orig_features = model_fitter.features
         self.orig_ordered_fes = model_fitter.get_ordered_fes()
-        
+
         self._set_config(model_fitter.model)
         self._est = type(model_fitter.model)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _set_config(self, orig_model: Logit | LGB | XGB) -> dict:
         """
@@ -252,7 +257,7 @@ class Fitter(FitterTrainBase):
         orig_model : Logit | LGB | XGB
             The original fitted model instance from which
             configuration is extracted.
-        """        
+        """
         self._cat = {}
         if self.is_gbm:
             self._cat = orig_model.get_categorical_feature()
@@ -275,15 +280,18 @@ class Fitter(FitterTrainBase):
         -------
         dict
             Model constructor keyword arguments.
-        """        
+        """
         if not self.is_gbm:
             return self.config
-        
+
         cat = [x for x in features if x in self._cat]
-        return self.config | dict(categorical_feature = cat)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-        
-    def _train_valid_split(self, X:pDF, y:pSe) -> tuple[ tuple[pDF,pSe], tuple[pDF,pSe] ]:
+        return self.config | dict(categorical_feature=cat)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def _train_valid_split(
+        self, X: pDF, y: pSe
+    ) -> tuple[tuple[pDF, pSe], tuple[pDF, pSe]]:
         """
         Stratified train/validation split for GBM early stopping.
 
@@ -304,12 +312,14 @@ class Fitter(FitterTrainBase):
         -------
         tuple
             ((X_train, y_train), (X_valid, y_valid))
-        """        
+        """
         vs = self.prm.val_size or self.orig_params.val_size
         rs = self.orig_params.random_state
-        return Sampling(vs, stratify=y, random_state=rs, shuffle=True).train_valid_split(X,y)
-            
-    def _fit(self, X:pDF, y:pSe) -> pd.Index:
+        return Sampling(
+            vs, stratify=y, random_state=rs, shuffle=True
+        ).train_valid_split(X, y)
+
+    def _fit(self, X: pDF, y: pSe) -> pd.Index:
         """
         Fit the champion model on the selected features.
 
@@ -333,17 +343,17 @@ class Fitter(FitterTrainBase):
             Validation set row indices (for diagnostic metrics).
         """
         cfg = self._get_config(X.columns)
-        model: Logit | LGB | XGB = self._est(**cfg)        
-        
-        if self.is_gbm:
-            Xy_train, Xy_valid = self._train_valid_split(X,y)
-            self._model = model.fit(*Xy_train, eval_set = [Xy_valid])
-            return Xy_valid[0].index
-        
-        self._model = model.fit(X, y) 
-        return X.index        
+        model: Logit | LGB | XGB = self._est(**cfg)
 
-    def _diagnostics(self, d_val:pDF) -> DiagnosticsResult:
+        if self.is_gbm:
+            Xy_train, Xy_valid = self._train_valid_split(X, y)
+            self._model = model.fit(*Xy_train, eval_set=[Xy_valid])
+            return Xy_valid[0].index
+
+        self._model = model.fit(X, y)
+        return X.index
+
+    def _diagnostics(self, d_val: pDF) -> DiagnosticsResult:
         """
         Compute validation metrics on the held-out set.
 
@@ -363,13 +373,14 @@ class Fitter(FitterTrainBase):
         DiagnosticsResult
             Separation metrics and lift table on the
             validation set.
-        """            
+        """
         t = d_val[self.prm.target]
         p = self.predict_proba(d_val)[:, 1]
         return SeparationDiagnostics(lift_bins=10).evaluate(t, p)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
-    def fit(self, data:pDF, features:list):
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def fit(self, data: pDF, features: list):
         """
         Execute the champion agent fit.
 
@@ -399,22 +410,20 @@ class Fitter(FitterTrainBase):
         idx = self._fit(data[features], data[self.prm.target])
 
         self.result = FitResult(
-            features_selected = features,
-            features_dropped  = [x for x in self.orig_features if x not in features]
+            features_selected=features,
+            features_dropped=[x for x in self.orig_features if x not in features],
         )
 
         self.features = features
         self.ordered_features = [x for x in self.orig_ordered_fes if x in features]
 
-        self.stats = FitStats(
-            diagnostics = self._diagnostics(data.loc[idx])
-        )
+        self.stats = FitStats(diagnostics=self._diagnostics(data.loc[idx]))
 
-        self.dash = FitDashLink(train_val_idx = idx)
+        self.dash = FitDashLink(train_val_idx=idx)
 
         return self
 
-    def predict_proba(self, data:pDF) -> NDArray:
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities using the champion model.
 
@@ -429,8 +438,11 @@ class Fitter(FitterTrainBase):
             2-D array of shape (n_samples, 2) with P(class=0)
             and P(class=1).
         """
-        return self.model.predict_proba(data[self.features])    
+        return self.model.predict_proba(data[self.features])
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class PredictorFitter(FitterModelBase[Fitter]):
     """
@@ -496,10 +508,10 @@ class PredictorFitter(FitterModelBase[Fitter]):
     >>> fitter.get_ordered_fes()  # ['tenure_WOE', 'revenue_WOE', 'segment_WOE']
     """
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
 
-    def fit(self, data:pDF, features:list):        
+    def fit(self, data: pDF, features: list):
         """
         Fit the champion model on the selected feature subset.
 
@@ -516,12 +528,12 @@ class PredictorFitter(FitterModelBase[Fitter]):
         self
             Fitted instance with `predict_proba` and
             `get_ordered_fes` available.
-        """        
+        """
         self._fitter = Fitter(self._params)
         self._fitter.fit(data, features)
         return self
-    
-    def predict_proba(self, data:pDF) -> NDArray:
+
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities using the fitted champion model.
 
@@ -551,5 +563,7 @@ class PredictorFitter(FitterModelBase[Fitter]):
             Feature names, most important first (restricted to
             the champion's feature subset).
         """
-        return self.fitter.ordered_features    
+        return self.fitter.ordered_features
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

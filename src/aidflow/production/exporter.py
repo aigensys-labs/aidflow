@@ -26,14 +26,13 @@ This is the complete interface required by the Airflow DAG.
 No other attributes are accessed at runtime.
 """
 
-from ..deps.common      import  Path, pickle, textwrap
-from ..deps.types       import  Any
-from ..core.base        import  ModelUIBase
-from ..core.base.worker import  WorkerBase
-from ..core.logging     import  Logger
-from ..core.factory     import  Dataclass
-from ..storage.folder   import  Folder
-
+from ..deps.common import Path, pickle, textwrap
+from ..deps.types import Any
+from ..core.base import ModelUIBase
+from ..core.base.worker import WorkerBase
+from ..core.logging import Logger
+from ..core.factory import Dataclass
+from ..storage.folder import Folder
 
 logger = Logger(__name__)
 
@@ -70,17 +69,19 @@ class ExportConfig:
     tags : tuple[str, ...], default=('aidflow', 'production', 'scoring')
         Airflow DAG tags for UI filtering.
     """
-    dag_id:          str  = "aidflow_scoring"
-    schedule:        str  = "0 2 * * *"
-    model_path:      str  = "/models/champion.pkl"
-    raw_data_loader: str  = "scoring.load_raw_data"
-    result_sink:     str  = "scoring.push_scores"
-    retries:         int  = 3
-    retry_delay_min: int  = 5
-    owner:           str  = "data-science"
-    tags: tuple[str, ...] = ("aidflow", "production", "scoring")
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    dag_id: str = "aidflow_scoring"
+    schedule: str = "0 2 * * *"
+    model_path: str = "/models/champion.pkl"
+    raw_data_loader: str = "scoring.load_raw_data"
+    result_sink: str = "scoring.push_scores"
+    retries: int = 3
+    retry_delay_min: int = 5
+    owner: str = "data-science"
+    tags: tuple[str, ...] = ("aidflow", "production", "scoring")
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -109,20 +110,21 @@ class ProductionExporter:
     paths    = exporter.export_all('./deployment/')
     # paths['pickle']      → deployment/champion.pkl
     # paths['airflow_dag'] → deployment/dag.py
-    ```        
+    ```
     """
-    _SIGNATURE = ('score', 'is_fitted')
 
-    def __init__(self, 
-        agent: WorkerBase | ModelUIBase, 
-        config: ExportConfig | None = None
+    _SIGNATURE = ("score", "is_fitted")
+
+    def __init__(
+        self, agent: WorkerBase | ModelUIBase, config: ExportConfig | None = None
     ):
         self._verify(agent)
         self._set_agent(agent)
         self._config = config or ExportConfig()
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def export_all(self, output_dir: Path = '') -> dict[str, Path]:
+    def export_all(self, output_dir: Path = "") -> dict[str, Path]:
         """
         Export all production artifacts to the specified directory.
 
@@ -140,12 +142,13 @@ class ProductionExporter:
         path = self._mk_dir(output_dir)
 
         return {
-            'pickle'      : self.export_pickle(path / 'champion.pkl'),
-            'airflow_dag' : self.export_airflow_dag(path / 'dag.py'),
+            "pickle": self.export_pickle(path / "champion.pkl"),
+            "airflow_dag": self.export_airflow_dag(path / "dag.py"),
         }
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def export_pickle(self, path: Path = '') -> Path:
+    def export_pickle(self, path: Path = "") -> Path:
         """
         Serialize the champion agent to a pickle file.
 
@@ -165,19 +168,20 @@ class ProductionExporter:
         """
         path = self._mk_dir(path)
 
-        with path.open('wb') as f:
+        with path.open("wb") as f:
             pickle.dump(self._agent, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        logger.info('Pickle ► %s (%.1f MB)', path, path.stat().st_size / 1_048_576)
+        logger.info("Pickle ► %s (%.1f MB)", path, path.stat().st_size / 1_048_576)
         return path
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def export_airflow_dag(self, path: Path = '') -> Path:
+    def export_airflow_dag(self, path: Path = "") -> Path:
         """
         Generate a production-ready Airflow DAG file.
 
         The DAG orchestrates:
-        - load raw data 
+        - load raw data
         - preprocess and score by aidflow package
         - push results to warehouse
 
@@ -192,44 +196,48 @@ class ProductionExporter:
             The written file path.
         """
         path = self._mk_dir(path)
-        path.write_text(self._render_dag(), encoding='utf-8')
+        path.write_text(self._render_dag(), encoding="utf-8")
 
-        logger.info('Airflow DAG ► %s (dag_id=%s)', path, self._config.dag_id)
+        logger.info("Airflow DAG ► %s (dag_id=%s)", path, self._config.dag_id)
         return path
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
     def _mk_dir(path: str | Path) -> Path:
         path, file = Folder.path_file(path)
         path = Folder.create(path)
         return path / file
-        
+
     def _set_agent(self, agent: WorkerBase | ModelUIBase) -> None:
         """Sets ModelBase as the inference engine."""
         if isinstance(agent, WorkerBase):
             agent = agent.model
         self._agent = agent.model
-            
+
     def _verify(self, agent: Any) -> None:
         """Validate that the agent is in a scorable state."""
         if not isinstance(agent, (WorkerBase, ModelUIBase)):
             raise ValueError(
-                'AIG SAFETY ► Agent must be signed by WorkerBase or ModelUIBase.'
+                "AIG SAFETY ► Agent must be signed by WorkerBase or ModelUIBase."
             )
         for m in self._SIGNATURE:
             if getattr(agent, m, None) is None:
                 raise ValueError(
                     f'AIG SAFETY ► Agent must expose "{m}". '
-                    f'Got: {type(agent).__name__}'
+                    f"Got: {type(agent).__name__}"
                 )
         if not agent.is_fitted:
-            raise ValueError('AIG SAFETY ► Agent is not fitted. Call fit() prior export.')
+            raise ValueError(
+                "AIG SAFETY ► Agent is not fitted. Call fit() prior export."
+            )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _render_dag(self) -> str:
         """Render the Airflow DAG Python source code."""
         c = self._config
-        tags = ', '.join(f'"{t}"' for t in c.tags)
+        tags = ", ".join(f'"{t}"' for t in c.tags)
 
         return textwrap.dedent(f'''
             """
@@ -302,4 +310,6 @@ class ProductionExporter:
                 )
 
         ''').lstrip()
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

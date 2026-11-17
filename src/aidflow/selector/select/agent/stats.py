@@ -31,85 +31,59 @@ Integration:
     architecture to retrieve all trained components [9].
 """
 
-from ....deps.common                            import  Path
-from ....deps.data                              import  np, pd, pDF, pSe
-from ....deps.plots                             import  go
-from ....deps.data_view                         import  itables_show
-from ....deps.types                             import  Literal
+from ....deps.common import Path
+from ....deps.data import np, pd, pDF, pSe
+from ....deps.plots import go
+from ....deps.data_view import itables_show
+from ....deps.types import Literal
 
-from ....core.parameters                        import  (
-                                                        Parameters, 
-                                                        AIGFLOW
-                                                        )
-from ....core.registry                          import  ProjectModelRegistry
-from ....core.factory                           import  (
-                                                        Dataclass,
-                                                        DictClass
-                                                        )
-from ....core.display                           import  (
-                                                        Display,
-                                                        DashPlotlyLink
-                                                        )
-from ....core.interop                           import  Pd
-from ....core.standard                          import  VarStd
+from ....core.parameters import Parameters, AIGFLOW
+from ....core.registry import ProjectModelRegistry
+from ....core.factory import Dataclass, DictClass
+from ....core.display import Display, DashPlotlyLink
+from ....core.interop import Pd
+from ....core.standard import VarStd
 
-from ....ml.sampling                            import  Subsampling
-from ....ml.features                            import  (
-                                                        Encoding,
-                                                        Binning,
-                                                        Correlation
-                                                        )
-from ....ml.features.woe                        import  (
-                                                        OV,
-                                                        WoEOverview
-                                                        )
-from ....ml.metrics                             import  (
-                                                        LBL as LBL_D,
-                                                        DiagnosticsResult,
-                                                        SeparationDiagnostics, 
-                                                        GiniLiftPlot,
-                                                        ConfusionMatrixPlot
-                                                        )
-from ....ml.models.calibration                  import  (
-                                                        LBL as LBL_C,
-                                                        CalibrationAssessment,
-                                                        CalibrationPlot
-                                                        )
-from ....ml.models.psi                          import  (
-                                                        PopulationStability,
-                                                        PopulationStabilityPlot,
-                                                        PopulationStabilityResult
-                                                        )
-from ....ml.features.stability                  import  (
-                                                        LBL  as LBL_S,
-                                                        STAB as STAB_S,
-                                                        DASH as DASH_S,
-                                                        FeConsistency,
-                                                        FEConsistencyPlot
-                                                        )
+from ....ml.sampling import Subsampling
+from ....ml.features import Encoding, Binning, Correlation
+from ....ml.features.woe import OV, WoEOverview
+from ....ml.metrics import (
+    LBL as LBL_D,
+    DiagnosticsResult,
+    SeparationDiagnostics,
+    GiniLiftPlot,
+    ConfusionMatrixPlot,
+)
+from ....ml.models.calibration import (
+    LBL as LBL_C,
+    CalibrationAssessment,
+    CalibrationPlot,
+)
+from ....ml.models.psi import (
+    PopulationStability,
+    PopulationStabilityPlot,
+    PopulationStabilityResult,
+)
+from ....ml.features.stability import (
+    LBL as LBL_S,
+    STAB as STAB_S,
+    DASH as DASH_S,
+    FeConsistency,
+    FEConsistencyPlot,
+)
 
-from ....data.encode.woe_stabilizer             import  (
-                                                        FitParams    as WOE_FitParams,
-                                                        FitParamsCfg as WOE_FitParamsCfg,
-                                                        WoeStabilizer
-                                                        )
-from ....learner.features.importance            import  (
-                                                        FeatureImportance,
-                                                        FeatureImportanceResult
-                                                        )
+from ....data.encode.woe_stabilizer import (
+    FitParams as WOE_FitParams,
+    FitParamsCfg as WOE_FitParamsCfg,
+    WoeStabilizer,
+)
+from ....learner.features.importance import FeatureImportance, FeatureImportanceResult
 
-from ....storage.export                         import  Export
-from ....display.style                          import  (
-                                                        TableStyle, 
-                                                        ItablesStyle
-                                                        )
+from ....storage.export import Export
+from ....display.style import TableStyle, ItablesStyle
 
-from .champion_predictor                        import  Fitter
-from .fitter                                    import  (
-                                                        FitParams, 
-                                                        FitDashLink,
-                                                        PredictorFitter
-                                                        )
+from .champion_predictor import Fitter
+from .fitter import FitParams, FitDashLink, PredictorFitter
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -117,44 +91,54 @@ from .fitter                                    import  (
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class SMPL(DictClass):
     """Sample label - train, valid, test - constants for report sections."""
-    TR = 'Train Sample'
-    VA = 'Valid Sample'
-    TE = 'Test Sample'
+
+    TR = "Train Sample"
+    VA = "Valid Sample"
+    TE = "Test Sample"
+
 
 class PRF(DictClass):
     """Performance metrics column constants."""
-    G  = 'Gini'
-    IV = 'IV'
-    KS = 'KS'
-    PB = 'ProbaBIN'
-    T  = 'E(Target)'
-    L  = 'E(Lift)'
-    W  = 'Weight'
-    C  = 'Count'
+
+    G = "Gini"
+    IV = "IV"
+    KS = "KS"
+    PB = "ProbaBIN"
+    T = "E(Target)"
+    L = "E(Lift)"
+    W = "Weight"
+    C = "Count"
+
 
 class CON(DictClass):
     """Confusion Matrix / Cutoff analysis column constants."""
-    T   = 'E(T|P>Cutoff)'
-    TR  = 'E(T|P<Cutoff)'
-    PC  = 'Prob. Cutoff'
-    CS  = 'Popul. Cut'
-    FPR = 'FPR'
-    TPR = 'TPR'
+
+    T = "E(T|P>Cutoff)"
+    TR = "E(T|P<Cutoff)"
+    PC = "Prob. Cutoff"
+    CS = "Popul. Cut"
+    FPR = "FPR"
+    TPR = "TPR"
+
 
 class CAL(DictClass):
     """Calibration assessment column constants."""
-    PB = 'ProbaBIN'
-    P  = 'E(Proba)'
-    T  = 'E(Target)'
-    W  = 'Weight'
-    C  = 'Count'
+
+    PB = "ProbaBIN"
+    P = "E(Proba)"
+    T = "E(Target)"
+    W = "Weight"
+    C = "Count"
+
 
 class STB(DictClass):
     """Feature stability column constants."""
-    F  = 'Feature'
-    S  = 'Stability'
-    IS = 'Stable'
-    D  = 'DriftΔ'
+
+    F = "Feature"
+    S = "Stability"
+    IS = "Stable"
+    D = "DriftΔ"
+
 
 @Dataclass.base
 class DashStats:
@@ -184,27 +168,33 @@ class DashStats:
         importance (dict): Per-sample feature importance results.
         predictive (dict): Per-sample WOE bin predictiveness tables.
         stability (dict): Per-sample feature temporal stability results.
-    """    
-    is_gbm:         bool
-    samples:        list[str]
-    features:       list[str]
-    diagnostics:    dict[str, DiagnosticsResult]
-    optim_cutoff:   float
-    confusion_mx:   go.Figure
-    calibration:    dict[str, pDF]
-    psi:            PopulationStabilityResult
-    summary:        object
-    correlation:    pDF
-    importance:     dict[str, FeatureImportance]
-    predictive:     dict[str, pDF]
-    stability:      dict[str, dict]
+    """
+
+    is_gbm: bool
+    samples: list[str]
+    features: list[str]
+    diagnostics: dict[str, DiagnosticsResult]
+    optim_cutoff: float
+    confusion_mx: go.Figure
+    calibration: dict[str, pDF]
+    psi: PopulationStabilityResult
+    summary: object
+    correlation: pDF
+    importance: dict[str, FeatureImportance]
+    predictive: dict[str, pDF]
+    stability: dict[str, dict]
+
 
 @Dataclass.base
 class DashData:
     """Internal container for raw training and test datasets."""
+
     train: pDF
-    test:  pDF
+    test: pDF
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class StatsUtils:
     """
@@ -216,66 +206,66 @@ class StatsUtils:
     """
 
     @staticmethod
-    def smpl_tv(is_gbm:bool) -> str:
+    def smpl_tv(is_gbm: bool) -> str:
         """Resolve the primary sample label based on model type."""
         return SMPL.VA if is_gbm else SMPL.TR
-    
+
     @staticmethod
-    def align_fes(fes: list, is_gbm:bool) -> list:
+    def align_fes(fes: list, is_gbm: bool) -> list:
         """Align feature names to their WOE-encoded equivalents for GBM models."""
         if not is_gbm:
             return fes
         return VarStd.var_to_woe(fes)
 
     @classmethod
-    def align_data(cls, train:pDF, test:pDF, target:str, woe_fes:list, is_gbm:bool
+    def align_data(
+        cls, train: pDF, test: pDF, target: str, woe_fes: list, is_gbm: bool
     ) -> tuple[pDF, pDF]:
         """Align data by WOE-encoded equivalents for GBM models."""
         if not is_gbm:
             return train, test
-        return cls._get_encoded_data(train, test, target, woe_fes)        
+        return cls._get_encoded_data(train, test, target, woe_fes)
 
     @classmethod
-    def _get_encoded_data(cls, train:pDF, test:pDF, target:str, woe_fes:list
+    def _get_encoded_data(
+        cls, train: pDF, test: pDF, target: str, woe_fes: list
     ) -> tuple[pDF, pDF]:
-        """Align data by WOE-encoded equivalents for GBM models."""        
-        y   = train[target]
+        """Align data by WOE-encoded equivalents for GBM models."""
+        y = train[target]
         woe = [x for x in woe_fes if x not in train.columns]
 
         if not woe:
             return train, test
-        
+
         train_w, test_w = {}, {}
         for x in woe:
             fe = VarStd.fe_to_var(x)
             train_w[x], woe = cls._get_encoded_fe(y, train[fe])
             test_w[x] = cls._get_mapped_fe(test[fe], woe, fe)
-        
+
         return (
             Pd.concat([train, pDF(train_w)], axis=1),
-            Pd.concat([test,  pDF(test_w)],  axis=1)
+            Pd.concat([test, pDF(test_w)], axis=1),
         )
-    
+
     @staticmethod
-    def _get_encoded_fe(y:pSe, x:pSe) -> pSe:
+    def _get_encoded_fe(y: pSe, x: pSe) -> pSe:
         """
-        Encodes feature to WOE repre. 
+        Encodes feature to WOE repre.
         Numerical fe is discretized to 10 bins max given reporting purposes.
         """
-        en = Encoding(
-            n_bins      = 7, 
-            transform   = True, 
-            ensure_trf  = True, 
-            incl_miss   = True
-        )
+        en = Encoding(n_bins=7, transform=True, ensure_trf=True, incl_miss=True)
         xt, woe, _ = en.process(y, x)
         return xt, woe
 
-    def _get_mapped_fe(x:pSe, woe:pDF, fe:str) -> pSe:
+    def _get_mapped_fe(x: pSe, woe: pDF, fe: str) -> pSe:
         b = Encoding(incl_miss=True).encode(x, woe, fe, VarStd.WOE)
         m = b.isna()
         return b
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class DashStatsCreator:
     """
@@ -317,48 +307,41 @@ class DashStatsCreator:
         model: PredictorFitter = fitter.model.model
         params: FitParams = model.params
         dash: FitDashLink = model.dash
-        
-        self.target  = params.target
-        self.is_gbm  = model.is_gbm   # Diag. data → GBM valid part | GLM full train        
-        self.diag    = fitter.stats.diagnostics
-        self.idx     = dash.train_val_idx
 
-        self.setup    = setup
-        self.fitter   = fitter
+        self.target = params.target
+        self.is_gbm = model.is_gbm  # Diag. data → GBM valid part | GLM full train
+        self.diag = fitter.stats.diagnostics
+        self.idx = dash.train_val_idx
+
+        self.setup = setup
+        self.fitter = fitter
         self.features = model.features
-        
+
         self.project_sig = setup.project_signature
 
         self.aligned_fes = StatsUtils.align_fes(self.features, self.is_gbm)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────        
-    
-    def _get_dash_data(self, train:pDF, test:pDF) -> DashData:  
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def _get_dash_data(self, train: pDF, test: pDF) -> DashData:
         train_, test_ = StatsUtils.align_data(
             train, test, self.target, self.aligned_fes, self.is_gbm
         )
-        return DashData(
-            train = train_,
-            test  = test_
-        )     
-       
+        return DashData(train=train_, test=test_)
+
     def _active_smpl(self) -> list[str]:
         """Returns list of active samples with respect to GLM / GBM sample use."""
         tv = StatsUtils.smpl_tv(self.is_gbm)
         return [tv, SMPL.TE]
-    
+
     def _smpl_def(self, *smpl) -> dict:
         """Build the standard sample dictionary with resolved labels."""
         lbl = self._active_smpl()
-        return {
-            lbl[0]: smpl[0],
-            lbl[1]: smpl[1]
-        }
-    
+        return {lbl[0]: smpl[0], lbl[1]: smpl[1]}
+
     def _samples(self, data: DashData) -> dict[str, pDF]:
         """Resolve the two primary samples from the data container."""
-        return self._smpl_def(
-            data.train.loc[self.idx], data.test
-        )
+        return self._smpl_def(data.train.loc[self.idx], data.test)
 
     def _subsamples(self, data: DashData) -> dict[str, pDF]:
         """Resolve the two primary samples from the data container with subsampling."""
@@ -376,16 +359,17 @@ class DashStatsCreator:
             y[s] = d[self.target]
             p[s] = pSe(self.fitter.predict_proba(d)[:, 1], index=d.index)
         return y, p
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-        
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def _diagnostics(self, y_true: pSe, y_pred: pSe) -> dict[str, DiagnosticsResult]:
         """
         Compute separation diagnostics for the test sample.
 
         Combines the pre-computed training diagnostics with fresh
-        test-sample evaluation.        
+        test-sample evaluation.
         """
-        dg = SeparationDiagnostics(lift_bins = 10).evaluate(y_true, y_pred)
+        dg = SeparationDiagnostics(lift_bins=10).evaluate(y_true, y_pred)
         return self._smpl_def(self.diag, dg)
 
     @staticmethod
@@ -400,13 +384,17 @@ class DashStatsCreator:
         """Create the confusion matrix and cutoff sensitivity visualization."""
         return ConfusionMatrix(optim_cut).create(y_true, y_pred, diag[SMPL.TE])
 
-    def _calibration(self, target: dict[str, pSe], pred: dict[str, pSe]) -> dict[str, pDF]:
+    def _calibration(
+        self, target: dict[str, pSe], pred: dict[str, pSe]
+    ) -> dict[str, pDF]:
         """Compute probability calibration tables for both samples."""
         return ModelCalibration.process(self.setup, target, pred)
 
     def _psi(self, data: DashData, pred: dict[str, pSe]) -> PopulationStabilityResult:
         """Compute model and feature level PSI stability analysis."""
-        s = PopulationStability(self.fitter.model.model, self.target, self.setup.select_bins)
+        s = PopulationStability(
+            self.fitter.model.model, self.target, self.setup.select_bins
+        )
         return s.create(*self._subsamples(data).values(), *pred.values())
 
     def _summary(self) -> pDF:
@@ -419,24 +407,28 @@ class DashStatsCreator:
         c = FeaturesCorrData(self.features)
         return c.create(data.test)
 
-    def _importance(self, data: DashData, diag: dict[str, DiagnosticsResult]
+    def _importance(
+        self, data: DashData, diag: dict[str, DiagnosticsResult]
     ) -> dict[str, FeatureImportanceResult]:
         """Compute per-sample feature importance rankings."""
-        i = FeaturesImportance(self.fitter, self.target, self.features, diag, self.is_gbm)
-        return i.fit( self._samples(data), data.train )
+        i = FeaturesImportance(
+            self.fitter, self.target, self.features, diag, self.is_gbm
+        )
+        return i.fit(self._samples(data), data.train)
 
     def _predictive(self, data: DashData) -> dict[str, pDF]:
         """Compute WOE bin-level predictiveness tables."""
         w = WoEOverview(self.target, self.aligned_fes, self.setup.select_alpha)
-        return w.create( self._samples(data) )
+        return w.create(self._samples(data))
 
     def _stability(self, data: DashData) -> dict[str, dict]:
         """Compute temporal feature stability (consistency) per sample."""
         s = FeaturesStabilityPlot(self.setup, self.target, self.aligned_fes)
-        return s.create( self._samples(data) )    
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
+        return s.create(self._samples(data))
 
-    def create(self, train_set:pDF, test_set:pDF) -> DashStats:
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def create(self, train_set: pDF, test_set: pDF) -> DashStats:
         """
         Execute the full Champion Report computation pipeline.
 
@@ -460,10 +452,10 @@ class DashStatsCreator:
             >>> stats.diagnostics['Test Sample'].gini   # 0.58
             >>> stats.optim_cutoff                      # 0.342
             >>> stats.stability.model_psi[0]            # {'Vol_PSI': 0.06, ...}
-        """        
+        """
         dd = self._get_dash_data(train_set, test_set)
 
-        y, p  = self._predict(dd)
+        y, p = self._predict(dd)
         yp_te = y[SMPL.TE], p[SMPL.TE]
 
         dg = self._diagnostics(*yp_te)
@@ -478,22 +470,25 @@ class DashStatsCreator:
         fs = self._stability(dd)
 
         return DashStats(
-            is_gbm          = self.is_gbm,
-            samples         = self._active_smpl(),
-            features        = self.features,
-            diagnostics     = dg,
-            optim_cutoff    = oc,
-            confusion_mx    = cx,
-            calibration     = ca,
-            psi             = st,
-            summary         = su,
-            correlation     = co,
-            importance      = im,
-            predictive      = bn,
-            stability       = fs,
+            is_gbm=self.is_gbm,
+            samples=self._active_smpl(),
+            features=self.features,
+            diagnostics=dg,
+            optim_cutoff=oc,
+            confusion_mx=cx,
+            calibration=ca,
+            psi=st,
+            summary=su,
+            correlation=co,
+            importance=im,
+            predictive=bn,
+            stability=fs,
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-        
+
+
 class ModelPerformance:
     """
     Model separation performance report renderer.
@@ -528,41 +523,36 @@ class ModelPerformance:
 
         The figure is rendered inline (e.g., in a Jupyter notebook or
         Dash report).
-        """        
+        """
         t = GiniLiftPlot.title_helper(self.diag)
         titles = [
-            f'Gini Performance → {t[LBL_D.G]}',
-            f'Lift Performance → {t[LBL_D.L]}'
+            f"Gini Performance → {t[LBL_D.G]}",
+            f"Lift Performance → {t[LBL_D.L]}",
         ]
-        colors = ['rgb( 33, 115, 115)', 'rgb(165,  75, 155)']
+        colors = ["rgb( 33, 115, 115)", "rgb(165,  75, 155)"]
         GiniLiftPlot(self.diag, plot_titles=titles, theme=colors).create()
 
     def _perf(self, perf: dict) -> pDF:
         """Format the summary metrics into a styled comparison table."""
         p = pDF(perf, index=list(self.diag)).T
-        return Pd.style(p, format = dict(precision = 4))
-    
+        return Pd.style(p, format=dict(precision=4))
+
     @staticmethod
     def _lift(lift: pDF) -> pDF:
         """Format a single sample's lift distribution into a styled table."""
-        f = '{:.4f}'
-        p = '{:.2%}'
-        l = (
-            lift.reset_index()
-            .rename(columns={
+        f = "{:.4f}"
+        p = "{:.2%}"
+        l = lift.reset_index().rename(
+            columns={
                 LBL_D.P: PRF.PB,
                 LBL_D.T: PRF.T,
                 LBL_D.L: PRF.L,
                 LBL_D.W: PRF.W,
                 LBL_D.C: PRF.C,
-            })
+            }
         )
-        return Pd.style(
-            l, 
-            hide_axis   = 0,
-            format_cols = {PRF.T: p, PRF.L: f, PRF.W: p}
-        )
-    
+        return Pd.style(l, hide_axis=0, format_cols={PRF.T: p, PRF.L: f, PRF.W: p})
+
     def tables(self) -> None:
         """
         Render all performance tables: summary metrics + per-bin lift.
@@ -573,20 +563,23 @@ class ModelPerformance:
            expected target rate, lift, weight, and count.
 
         The tables are rendered inline with center-aligned titles.
-        """        
+        """
         perf, lift = [], []
         for d in self.diag.values():
             perf.append({PRF.G: d.gini, PRF.IV: d.IV, PRF.KS: d.KS})
-            lift.append( self._lift(d.lift) )
+            lift.append(self._lift(d.lift))
 
         TableStyle.combine_pdf_to_html(
-            pdf_tables      = [self._perf(perf), *lift], 
-            titles          = ['Metrics', *list(self.diag)], 
-            tables_per_block= 1, 
-            h_align         = 'center', 
-            show            = True
+            pdf_tables=[self._perf(perf), *lift],
+            titles=["Metrics", *list(self.diag)],
+            tables_per_block=1,
+            h_align="center",
+            show=True,
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ConfusionMatrix:
     """
@@ -611,45 +604,44 @@ class ConfusionMatrix:
 
     def __init__(self, optim_cutoff: float):
         self.optim_cut = optim_cutoff
-    
+
     @staticmethod
     def _align_data(diag: DiagnosticsResult) -> pDF:
         """Extract and align the PR curve data for the cutoff table."""
         pr = diag.PR
 
-        ipr:pDF = pr[LBL_D.IPR].copy()
+        ipr: pDF = pr[LBL_D.IPR].copy()
         ipr[CON.FPR] = pr[LBL_D.FPR]
         ipr[CON.TPR] = pr[LBL_D.TPR]
-        ipr = (
-            ipr
-            .rename(columns={
-                LBL_D.PC : CON.PC, 
-                LBL_D.CS : CON.CS, 
-                LBL_D.T  : CON.T, 
-                LBL_D.TR : CON.TR
-            })
+        ipr = ipr.rename(
+            columns={
+                LBL_D.PC: CON.PC,
+                LBL_D.CS: CON.CS,
+                LBL_D.T: CON.T,
+                LBL_D.TR: CON.TR,
+            }
         )
         return ipr[[CON.PC, CON.TR, CON.T, CON.CS, CON.FPR, CON.TPR]]
-    
+
     @classmethod
     def _table_data(cls, diag: DiagnosticsResult) -> tuple[dict, int]:
         """
         Prepare the cutoff sensitivity table data.
 
         Selects cutoffs at ±10 percentile intervals around the optimal
-        cutoff to show how performance degrades as the threshold moves.        
+        cutoff to show how performance degrades as the threshold moves.
         """
-        
+
         ipr = cls._align_data(diag)
-        oc  = SeparationDiagnostics.get_pr_optim_cutoff(diag.PR)
-        ix  = int(ipr.loc[ipr[CON.PC]==oc].index.values[0])
+        oc = SeparationDiagnostics.get_pr_optim_cutoff(diag.PR)
+        ix = int(ipr.loc[ipr[CON.PC] == oc].index.values[0])
         idx = list(ipr.sort_index().index)[:-1]
-        
-        i = idx.index(ix)   
+
+        i = idx.index(ix)
         l = list(range(i, -1, -10)) + list(range(i + 10, len(idx), 10))
         l = sorted(l)
-            
-        return ipr.map("{:.2%}".format).loc[l].to_dict('list'), l.index(ix)
+
+        return ipr.map("{:.2%}".format).loc[l].to_dict("list"), l.index(ix)
 
     def create(self, y_true: pSe, y_pred: pSe, diag: DiagnosticsResult) -> go.Figure:
         """
@@ -669,15 +661,20 @@ class ConfusionMatrix:
         Returns:
             go.Figure: The complete confusion matrix figure with
                 embedded sensitivity table.
-        """        
-        po  = (y_pred > self.optim_cut).astype(int)
-        t,i = self._table_data(diag)
-        st  = [
-            f'Confusion Matrix | Cutoff {self.optim_cut} (continuous)',
-            'Cutoffs Impact Around Optimal Cutoff (percentile)'
+        """
+        po = (y_pred > self.optim_cut).astype(int)
+        t, i = self._table_data(diag)
+        st = [
+            f"Confusion Matrix | Cutoff {self.optim_cut} (continuous)",
+            "Cutoffs Impact Around Optimal Cutoff (percentile)",
         ]
-        return ConfusionMatrixPlot(plot_titles=st).create(y_true, po, table_data=t, row_highlight=i) 
+        return ConfusionMatrixPlot(plot_titles=st).create(
+            y_true, po, table_data=t, row_highlight=i
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ModelCalibration:
     """
@@ -702,14 +699,12 @@ class ModelCalibration:
     """
 
     def __init__(self, stats: dict[str, pDF]):
-        self.stats = stats        
+        self.stats = stats
         self._smpl = [x for x in stats if x != LBL_C.A]
 
     @staticmethod
     def process(
-        setup:  Parameters, 
-        target: dict[str, pSe], 
-        pred:   dict[str, pSe]
+        setup: Parameters, target: dict[str, pSe], pred: dict[str, pSe]
     ) -> dict[str, pDF]:
         """
         Compute calibration assessment for all samples.
@@ -723,12 +718,14 @@ class ModelCalibration:
             dict: Mapping of sample label → calibration bin dataframe
                 containing expected probability, actual rate, weight,
         """
-        ca  = CalibrationAssessment(setup.select_alpha, setup.select_bins, kind='uniform')        
+        ca = CalibrationAssessment(
+            setup.select_alpha, setup.select_bins, kind="uniform"
+        )
         cal = {}
         for s, t in target.items():
-            cal = cal | ca.process(t, {s: pred[s]}) 
+            cal = cal | ca.process(t, {s: pred[s]})
         return cal
-    
+
     def graph(self) -> None:
         """
         Render the calibration reliability diagram.
@@ -736,28 +733,30 @@ class ModelCalibration:
         Displays a dual-panel figure showing the predicted vs. actual
         probability per bin for both samples. Points falling on the
         diagonal indicate perfect calibration.
-        """        
-        return CalibrationPlot(self.stats, graph_titles = self._smpl).create()
+        """
+        return CalibrationPlot(self.stats, graph_titles=self._smpl).create()
 
     @staticmethod
-    def _style(cal:pDF) -> pDF:
+    def _style(cal: pDF) -> pDF:
         """Format a single sample's calibration table for display."""
-        f = '{:.4f}'
-        p = '{:.2%}'
-        c = cal.rename(columns={
-            LBL_C.PB: CAL.PB,
-            LBL_C.P:  CAL.P,
-            LBL_C.T:  CAL.T,
-            LBL_C.C:  CAL.C,
-            LBL_C.W:  CAL.W,
-        })[[CAL.PB, CAL.P, CAL.T, LBL_C.D, CAL.W, CAL.C, LBL_C.V]]
+        f = "{:.4f}"
+        p = "{:.2%}"
+        c = cal.rename(
+            columns={
+                LBL_C.PB: CAL.PB,
+                LBL_C.P: CAL.P,
+                LBL_C.T: CAL.T,
+                LBL_C.C: CAL.C,
+                LBL_C.W: CAL.W,
+            }
+        )[[CAL.PB, CAL.P, CAL.T, LBL_C.D, CAL.W, CAL.C, LBL_C.V]]
         return Pd.style(
-            c, 
-            hide_axis   = 0,
-            format_cols = {CAL.P: p, CAL.T: p, LBL_C.D: f, CAL.W: p},
-            color       = {'subset': LBL_C.V}
+            c,
+            hide_axis=0,
+            format_cols={CAL.P: p, CAL.T: p, LBL_C.D: f, CAL.W: p},
+            color={"subset": LBL_C.V},
         )
-        
+
     def table(self) -> None:
         """
         Render the per-sample calibration tables.
@@ -765,20 +764,23 @@ class ModelCalibration:
         Produces a combined HTML report with one calibration table
         per sample, showing probability bin, expected probability,
         actual target rate, deviation, weight, and count.
-        """        
+        """
         cal = []
         for s in self._smpl:
             d = self.stats[s]
             cal.append(self._style(d))
 
         TableStyle.combine_pdf_to_html(
-            pdf_tables      = cal, 
-            titles          = self._smpl, 
-            tables_per_block= 1, 
-            h_align         = 'center', 
-            show            = True
+            pdf_tables=cal,
+            titles=self._smpl,
+            tables_per_block=1,
+            h_align="center",
+            show=True,
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ModelStability:
     """
@@ -798,9 +800,9 @@ class ModelStability:
         expected (str): The label for the reference sample
             (e.g., 'Train' or 'Valid').
         report_path (Path): Optional path for saving report artifacts.
-        is_load (bool): Indicator whether previously created HTML 
+        is_load (bool): Indicator whether previously created HTML
             artifacts can be used.
-        is_save_only (bool): Set to True to save static HTML object 
+        is_save_only (bool): Set to True to save static HTML object
             and exit (is_load is ignored).
 
     Example:
@@ -811,18 +813,19 @@ class ModelStability:
         >>> stab.dash()  # Renders full PSI report
     """
 
-    def __init__(self, 
-        stability: dict[str, dict], 
-        expected: str, 
+    def __init__(
+        self,
+        stability: dict[str, dict],
+        expected: str,
         report_path: Path = None,
         is_load: bool = False,
-        is_save_only : bool = False
+        is_save_only: bool = False,
     ):
-        self.stab  = stability
-        self.exp   = expected
-        self.path  = report_path
-        self.is_load  = is_load
-        self.is_save_only  = is_save_only
+        self.stab = stability
+        self.exp = expected
+        self.path = report_path
+        self.is_load = is_load
+        self.is_save_only = is_save_only
 
     def dash(self) -> None:
         """
@@ -835,17 +838,18 @@ class ModelStability:
         4. Feature overview table with stability flags
         """
         psi = PopulationStabilityPlot(
-            stability   = self.stab, 
-            report_path = self.path, 
-            trace_names = [self.exp, 'Test']
+            stability=self.stab, report_path=self.path, trace_names=[self.exp, "Test"]
         )
 
         if self.is_save_only:
             psi.fe_grid(False)
             return
-        
+
         psi.dash(self.path if self.is_load else None)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ModelSummary:
     """
@@ -869,7 +873,7 @@ class ModelSummary:
 
     def __init__(self, fitter: Fitter):
         self.model: PredictorFitter = fitter.model.model
-    
+
     def get(self) -> pDF:
         """
         Retrieve the model summary table.
@@ -877,7 +881,7 @@ class ModelSummary:
         Returns:
             pDF: A styled dataframe of model parameters (coefficients
                 or weights) with feature names as the index.
-        """        
+        """
         return self.model.summary(show=False)
 
     @staticmethod
@@ -887,9 +891,12 @@ class ModelSummary:
 
         Parameters:
             stats (pDF): The pre-formatted summary dataframe.
-        """        
+        """
         Display.construct(stats)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeaturesCorrData:
     """
@@ -920,8 +927,9 @@ class FeaturesCorrData:
         Returns:
             pDF: A symmetric correlation matrix (float32, 6 decimal
                 places) with features as both rows and columns.
-        """        
+        """
         return data[self.features].corr(numeric_only=True).astype(np.float32).round(6)
+
 
 class FeaturesCorrelation:
     """
@@ -934,9 +942,9 @@ class FeaturesCorrelation:
     Parameters:
         corr_mx (pDF): The pre-computed correlation matrix.
         report_path (Path): Path for saving the heatmap artifact.
-        is_load (bool): Indicator whether previously created HTML 
+        is_load (bool): Indicator whether previously created HTML
             artifacts can be used.
-        is_save_only (bool): Set to True to save static HTML object 
+        is_save_only (bool): Set to True to save static HTML object
             and exit (is_load is ignored).
 
     Example:
@@ -945,11 +953,12 @@ class FeaturesCorrelation:
         >>> corr_report.table()  # Lists high-correlation pairs
     """
 
-    def __init__(self, 
-        corr_mx: dict[str, pDF], 
-        report_path: Path = None, 
+    def __init__(
+        self,
+        corr_mx: dict[str, pDF],
+        report_path: Path = None,
         is_load: bool = False,
-        is_save_only : bool = False
+        is_save_only: bool = False,
     ):
         self.c_mx = corr_mx
         self.path = report_path
@@ -959,23 +968,20 @@ class FeaturesCorrelation:
     @staticmethod
     def _heatmap(correlation_mx: pDF) -> go.Figure:
         """Generate the upper-triangle correlation heatmap figure."""
-        l = dict(
-            xaxis  = dict(tickfont = dict(size=12)),
-            yaxis  = dict(tickfont = dict(size=12))
-        )
+        l = dict(xaxis=dict(tickfont=dict(size=12)), yaxis=dict(tickfont=dict(size=12)))
         upper = Correlation.upper(correlation_mx)
-        return Correlation.heatmap(upper = upper, update_layout = l)
+        return Correlation.heatmap(upper=upper, update_layout=l)
 
     def _save(self, fig: go.Figure | Path) -> None:
         """Save the heatmap and embed a clickable link in the report."""
         link = DashPlotlyLink(
-            figure_path  = fig,
-            report_path  = self.path,
-            link_name    = 'Correlation Heatmap',
-            hide_columns = True,
-            show         = False
+            figure_path=fig,
+            report_path=self.path,
+            link_name="Correlation Heatmap",
+            hide_columns=True,
+            show=False,
         ).get_output()
-        
+
         if self.is_save_only:
             return
         TableStyle.combine_pdf_tables(link)
@@ -1002,8 +1008,11 @@ class FeaturesCorrelation:
         if self.is_save_only:
             return
         print()
-        Correlation.show(self.c_mx, max_corr = 0.99)
+        Correlation.show(self.c_mx, max_corr=0.99)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeaturesImportance:
     """
@@ -1034,50 +1043,49 @@ class FeaturesImportance:
         >>> results = imp.fit({'Valid Sample': val_df, 'Test Sample': oot_df})
     """
 
-    def __init__(self, 
-        fitter: Fitter, 
-        target: str, 
-        features: list, 
-        diagnostics: dict[str, DiagnosticsResult], 
-        is_gbm: bool
+    def __init__(
+        self,
+        fitter: Fitter,
+        target: str,
+        features: list,
+        diagnostics: dict[str, DiagnosticsResult],
+        is_gbm: bool,
     ):
-        self.model: PredictorFitter  = fitter.model.model
+        self.model: PredictorFitter = fitter.model.model
         self.target = target
-        self.fes    = features
-        self.order  = self.model.get_ordered_fes()
-        self.diag   = diagnostics
+        self.fes = features
+        self.order = self.model.get_ordered_fes()
+        self.diag = diagnostics
         self.is_gbm = is_gbm
-        
+
         self._fi = FeatureImportance(
-            model = self.model.model,  
-            dash_title = dict(
-                table = None,
-                main  = None,
-                shap  = None
-            ),
-            verbose  = False,
-            shap_fig = False
+            model=self.model.model,
+            dash_title=dict(table=None, main=None, shap=None),
+            verbose=False,
+            shap_fig=False,
         )
-    
+
     @staticmethod
-    def _title(tx:str) -> dict:
+    def _title(tx: str) -> dict:
         return dict(
-            table = f'Feature Effect by Method on {tx} | Ordered by Training Importance'
+            table=f"Feature Effect by Method on {tx} | Ordered by Training Importance"
         )
-    
-    def _fit(self, tx: str, data: pDF, ablation_train: tuple[pDF, pSe]) -> FeatureImportance:
+
+    def _fit(
+        self, tx: str, data: pDF, ablation_train: tuple[pDF, pSe]
+    ) -> FeatureImportance:
         """Compute importance for a single sample."""
         t = self._title(tx)
         self._fi.update_dash_title(t)
 
         return self._fi.fit(
-            X = data[self.fes], 
-            y = data[self.target], 
-            ablation_train = ablation_train,
-            features_order = self.order, 
+            X=data[self.fes],
+            y=data[self.target],
+            ablation_train=ablation_train,
+            features_order=self.order,
         )
-    
-    def _get_train_sample(self, train_valid:pDF, train_data: pDF) -> tuple[pDF, pSe]:
+
+    def _get_train_sample(self, train_valid: pDF, train_data: pDF) -> tuple[pDF, pSe]:
         # 1. GLM uses the whole train in the final prod. fit
         if train_valid.index.equals(train_data.index):
             train = train_data
@@ -1085,13 +1093,10 @@ class FeaturesImportance:
         else:
             idx = train_valid.index
             train = train_data[~train_data.index.isin(idx)]
-            
-        return (
-            train[self.fes],
-            train[self.target]
-        )
-    
-    def fit(self, datasets: dict[str,pDF], train_data: pDF):
+
+        return (train[self.fes], train[self.target])
+
+    def fit(self, datasets: dict[str, pDF], train_data: pDF):
         """
         Compute feature importance across all samples.
 
@@ -1101,14 +1106,17 @@ class FeaturesImportance:
 
         Returns:
             dict: Mapping of sample label → `FeatureImportanceResult`.
-        """        
+        """
         im = {}
         tr = StatsUtils.smpl_tv(self.is_gbm)
-        t  = self._get_train_sample(datasets[tr], train_data)
-        for tx, d in datasets.items():             
+        t = self._get_train_sample(datasets[tr], train_data)
+        for tx, d in datasets.items():
             im[tx] = self._fit(tx, d, t)
         return im
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeaturesPredictiveness:
     """
@@ -1126,9 +1134,9 @@ class FeaturesPredictiveness:
         binning (dict): Pre-computed WOE overview data containing
             per-feature bin tables and a summary table.
         report_path (Path): Path for saving the detailed grid artifact.
-        is_load (bool): Indicator whether previously created HTML 
+        is_load (bool): Indicator whether previously created HTML
             artifacts can be used.
-        is_save_only (bool): Set to True to save static HTML object 
+        is_save_only (bool): Set to True to save static HTML object
             and exit (is_load is ignored).
 
     Example:
@@ -1137,11 +1145,12 @@ class FeaturesPredictiveness:
         >>> pred.grid()   # Saves full per-feature bin grid
     """
 
-    def __init__(self,         
-        binning: dict[str, dict[str, pDF]], 
+    def __init__(
+        self,
+        binning: dict[str, dict[str, pDF]],
         report_path: Path = None,
         is_load: bool = False,
-        is_save_only : bool = False
+        is_save_only: bool = False,
     ):
         self.bins = binning
         self.path = report_path
@@ -1149,30 +1158,30 @@ class FeaturesPredictiveness:
         self.is_save_only = is_save_only
 
     @staticmethod
-    def _style(tbl:pDF, hide_axis:int=None) -> pDF:
+    def _style(tbl: pDF, hide_axis: int = None) -> pDF:
         """Apply consistent formatting to a WOE bin table."""
-        f = '{:.4f}'
-        i = '{:.0f}'
+        f = "{:.4f}"
+        i = "{:.0f}"
         x = [x for x in tbl.columns if x not in [OV.FE, OV.IS]]
-        c = [x for x in tbl.columns if OV.C('') in x]
+        c = [x for x in tbl.columns if OV.C("") in x]
         return Pd.style(
-            tbl, 
-            hide_axis   = hide_axis,
-            format_cols = {c: f for c in x} | {x: i for x in c},
-            color       = {'subset': OV.IS, 'color': '#B50064;'}
+            tbl,
+            hide_axis=hide_axis,
+            format_cols={c: f for c in x} | {x: i for x in c},
+            color={"subset": OV.IS, "color": "#B50064;"},
         )
 
     @staticmethod
     def _combine(tables: list, titles: list = None, show: bool = True) -> str | None:
         """Combine styled tables into a single HTML block."""
         return TableStyle.combine_pdf_to_html(
-            pdf_tables       = tables, 
-            titles           = titles,
-            tables_per_block = 1, 
-            p_tables_per_row = 1,
-            h_cols_per_row   = 1,
-            h_align          = 'center', 
-            show             = show
+            pdf_tables=tables,
+            titles=titles,
+            tables_per_block=1,
+            p_tables_per_row=1,
+            h_cols_per_row=1,
+            h_align="center",
+            show=show,
         )
 
     def _save(self, html_path: str | Path) -> None:
@@ -1184,13 +1193,13 @@ class FeaturesPredictiveness:
 
         if self.is_save_only:
             return
-        
+
         link = TableStyle.clickable([path], show=False)
         TableStyle.combine_pdf_to_html(
-            [link], ['Feature Detail'], tables_per_block=1, h_align='center', show = True
+            [link], ["Feature Detail"], tables_per_block=1, h_align="center", show=True
         )
 
-    def table(self, kind: Literal['itables', 'pd'] = 'itables') -> None:
+    def table(self, kind: Literal["itables", "pd"] = "itables") -> None:
         """
         Render the feature predictiveness summary table.
 
@@ -1205,9 +1214,9 @@ class FeaturesPredictiveness:
         """
         if self.is_save_only:
             return
-        
-        if kind == 'itables':
-            js = ItablesStyle.bool_color(OV.IS, ['#B50064', '#2BCF91'])
+
+        if kind == "itables":
+            js = ItablesStyle.bool_color(OV.IS, ["#B50064", "#2BCF91"])
             cd = [{"targets": -1, "createdCell": js}]
             itables_show(self._style(self.bins[OV.SUM]), columnDefs=cd)
         else:
@@ -1223,18 +1232,21 @@ class FeaturesPredictiveness:
         """
         if self.is_load:
             self._save(self.path)
-            return 
-        
+            return
+
         fes = self.bins[OV.DATA]
         g = []
         for d in fes.values():
             d_ = d.copy()
-            d_.index.name = 'WOE'
-            g.append(self._style(d_, hide_axis = None))
+            d_.index.name = "WOE"
+            g.append(self._style(d_, hide_axis=None))
 
         t = self._combine(g, list(fes), show=False)
         self._save(t)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeaturesStabilityPlot:
     """
@@ -1259,28 +1271,29 @@ class FeaturesStabilityPlot:
         >>> results = stab.create({'Valid Sample': val_df, 'Test Sample': oot_df})
     """
 
-    def __init__(self, setup: Parameters, target:str, woe_features:list):
-        self.setup  = setup
+    def __init__(self, setup: Parameters, target: str, woe_features: list):
+        self.setup = setup
         self.target = target
-        self.fes    = woe_features
-        self.sig    = setup.project_signature
+        self.fes = woe_features
+        self.sig = setup.project_signature
 
         self._p = Dataclass.schema(WOE_FitParams)
         self._c = Dataclass.schema(WOE_FitParamsCfg)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _get_params(self, m: WoeStabilizer) -> dict:
-        """Retrieve parameters for FeConsistency from 
+        """Retrieve parameters for FeConsistency from
         fitted WoeStabilizer or flow parametrization.
         """
         if m is not None:
             return m.get_all_params()
         return {
-            self._c.time_var:           self.setup.time_var,
-            self._p.stability_cutoff:   self.setup.woe_stability,
-            self._p.alpha:              self.setup.woe_alpha,
-            self._c.time_unit:          None,
-            self._c.max_time_units:     None
+            self._c.time_var: self.setup.time_var,
+            self._p.stability_cutoff: self.setup.woe_stability,
+            self._p.alpha: self.setup.woe_alpha,
+            self._c.time_unit: None,
+            self._c.max_time_units: None,
         }
 
     def _get_stability_prm(self) -> WOE_FitParams:
@@ -1289,51 +1302,54 @@ class FeaturesStabilityPlot:
 
         Ensures the report uses the exact same thresholds and
         time-unit configuration as the pipeline's WOE stabilization
-        step.        
+        step.
         """
-        m: WoeStabilizer = ProjectModelRegistry.get_model(self.sig, AIGFLOW.Encoding.woe_stabilizer)
+        m: WoeStabilizer = ProjectModelRegistry.get_model(
+            self.sig, AIGFLOW.Encoding.woe_stabilizer
+        )
         p = self._get_params(m)
         return {
-            self._c.time_var:           p[self._c.time_var],
-            self._p.stability_cutoff:   p[self._p.stability_cutoff],
-            self._p.alpha:              p[self._p.alpha],
-            self._c.time_unit:          p[self._c.time_unit],
-            self._c.max_time_units:     p[self._c.max_time_units]
+            self._c.time_var: p[self._c.time_var],
+            self._p.stability_cutoff: p[self._p.stability_cutoff],
+            self._p.alpha: p[self._p.alpha],
+            self._c.time_unit: p[self._c.time_unit],
+            self._c.max_time_units: p[self._c.max_time_units],
         }
-    
+
     def _fe_consistency(self) -> FeConsistency:
         """Instantiate the feature consistency tester with pipeline params."""
-        prm = self._get_stability_prm()        
-        return FeConsistency( 
-            self.fes, self.target, 
-            time_var       = prm[self._c.time_var], 
-            c_test_th      = prm[self._p.stability_cutoff], 
-            t_test_alpha   = prm[self._p.alpha],
-            time_unit      = prm[self._c.time_unit], 
-            max_time_units = prm[self._c.max_time_units]
+        prm = self._get_stability_prm()
+        return FeConsistency(
+            self.fes,
+            self.target,
+            time_var=prm[self._c.time_var],
+            c_test_th=prm[self._p.stability_cutoff],
+            t_test_alpha=prm[self._p.alpha],
+            time_unit=prm[self._c.time_unit],
+            max_time_units=prm[self._c.max_time_units],
         )
-    
+
     def _create_stats(self, data: pDF) -> dict:
         """Execute the consistency test on a single sample."""
         c = self._fe_consistency()
         return c.test(data, verbose=False)
 
-    def _create_fig(self, tx:str, data: dict) -> go.Figure:
+    def _create_fig(self, tx: str, data: dict) -> go.Figure:
         """Generate the stability grid figure for a single sample."""
         return FEConsistencyPlot.dash(
-            test_data   = data,
-            features    = self.fes,
-            verbose     = False,
-            grid_title  = f'{tx} → Features Stability'.upper(),
-            fig_layout  = FEConsistencyPlot.FigLayout(
-                graph_height = 350, 
-                graph_width  = 500, 
-                horizontal_spacing = 0.15,
-                vertical_spacing   = 0.15,                
-            )
+            test_data=data,
+            features=self.fes,
+            verbose=False,
+            grid_title=f"{tx} → Features Stability".upper(),
+            fig_layout=FEConsistencyPlot.FigLayout(
+                graph_height=350,
+                graph_width=500,
+                horizontal_spacing=0.15,
+                vertical_spacing=0.15,
+            ),
         )
-    
-    def create(self, datasets: dict[str,pDF]) -> dict[str, dict]:
+
+    def create(self, datasets: dict[str, pDF]) -> dict[str, dict]:
         """
         Compute feature stability across all samples.
 
@@ -1343,13 +1359,16 @@ class FeaturesStabilityPlot:
         Returns:
             dict: Mapping of sample label → {'data': test_stats,
                 'fig': Plotly figure}.
-        """        
+        """
         s, f = {}, {}
         for tx, d in datasets.items():
             s = self._create_stats(d)
             f[tx] = self._create_fig(tx, s)
         return f
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FeaturesStability:
     """
@@ -1369,11 +1388,11 @@ class FeaturesStability:
     Parameters:
         stability (dict): Pre-computed stability results from
             `DashStats.fe_stability`.
-        report_path (dict[str, Path]): Train-Test Path for saving stability 
+        report_path (dict[str, Path]): Train-Test Path for saving stability
             figure artifacts.
-        is_load (bool): Indicator whether previously created HTML 
+        is_load (bool): Indicator whether previously created HTML
             artifacts can be used.
-        is_save_only (bool): Set to True to save static HTML object 
+        is_save_only (bool): Set to True to save static HTML object
             and exit (is_load is ignored).
 
     Example:
@@ -1382,41 +1401,43 @@ class FeaturesStability:
         >>> fs.table()  # Renders cross-sample stability comparison table
     """
 
-    def __init__(self, 
-        stability: dict[str, dict], 
-        report_path: dict[str, Path] = None, 
+    def __init__(
+        self,
+        stability: dict[str, dict],
+        report_path: dict[str, Path] = None,
         is_load: bool = False,
-        is_save_only: bool = False
+        is_save_only: bool = False,
     ):
         self.stab = stability
         self.path = report_path
         self.is_load = is_load
         self.is_save_only = is_save_only
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _path(self, tx: str) -> str|None:
+    def _path(self, tx: str) -> str | None:
         """Generate the artifact path for a specific sample's stability figure."""
         if self.path is None:
             return
         return self.path[tx]
-        
+
     def _save(self, fig: go.Figure, tx: str) -> pDF:
         """Save a stability figure and return a clickable link."""
         return DashPlotlyLink(
-            figure_path     = self._path(tx) if self.is_load else fig, 
-            report_path     = self._path(tx),
-            make_clickable  = True,
-            hide_columns    = True,
-            show            = False
+            figure_path=self._path(tx) if self.is_load else fig,
+            report_path=self._path(tx),
+            make_clickable=True,
+            hide_columns=True,
+            show=False,
         ).get_output()
 
     def _dash(self) -> list[pDF]:
         """Prepare all stability figures as clickable links."""
         links = []
         for t, f in self.stab.items():
-            links.append( self._save(f[DASH_S.FIG], t) )
+            links.append(self._save(f[DASH_S.FIG], t))
         return links
-    
+
     def grid(self):
         """
         Render the per-sample stability figure grid.
@@ -1424,70 +1445,68 @@ class FeaturesStability:
         Displays each sample's stability figure as a clickable link
         in a two-column layout, allowing reviewers to open the full
         interactive chart for detailed inspection.
-        """        
+        """
         links = self._dash()
         if self.is_save_only:
             return
-        
+
         return TableStyle.combine_pdf_to_html(
-            links, 
-            list(self.stab), 
-            tables_per_block = 1,
-            h_cols_per_row   = 2,             
-            h_align          = 'center', 
-            show             = True
+            links,
+            list(self.stab),
+            tables_per_block=1,
+            h_cols_per_row=2,
+            h_align="center",
+            show=True,
         )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _smpl_names(self) -> dict[str, str]:
         """Shorten sample labels for table column headers."""
-        return {x: x.split(' ')[0] for x in self.stab}
-    
+        return {x: x.split(" ")[0] for x in self.stab}
+
     def _create_data(self) -> dict[str, pDF]:
         """
         Assemble the cross-sample stability comparison table.
 
         Creates a unified table where each row is a feature and
         columns show: stability score per sample, drift delta
-        (difference between samples), and overall stable/unstable flag.        
+        (difference between samples), and overall stable/unstable flag.
         """
         tbl = {}
         for tx, d in self.stab.items():
-            dt:dict = d[DASH_S.DATA]
+            dt: dict = d[DASH_S.DATA]
             v = []
             for fe, vals in dt.items():
-                v.append({
-                    STB.F:  fe, 
-                    STB.S:  vals[LBL_S.VALUE], 
-                    STB.IS: vals[LBL_S.IS]
-                })
+                v.append({STB.F: fe, STB.S: vals[LBL_S.VALUE], STB.IS: vals[LBL_S.IS]})
             tbl[tx] = pDF(v)
-        
+
         smpl = list(self.stab)
         sn = self._smpl_names().items()
-        d = lambda i,x: tbl[smpl[i]][x] 
+        d = lambda i, x: tbl[smpl[i]][x]
         return pDF(
-            {STB.F:  tbl[tx][STB.F]             } | 
-            {n:      tbl[s][STB.S] for s,n in sn} |
-            {STB.D:  d(1, STB.S)  - d(0, STB.S) } |
-            {STB.IS: 
-                (d(0, STB.IS)==STAB_S.Y) & 
-                (d(1, STB.IS).isin([STAB_S.Y, STAB_S.NA])) }
+            {STB.F: tbl[tx][STB.F]}
+            | {n: tbl[s][STB.S] for s, n in sn}
+            | {STB.D: d(1, STB.S) - d(0, STB.S)}
+            | {
+                STB.IS: (d(0, STB.IS) == STAB_S.Y)
+                & (d(1, STB.IS).isin([STAB_S.Y, STAB_S.NA]))
+            }
         )
 
-    def _style(self, tbl:pDF, hide_axis:int=None) -> pDF:
+    def _style(self, tbl: pDF, hide_axis: int = None) -> pDF:
         """Apply formatting and color coding to the stability table."""
-        f = '{:.4f}'
-        p = '{:.2%}'
+        f = "{:.4f}"
+        p = "{:.2%}"
         n = list(self._smpl_names().values())
         return Pd.style(
-            tbl, 
-            hide_axis   = hide_axis,
-            format_cols = {s: p for s in self.stab} | {x: f for x in [STB.D] + n},
-            color       = {'subset': STB.IS, 'color': ['#B50064;', None]}
+            tbl,
+            hide_axis=hide_axis,
+            format_cols={s: p for s in self.stab} | {x: f for x in [STB.D] + n},
+            color={"subset": STB.IS, "color": ["#B50064;", None]},
         )
-        
-    def table(self, kind: Literal['itables', 'pd'] = 'itables') -> None:
+
+    def table(self, kind: Literal["itables", "pd"] = "itables") -> None:
         """
         Render the cross-sample feature stability comparison table.
 
@@ -1504,19 +1523,21 @@ class FeaturesStability:
         """
         if self.is_save_only:
             return
-        
+
         tbl = self._create_data()
-        
-        if kind == 'itables':
+
+        if kind == "itables":
             js = ItablesStyle.bool_color(STB.IS)
             cd = [{"targets": -1, "createdCell": js}]
             itables_show(self._style(tbl), columnDefs=cd)
             return
-        
+
         TableStyle.combine_pdf_to_html(
-            pdf_tables       = [self._style(tbl)], 
-            tables_per_block = 1, 
-            h_align          = 'center', 
-            show             = True
+            pdf_tables=[self._style(tbl)],
+            tables_per_block=1,
+            h_align="center",
+            show=True,
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

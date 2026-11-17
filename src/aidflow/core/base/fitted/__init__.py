@@ -18,7 +18,7 @@ AIDflow's pipeline results. It exposes four complementary components:
 **Relay** (data transfer between layers):
 
 - **FitterDataRelay**: Manages the data handoff between Fitter and
-  Model/Worker layers. Provides the "hop" mechanism that allows to 
+  Model/Worker layers. Provides the "hop" mechanism that allows to
   access relay data from any layer in the deeper hierarchy.
 
 **Offload** (memory reclamation):
@@ -57,7 +57,7 @@ Usage:
     >>>
     >>> # Clear offloaded data (free disk space):
     >>> ModelFittedResult.clear('AIGFLOW.Data.fe_cleaner', project_signature)
-    
+
 Architecture:
     ┌─────────────────────────────────────────────────────────────────────┐
     │  Worker / UI Layer                                                  │
@@ -83,7 +83,7 @@ Architecture:
     └─────────────────────────────────────────────────────────────────────┘
 """
 
-from .fitted    import FittedResult
-from .result    import ModelDataResult
-from .relay     import FitterDataRelay
-from .offload   import FittedOffload
+from .fitted import FittedResult
+from .result import ModelDataResult
+from .relay import FitterDataRelay
+from .offload import FittedOffload

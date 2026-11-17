@@ -52,8 +52,8 @@ References:
     - ECB Guide on internal models (2023), Chapter 5.
 """
 
-from ...deps.data       import np, pDF, pSe
-from .sampling          import Sampling
+from ...deps.data import np, pDF, pSe
+from .sampling import Sampling
 
 
 class SubsamplingSpec:
@@ -106,16 +106,16 @@ class SubsamplingSpec:
     >>> # target_rate: 0.5 (balanced — safe for GLM)
     """
 
-    BT = 0.5        # Balanced target rate
-    US = int(1e5)   # Univariate sample size
-    
-    GS = int(1e6)   # GBM max sample size
-    GT = int(5e3)   # GBM min target events
+    BT = 0.5  # Balanced target rate
+    US = int(1e5)  # Univariate sample size
 
-    PS = int(2e5)   # GBM | GLM / 2 pruning-sensitivity
+    GS = int(1e6)  # GBM max sample size
+    GT = int(5e3)  # GBM min target events
 
-    def __init__(self, y:pSe):
-        self.y = y 
+    PS = int(2e5)  # GBM | GLM / 2 pruning-sensitivity
+
+    def __init__(self, y: pSe):
+        self.y = y
 
     def get_glm_spec(self, X: pDF, n_p: int = 500) -> tuple[int, float]:
         """
@@ -176,13 +176,13 @@ class SubsamplingSpec:
         reproducible. The intercept shift is deterministic and can be
         back-calculated: `intercept_original = intercept_balanced - log(prior/0.5)`.
         This satisfies SR 11-7 requirements for model interpretability
-        and validation traceability.        
+        and validation traceability.
         """
         o, c = X.shape
-        s = np.clip(o/c, max=n_p) * c
+        s = np.clip(o / c, max=n_p) * c
         return int(s), self.BT
 
-    def get_gbm_spec(self, sample_size: int = None) -> tuple[int, float|None]:
+    def get_gbm_spec(self, sample_size: int = None) -> tuple[int, float | None]:
         """
         Compute the optimal sample size and target rate for GBM models.
 
@@ -208,7 +208,7 @@ class SubsamplingSpec:
 
         Reference: Chen, T. & Guestrin, C. (2016). "XGBoost: A Scalable
         Tree Boosting System." KDD 2016, 785-794.
-        
+
         Parameters
         ----------
         sample_size (int): Optionally, specified sample size is
@@ -236,16 +236,17 @@ class SubsamplingSpec:
         majority-class noise. This prevents implicit discrimination
         against customer segments that are underrepresented in the
         default population. The approach is documented and reproducible,
-        satisfying ECB Model Risk Management guidelines.        
-        """      
-        gs = sample_size or self.GS     # max obs per training
-        t  = self.y.mean()              # target rate
-        if (self.GT / t) < gs:          # min satisfied within gs
-            return gs, None        
+        satisfying ECB Model Risk Management guidelines.
+        """
+        gs = sample_size or self.GS  # max obs per training
+        t = self.y.mean()  # target rate
+        if (self.GT / t) < gs:  # min satisfied within gs
+            return gs, None
         return gs, self.GT / min(len(self.y), gs)
 
-    def get_sensitivity_spec(self, is_gbm:bool, sample_size:int=None
-    ) -> tuple[int, None|float]:
+    def get_sensitivity_spec(
+        self, is_gbm: bool, sample_size: int = None
+    ) -> tuple[int, None | float]:
         """
         Compute the optimal sample size and target rate for feature
         sensitivity assessment and pruning.
@@ -264,7 +265,7 @@ class SubsamplingSpec:
 
         - The feature set is already reduced (post-selection), so
         per-feature statistics are computed on fewer columns.
-        - Iterative sensitivity and pruning benefits from faster 
+        - Iterative sensitivity and pruning benefits from faster
         computation at each cycle without loosing diagnostic
         robustness.
 
@@ -273,7 +274,7 @@ class SubsamplingSpec:
         - **GBM (PS = 200,000)**: SHAP values require sufficient
         tree traversals for stable attribution. At 200K observations,
         the variance of SHAP estimates per feature is negligible
-        relative to the signal. 
+        relative to the signal.
 
         - **GLM (PS = 100,000)**: The GLM link function has
         well-understood asymptotic properties — coefficient variance
@@ -320,7 +321,7 @@ class SubsamplingSpec:
         scalar factor in the False Positive Rate formula:
 
             FPR(t) = FP(t) / N_0
-            
+
         Because FPR(t) and TPR(t) remain invariant across all
         decision thresholds t, the ROC curve coordinates and the
         resulting Gini coefficient are asymptotically invariant
@@ -386,12 +387,12 @@ class SubsamplingSpec:
 
         - Lundberg, S. & Lee, S. (2017). "A Unified Approach to
             Interpreting Model Predictions." NeurIPS. (SHAP stability)
-        - Firth, D. (1993). "Bias reduction of maximum likelihood estimates." 
+        - Firth, D. (1993). "Bias reduction of maximum likelihood estimates."
             Biometrika, 27-38. (GLM invariance)
         - Harrel, D. (2015). "Regression Modeling Strategies," 2nd ed.
             (n/p ratio guidelines)
         - Breiman, L. (2001). "Random Forests." Machine Learning.
-            (Permutation importance)        
+            (Permutation importance)
         """
         n = self.PS or sample_size
         if is_gbm:
@@ -407,7 +408,7 @@ class SubsamplingSpec:
         **Statistical Justification:**
 
         WOE (Weight of Evidence) is defined as:
-        
+
             WOE_i = ln( (n_good_i / n_good_total) / (n_bad_i / n_bad_total) )
 
         This ratio is **mathematically invariant** to re-weighting of
@@ -442,7 +443,7 @@ class SubsamplingSpec:
                 (no re-weighting). WOE invariance makes balancing
                 unnecessary, and regulatory profiling requires the
                 natural distribution.
-        
+
         Example
         -------
         >>> spec = SubsamplingSpec(y)
@@ -458,13 +459,13 @@ class SubsamplingSpec:
         Preserving the original target rate ensures that the WOE
         profile accurately reflects the true customer population,
         satisfying GDPR Article 22 (transparency) and EU AI Act
-        Article 10 (data governance) requirements.      
+        Article 10 (data governance) requirements.
         """
-        t = self.y.mean()               # target rate
-        s = t * np.exp(-4)              # extreme bin separation WOE ~ 4
-        b = 0.01                        # extreme bin share of obs
-        e = len(self.y) * b * s         # events in extreme bin
-        o = np.clip(e, max = 30)
+        t = self.y.mean()  # target rate
+        s = t * np.exp(-4)  # extreme bin separation WOE ~ 4
+        b = 0.01  # extreme bin share of obs
+        e = len(self.y) * b * s  # events in extreme bin
+        o = np.clip(e, max=30)
         return int(o / b / s), None
 
     def get_univar_spec(self) -> tuple[int, float]:
@@ -506,8 +507,9 @@ class SubsamplingSpec:
         are reported to regulators and must be stable and
         reproducible. The fixed sample size ensures consistency
         across validation cycles.
-        """        
+        """
         return self.US, self.BT
+
 
 class Subsampling:
     """
@@ -527,7 +529,7 @@ class Subsampling:
     random_state (int): Random seed for reproducible sampling.
         Default is 42. **Must be logged** in model metadata for
         regulatory audit (SR 11-7, EU AI Act Article 10).
-            
+
     Key Properties
     --------------
     - **Stratified**: Sampling is always performed with stratification on
@@ -574,16 +576,13 @@ class Subsampling:
     >>> X_uni, y_uni = sub.univar()
     """
 
-    def __init__(self, X:pDF, y:pSe, random_state:int = 42):
+    def __init__(self, X: pDF, y: pSe, random_state: int = 42):
         self.X = X
         self.y = y
-        self.rs = random_state        
+        self.rs = random_state
         self.spec = SubsamplingSpec(y)
 
-    def sampling(self, 
-        sample_size: int, 
-        target_rate: float|None
-    ) -> tuple[pDF, pSe]:
+    def sampling(self, sample_size: int, target_rate: float | None) -> tuple[pDF, pSe]:
         """
         Execute the stratified subsampling operation.
 
@@ -603,7 +602,7 @@ class Subsampling:
         -------
         tuple[pDF, pSe]:
             - X_sampled (pDF): The subsampled feature matrix.
-            - y_sampled (pSe): The corresponding target series.            
+            - y_sampled (pSe): The corresponding target series.
 
         **Note:**
 
@@ -613,15 +612,15 @@ class Subsampling:
         """
         if len(self.X) <= sample_size:
             return self.X, self.y
-        
+
         return Sampling(
-            sample_size     = sample_size,
-            stratify        = self.y,
-            stratify_ratio  = target_rate,
-            random_state    = self.rs
+            sample_size=sample_size,
+            stratify=self.y,
+            stratify_ratio=target_rate,
+            random_state=self.rs,
         ).subsample(self.X, self.y)
 
-    def glm(self, n_p:int = 500, sample_size: int = None) -> tuple[pDF, pSe]:
+    def glm(self, n_p: int = 500, sample_size: int = None) -> tuple[pDF, pSe]:
         """
         Generate a training sample optimized for GLM (linear) models.
 
@@ -637,7 +636,7 @@ class Subsampling:
         n_p (int): Minimum events-per-parameter ratio. Default is 500.
             Use higher values (e.g., 1000) for models with many
             interactions or polynomial terms.
-        
+
         sample_size (int): Optionally, a specified sample size is
             used directly, overriding the n/p calculation.
             Default is None (uses the n_p-based formula).
@@ -661,12 +660,12 @@ class Subsampling:
         The balanced sample is statistically equivalent to the original
         for coefficient estimation. The intercept can be back-calculated
         using: `β₀_original = β₀_balanced - ln(prior_ratio / 0.5)`.
-        This transformation must be documented in the model report.        
-        """        
+        This transformation must be documented in the model report.
+        """
         n, r = self.spec.get_glm_spec(self.X, n_p)
         n = sample_size or n
         return self.sampling(n, r)
-        
+
     def gbm(self, sample_size: int = None) -> tuple[pDF, pSe]:
         """
         Generate a training sample optimized for GBM (tree-based) models.
@@ -685,7 +684,7 @@ class Subsampling:
 
         Returns
         -------
-        tuple[pDF, pSe]: 
+        tuple[pDF, pSe]:
             The subsampled (X, y) pair for GBM training.
 
         Example
@@ -695,7 +694,7 @@ class Subsampling:
         >>> X_gbm, y_gbm = sub.gbm()
         >>>
         >>> # Override: smaller sample for rapid iteration
-        >>> X_gbm, y_gbm = sub.gbm(sample_size=200_000)            
+        >>> X_gbm, y_gbm = sub.gbm(sample_size=200_000)
 
         **Regulatory Note:**
 
@@ -704,13 +703,12 @@ class Subsampling:
         This prevents implicit bias against customer segments that
         are underrepresented in the default population. The rationale
         must be documented in the model validation report per
-        ECB Model Risk Management guidelines.        
-        """        
+        ECB Model Risk Management guidelines.
+        """
         n, r = self.spec.get_gbm_spec(sample_size)
         return self.sampling(n, r)
 
-    def sensitivity(self, is_gbm: bool, sample_size: int = None
-    ) -> tuple[pDF, pSe]:
+    def sensitivity(self, is_gbm: bool, sample_size: int = None) -> tuple[pDF, pSe]:
         """
         Generate a training sample optimized for feature sensitivity
         assessment and pruning.
@@ -774,7 +772,7 @@ class Subsampling:
         target outcome and feature statistics, never on protected
         characteristics. All customer segments are represented
         proportionally in the sensitivity sample.
-        """        
+        """
         n, r = self.spec.get_sensitivity_spec(is_gbm, sample_size)
         return self.sampling(n, r)
 
@@ -799,9 +797,9 @@ class Subsampling:
 
         Returns
         -------
-        tuple[pDF, pSe]: 
+        tuple[pDF, pSe]:
             The subsampled (X, y) pair for WOE encoding.
-        
+
         Example
         -------
         >>> sub = Subsampling(X, y)
@@ -817,13 +815,14 @@ class Subsampling:
         credit scorecards. The bin structure and WOE values must be
         stable, reproducible, and defensible in regulatory review.
         Preserving the natural target rate ensures the WOE profile
-        accurately reflects the true customer population.        
+        accurately reflects the true customer population.
         """
         n, r = self.spec.get_woe_spec()
         n = sample_size or n
         return self.sampling(n, r)
 
-    def univar(self, sample_size: int = None, is_balanced: bool = True
+    def univar(
+        self, sample_size: int = None, is_balanced: bool = True
     ) -> tuple[pDF, pSe]:
         """
         Generate a training sample optimized for univariate analysis.
@@ -846,7 +845,7 @@ class Subsampling:
 
         Returns
         -------
-        tuple[pDF, pSe]: 
+        tuple[pDF, pSe]:
             The subsampled (X, y) pair for univariate analysis.
 
         Example
@@ -857,15 +856,15 @@ class Subsampling:
         >>>
         >>> # Override: larger sample for detailed analysis
         >>> X_uni, y_uni = sub.univar(sample_size=500_000)
-        
+
         **Regulatory Note:**
 
         Univariate statistics are the first line of defense in model
         monitoring and validation. The fixed sample size ensures
         consistency across validation cycles and model comparisons.
         The balanced target rate simplifies interpretation and
-        reporting to stakeholders and regulators.        
-        """        
+        reporting to stakeholders and regulators.
+        """
         n, r = self.spec.get_univar_spec()
         n = sample_size or n
         r = r if is_balanced else None

@@ -5,10 +5,9 @@ This module provides unified training callbacks for the GBM
 backends (LightGBM and XGBoost) used by the training agents.
 """
 
-from ...deps.common     import json
-from ...deps.ml.gbm     import TrainingCallback
-from ...core.logging    import Logger
-
+from ...deps.common import json
+from ...deps.ml.gbm import TrainingCallback
+from ...core.logging import Logger
 
 logger = Logger(__name__)
 
@@ -21,7 +20,7 @@ class ReduceLROnPlateau(TrainingCallback):
 
     Monitors a validation metric during boosting and
     multiplicatively decays the learning rate when the metric
-    stagnates. Compatible with both LightGBM (`__call__` protocol) 
+    stagnates. Compatible with both LightGBM (`__call__` protocol)
     and XGBoost (`before_training` / `after_iteration` protocol).
 
     Decay Protocol
@@ -73,7 +72,7 @@ class ReduceLROnPlateau(TrainingCallback):
         metric_name: str | None = None,
         is_higher_better: bool | None = None,
         initial_lr: float | None = None,
-        verbose: bool = True
+        verbose: bool = True,
     ):
         self.patience = patience
         self.factor = factor
@@ -92,7 +91,7 @@ class ReduceLROnPlateau(TrainingCallback):
     def __repr__(self):
         lr = f"{self.current_lr:.6g}" if self.current_lr else "?"
         return f"{type(self).__name__}(patience={self.patience}, factor={self.factor}, lr={lr})"
-    
+
     # LightGBM
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     def __call__(self, env):
@@ -103,7 +102,7 @@ class ReduceLROnPlateau(TrainingCallback):
         score from the environment, checks for stagnation, and
         updates the learning rate if the patience threshold is
         exceeded.
-        """        
+        """
         if not env.evaluation_result_list:
             return
         if self.dataset_idx >= len(env.evaluation_result_list):
@@ -126,7 +125,11 @@ class ReduceLROnPlateau(TrainingCallback):
             self.current_lr = float(env.params.get("learning_rate", 0.1))
 
         self._evaluate(
-            score, hb, env.iteration, data_name, metric,
+            score,
+            hb,
+            env.iteration,
+            data_name,
+            metric,
             lambda lr: env.model.reset_parameter({"learning_rate": lr}),
         )
 
@@ -138,14 +141,16 @@ class ReduceLROnPlateau(TrainingCallback):
 
         Captures the initial learning rate from the model
         configuration.
-        """        
+        """
         if self.current_lr is None:
             if self.initial_lr is not None:
                 self.current_lr = self.initial_lr
             else:
                 cfg = json.loads(model.save_config())
                 self.current_lr = float(
-                    cfg["learner"]["gradient_booster"]["model"]["tree_param"]["learning_rate"]
+                    cfg["learner"]["gradient_booster"]["model"]["tree_param"][
+                        "learning_rate"
+                    ]
                 )
         return model
 
@@ -162,7 +167,7 @@ class ReduceLROnPlateau(TrainingCallback):
         bool
             Always False (training continues; early stopping
             is handled separately).
-        """        
+        """
         if not evals_log or self.dataset_name_xgb not in evals_log:
             return False
 
@@ -183,7 +188,7 @@ class ReduceLROnPlateau(TrainingCallback):
         self._evaluate(score, hb, epoch, self.dataset_name_xgb, metric, _set_lr)
         return False
 
-    # Shared logic 
+    # Shared logic
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     def _infer_higher_better(self, metric: str) -> bool:
         if self.is_higher_better is not None:
@@ -209,7 +214,7 @@ class ReduceLROnPlateau(TrainingCallback):
         update_fn : callable
             Function that sets the new learning rate on the
             model.
-        """        
+        """
         if self.best_score is None:
             self.best_score = score
             return
@@ -236,7 +241,11 @@ class ReduceLROnPlateau(TrainingCallback):
         if self.verbose:
             logger.info(
                 type(self).__name__ + " | [%d] %s/%s stagnant %d rounds → lr=%.6f",
-                iteration, ds_label, metric_label, self.patience, new_lr,
+                iteration,
+                ds_label,
+                metric_label,
+                self.patience,
+                new_lr,
             )
 
     def reset(self):

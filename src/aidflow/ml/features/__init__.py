@@ -35,31 +35,10 @@ Submodules
   structure.
 """
 
-from .binning import (
-    Binning,
-    MinBinResult,
-    EncodingMap
-)
-from .encoding import (
-    Encoding
-)
-from .interaction import (
-    TreeMiner, 
-    RuleStats, 
-    Rule
-)
-from .woe import (
-    WoE,
-    WoEPlot
-)
-from .stability import (
-    FeConsistency,
-    FEConsistencyPlot
-)
-from .reduction import (
-    Correlation
-)
-from .pca import (
-    PCV, 
-    PCAnalysis
-)
+from .binning import Binning, MinBinResult, EncodingMap
+from .encoding import Encoding
+from .interaction import TreeMiner, RuleStats, Rule
+from .woe import WoE, WoEPlot
+from .stability import FeConsistency, FEConsistencyPlot
+from .reduction import Correlation
+from .pca import PCV, PCAnalysis

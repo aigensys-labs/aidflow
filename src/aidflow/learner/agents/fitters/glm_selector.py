@@ -53,39 +53,27 @@ Solvers
   features and target. Best for high-dimensional, correlated inputs.
 """
 
-from ....deps.data              import  np, pd, pDF, pSe
-from ....deps.types             import  NDArray
+from ....deps.data import np, pd, pDF, pSe
+from ....deps.types import NDArray
 
-from ....core.base              import  (
-                                        FitterTrainBase, 
-                                        FitterModelBase
-                                        )
-from ....core.factory           import  Dataclass
-from ....core.foundation        import  AigParam
-from ....core.accessor          import  Spinner
+from ....core.base import FitterTrainBase, FitterModelBase
+from ....core.factory import Dataclass
+from ....core.foundation import AigParam
+from ....core.accessor import Spinner
 
-from ....ml.models              import  Logit
-from ....ml.sampling            import  Sampling
-from ....ml.metrics             import  (
-                                        DiagnosticsResult,
-                                        SeparationDiagnostics
-                                        )
-from ....display.verbosity      import  Verbosity
+from ....ml.models import Logit
+from ....ml.sampling import Sampling
+from ....ml.metrics import DiagnosticsResult, SeparationDiagnostics
+from ....display.verbosity import Verbosity
 
-from ...features.selection      import  (
-                                        LS, 
-                                        LinearSelectorCV
-                                        )
-from ...features.pruning        import  (
-                                        GiniPath,
-                                        FeaturesShadowPruner
-                                        )
-
+from ...features.selection import LS, LinearSelectorCV
+from ...features.pruning import GiniPath, FeaturesShadowPruner
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # LOCAL CONFIG
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 GLM = LinearSelectorCV.implemented_estimators
+
 
 @Dataclass.base
 class EstimatorCfg:
@@ -100,11 +88,13 @@ class EstimatorCfg:
     config : dict
         Additional solver-specific hyperparameters (e.g., l1_ratio
         for ElasticNet, n_components for PLS).
-    """ 
-    solver:  str = LS.S
-    config: dict = Dataclass.field({})
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+    """
 
+    solver: str = LS.S
+    config: dict = Dataclass.field({})
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -140,12 +130,14 @@ class FitParamsBase:
         Number of cross-validation folds for the regularization
         search and shadow pruning. Higher = more stable estimates
         at the cost of computation time.
-    """     
-    alpha:           float = 0.05
-    eps:             float = 1e-3
-    tol:             float = 1e-4
+    """
+
+    alpha: float = 0.05
+    eps: float = 1e-3
+    tol: float = 1e-4
     shadow_quantile: float = 0.9
-    cv:                int = 3
+    cv: int = 3
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -169,15 +161,18 @@ class FitParamsCfg:
     verbose : bool | Verbosity, default=True
         Enable progress display and diagnostics.
     """
-    target:         str
-    val_size:       float = 0.33
+
+    target: str
+    val_size: float = 0.33
     n_permutations: int = 3
-    random_state:   int = 42
-    verbose:        bool|Verbosity = True
+    random_state: int = 42
+    verbose: bool | Verbosity = True
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -192,8 +187,10 @@ class FitResult:
         Features removed during selection (with implicit reason
         from the stage at which they were dropped).
     """
+
     features_selected: list
-    features_dropped:  list
+    features_dropped: list
+
 
 @Dataclass.base
 class FitStats:
@@ -214,10 +211,12 @@ class FitStats:
         Validation metrics (Gini, AUC, KS, lift table) on the
         held-out validation set.
     """
+
     selector_path: dict
-    pruner_path:   dict
-    gini_path:     GiniPath
-    diagnostics:   DiagnosticsResult = None
+    pruner_path: dict
+    gini_path: GiniPath
+    diagnostics: DiagnosticsResult = None
+
 
 @Dataclass.base
 class FitDashLink:
@@ -243,13 +242,17 @@ class FitDashLink:
     val_idx : pd.Index
         Validation set row indices (for metric display).
     """
-    pruner:    FeaturesShadowPruner
-    model:     Logit
-    target:    str
-    features:  list
+
+    pruner: FeaturesShadowPruner
+    model: Logit
+    target: str
+    features: list
     total_fes: int
-    val_idx:   pd.Index
+    val_idx: pd.Index
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class FitWorker:
@@ -282,17 +285,19 @@ class FitWorker:
     config : EstimatorCfg
         Solver backend configuration.
     """
-    selector = None
-    pruner   = None
-    result   = None
 
-    def __init__(self, params:FitParams, config:EstimatorCfg = None):
-        self.prm     = params
-        self.config  = config or EstimatorCfg()
-        self.target  = params.target
-        self.verbose = params.verbose        
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
+    selector = None
+    pruner = None
+    result = None
+
+    def __init__(self, params: FitParams, config: EstimatorCfg = None):
+        self.prm = params
+        self.config = config or EstimatorCfg()
+        self.target = params.target
+        self.verbose = params.verbose
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def _get_n_alphas(self) -> int:
         """
         Determine the number of regularization path points.
@@ -305,7 +310,7 @@ class FitWorker:
         int
             Number of alpha points to explore (10–500).
         """
-        multiplier = np.log10(1 / self.prm.eps) / 3.0   # 1e-3 is 3 orders of magnitude
+        multiplier = np.log10(1 / self.prm.eps) / 3.0  # 1e-3 is 3 orders of magnitude
         return int(100 * np.clip(multiplier, 1, 5))
 
     def _get_setup(self) -> dict:
@@ -317,21 +322,21 @@ class FitWorker:
         dict
             Merged configuration: solver type, alpha, eps, tol,
             path points, random state, and user overrides.
-        """        
+        """
         default = dict(
-            alphas       = self._get_n_alphas(),
-            random_state = self.prm.random_state,
-            verbose      = False
+            alphas=self._get_n_alphas(),
+            random_state=self.prm.random_state,
+            verbose=False,
         )
         prm = dict(
-            solver = self.config.solver,
-            alpha  = self.prm.alpha,
-            eps    = self.prm.eps,
-            tol    = self.prm.tol,
+            solver=self.config.solver,
+            alpha=self.prm.alpha,
+            eps=self.prm.eps,
+            tol=self.prm.tol,
         )
         return default | self.config.config | prm
-        
-    def fit_selector(self, data:pDF, fes:list) -> None:
+
+    def fit_selector(self, data: pDF, fes: list) -> None:
         """
         Execute Stage 1: Regularization-based feature selection.
 
@@ -345,7 +350,7 @@ class FitWorker:
             Dataset containing features and target.
         fes : list
             Candidate feature names.
-        """      
+        """
         self.selector = LinearSelectorCV(**self._get_setup())
         self.selector.fit(data[fes], data[self.target])
 
@@ -362,11 +367,12 @@ class FitWorker:
         ------
         ValueError
             If `fit_selector` has not been called yet.
-        """        
+        """
         if self.selector is None:
             raise ValueError("Fit selector .fit_selector() prior calling results.")
         return self.selector.result
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _get_n_shadow_samples(self) -> int:
         """
@@ -382,9 +388,9 @@ class FitWorker:
             Number of permutation samples (2–10).
         """
         x = max(2, int(20 / self.prm.cv))
-        return np.clip( self.prm.n_permutations, 2, x)
-                
-    def fit_pruner(self, data:pDF) -> None:
+        return np.clip(self.prm.n_permutations, 2, x)
+
+    def fit_pruner(self, data: pDF) -> None:
         """
         Execute Stage 2: Shadow feature pruning.
 
@@ -397,22 +403,20 @@ class FitWorker:
         ----------
         data : pDF
             Full dataset (used for CV splits and shadow generation).
-        """            
+        """
         fes = self._get_selector_result()
         self.pruner = FeaturesShadowPruner(
-            model           = self.selector,
-            n_permutations  = self._get_n_shadow_samples(),
-            cv              = self.prm.cv,
-            val_size        = self.prm.val_size,
-            random_state    = self.prm.random_state,
-            verbose         = False
-        ).fit(
-            data[fes], data[self.target], 
-            shadow_quantile = self.prm.shadow_quantile
-        )
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
-    def _get_result(self, fes:list) -> tuple[FitResult, FitStats]:
+            model=self.selector,
+            n_permutations=self._get_n_shadow_samples(),
+            cv=self.prm.cv,
+            val_size=self.prm.val_size,
+            random_state=self.prm.random_state,
+            verbose=False,
+        ).fit(data[fes], data[self.target], shadow_quantile=self.prm.shadow_quantile)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def _get_result(self, fes: list) -> tuple[FitResult, FitStats]:
         """
         Package the selection results and diagnostics.
 
@@ -425,20 +429,22 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Selected/dropped features + optimization paths.
-        """        
+        """
         return (
             FitResult(
-                features_selected = self.pruner.result,
-                features_dropped  = [x for x in fes if x not in self.pruner.result],
+                features_selected=self.pruner.result,
+                features_dropped=[x for x in fes if x not in self.pruner.result],
             ),
             FitStats(
-                selector_path = self.selector.optim_path,
-                pruner_path   = self.pruner.optim_path,
-                gini_path     = self.pruner.gini_path,            
-            ))
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+                selector_path=self.selector.optim_path,
+                pruner_path=self.pruner.optim_path,
+                gini_path=self.pruner.gini_path,
+            ),
+        )
 
-    def pipeline(self, data:pDF, fes:list) -> None:     
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def pipeline(self, data: pDF, fes: list) -> None:
         """
         Execute the full two-stage feature selection pipeline.
 
@@ -453,8 +459,10 @@ class FitWorker:
         """
         self.fit_selector(data, fes)
         self.fit_pruner(data)
-        
-    def process(self, data:pDF, fes:list) -> tuple[FitResult, FitStats, FeaturesShadowPruner]:
+
+    def process(
+        self, data: pDF, fes: list
+    ) -> tuple[FitResult, FitStats, FeaturesShadowPruner]:
         """
         Entry point: execute the full selection pipeline.
 
@@ -474,8 +482,11 @@ class FitWorker:
         self.pipeline(data, fes)
         result, stats = self._get_result(fes)
         return result, stats, self.pruner
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
-   
+
+
 class Fitter(FitterTrainBase):
     """
     GLM Training — execution backend.
@@ -498,13 +509,14 @@ class Fitter(FitterTrainBase):
     config : EstimatorCfg
         Solver backend configuration.
     """
+
     _model: Logit = None
-    
-    def __init__(self, params:FitParams, config:EstimatorCfg=None):
-        self.prm = params 
+
+    def __init__(self, params: FitParams, config: EstimatorCfg = None):
+        self.prm = params
         self.config = config
 
-    def _train_valid_split(self, data:pDF) -> tuple[pDF, pDF]:
+    def _train_valid_split(self, data: pDF) -> tuple[pDF, pDF]:
         """
         Stratified train/validation split for the final model fit.
 
@@ -525,16 +537,16 @@ class Fitter(FitterTrainBase):
             (train_data, validation_data)
         """
         return Sampling(
-            sample_size  = self.prm.val_size, 
-            stratify     = data[self.prm.target], 
-            random_state = self.prm.random_state, 
-            shuffle      = True
-        ).train_valid_split(data)        
-                
-    def _fit(self, X:pDF, y:pSe) -> None:
-        self._model = Logit().fit(X, y)  
+            sample_size=self.prm.val_size,
+            stratify=data[self.prm.target],
+            random_state=self.prm.random_state,
+            shuffle=True,
+        ).train_valid_split(data)
 
-    def _valid_diagnostics(self, d_val:pDF) -> DiagnosticsResult:
+    def _fit(self, X: pDF, y: pSe) -> None:
+        self._model = Logit().fit(X, y)
+
+    def _valid_diagnostics(self, d_val: pDF) -> DiagnosticsResult:
         """
         Compute validation metrics on the held-out set.
 
@@ -547,12 +559,12 @@ class Fitter(FitterTrainBase):
         -------
         DiagnosticsResult
             Gini, AUC, KS, and lift table on the validation set.
-        """            
+        """
         t = d_val[self.prm.target]
         p = self.predict_proba(d_val)[:, 1]
         return SeparationDiagnostics(lift_bins=10).evaluate(t, p)
-        
-    def fit(self, data:pDF, fes:list):
+
+    def fit(self, data: pDF, fes: list):
         """
         Execute the full GLM training pipeline.
 
@@ -578,29 +590,29 @@ class Fitter(FitterTrainBase):
         """
         worker = FitWorker(self.prm, self.config)
         self.result, stats, pruner = worker.process(data, fes)
-        
+
         d_train, d_val = self._train_valid_split(data)
 
         self.features = self.result.features_selected
         self._fit(d_train[self.features], d_train[self.prm.target])
 
         self.stats = FitStats(
-            **(dict(stats) | dict(diagnostics = self._valid_diagnostics(d_val)))
+            **(dict(stats) | dict(diagnostics=self._valid_diagnostics(d_val)))
         )
         self.ordered_features = pruner.get_ordered_importance_fes(self.features)
 
         self.dash = FitDashLink(
-            pruner    = pruner,
-            model     = self._model,
-            target    = self.prm.target,
-            features  = self.features,
-            total_fes = len(fes),
-            val_idx   = d_val.index
+            pruner=pruner,
+            model=self._model,
+            target=self.prm.target,
+            features=self.features,
+            total_fes=len(fes),
+            val_idx=d_val.index,
         )
-        
-        return self  
-        
-    def predict_proba(self, data:pDF) -> NDArray:
+
+        return self
+
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities using the fitted GLM.
 
@@ -616,8 +628,9 @@ class Fitter(FitterTrainBase):
             and P(class=1).
         """
         return self.model.predict_proba(data[self.features])
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -675,21 +688,22 @@ class BinaryGLM(FitterModelBase[Fitter]):
     >>> from aidflow.fitters import SparseBinaryGLM
     >>> model = SparseBinaryGLM(target='is_churn', alpha=0.05)
     >>> model.fit(data_woe)
-    >>> probs = model.predict_proba(data_new) 
+    >>> probs = model.predict_proba(data_new)
     >>> model.get_ordered_fes()  # ['tenure_WOE', 'revenue_WOE', ...]
     """
+
     _solver: str = None
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
         self._config = self.get_estimator_config(self._params, kwargs)
-    
-    def _get_fes(self, data:pDF, fes:list|None) -> list:
+
+    def _get_fes(self, data: pDF, fes: list | None) -> list:
         if fes is not None:
             return fes
-        return [x for x in data.columns if x!=self._params.target]
-        
-    def fit(self, data:pDF, features:list|None = None):        
+        return [x for x in data.columns if x != self._params.target]
+
+    def fit(self, data: pDF, features: list | None = None):
         """
         Fit the GLM: feature selection + logistic regression.
 
@@ -708,16 +722,16 @@ class BinaryGLM(FitterModelBase[Fitter]):
             `get_ordered_fes` available.
         """
         fes = self._get_fes(data, features)
-        cfg = EstimatorCfg(solver = self._solver, config = self._config)
+        cfg = EstimatorCfg(solver=self._solver, config=self._config)
         self._fitter = Fitter(self._params, cfg)
-        
-        title = f'GLM {self._solver.upper()} training in progress'
+
+        title = f"GLM {self._solver.upper()} training in progress"
         with Spinner(title, show_timer=True).progress(self._params.verbose):
             self._fitter.fit(data, fes)
-            
+
         return self
-    
-    def predict_proba(self, data:pDF) -> NDArray:
+
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities.
 
@@ -732,7 +746,7 @@ class BinaryGLM(FitterModelBase[Fitter]):
             2-D array of shape (n_samples, 2): [P(class=0), P(class=1)].
         """
         return self.fitter.predict_proba(data)
-    
+
     def get_ordered_fes(self) -> list:
         """
         Return the selected features in descending importance order.
@@ -746,7 +760,10 @@ class BinaryGLM(FitterModelBase[Fitter]):
             Feature names, most important first.
         """
         return self.fitter.ordered_features
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class SparseBinaryGLM(BinaryGLM):
     """
@@ -782,8 +799,10 @@ class SparseBinaryGLM(BinaryGLM):
     >>> model.fit(data_woe)
     >>> model.get_ordered_fes()  # ['tenure_WOE', 'score_WOE']
     """
+
     _solver = LS.S
     _estimator = GLM[_solver]
+
 
 class LassoBinaryGLM(BinaryGLM):
     """
@@ -823,8 +842,10 @@ class LassoBinaryGLM(BinaryGLM):
     >>> model.fit(data_woe)
     >>> model.get_ordered_fes()  # ['revenue_WOE', 'tenure_WOE']
     """
+
     _solver = LS.L
     _estimator = GLM[_solver]
+
 
 class ElasticBinaryGLM(BinaryGLM):
     """
@@ -874,8 +895,10 @@ class ElasticBinaryGLM(BinaryGLM):
     >>> model.fit(data_woe)
     >>> model.get_ordered_fes()
     """
+
     _solver = LS.E
     _estimator = GLM[_solver]
+
 
 class LogRegBinaryGLM(BinaryGLM):
     """
@@ -911,6 +934,7 @@ class LogRegBinaryGLM(BinaryGLM):
     >>> model.fit(data_woe)
     >>> model.predict_proba(new_data)
     """
+
     _solver = LS.R
     _estimator = GLM[_solver]
 
@@ -949,8 +973,11 @@ class PLSBinaryGLM(BinaryGLM):
     >>> from aidflow.fitters import PLSBinaryGLM
     >>> model = PLSBinaryGLM(target='is_churn')
     >>> model.fit(data_woe)
-    >>> model.predict_proba(new_data) 
+    >>> model.predict_proba(new_data)
     """
+
     _solver = LS.P
     _estimator = GLM[_solver]
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

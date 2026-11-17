@@ -52,44 +52,37 @@ Requires the following pipeline stages to be completed:
 - Agent Training (≥ 1 agent)
 """
 
-from ...deps.data               import  pDF
+from ...deps.data import pDF
 
-from ...core.parameters         import  AIGFLOW
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from .adapter                   import  PredictorAdapter
-from .processor                 import  (
-                                        AGENTS,
-                                        PredictorProcessor,
-                                        PredictorParamsBase,
-                                        PredictorParamsCfg,
-                                        PredictorResult,
-                                        PredictorStats
-                                        )
+from .adapter import PredictorAdapter
+from .processor import (
+    AGENTS,
+    PredictorProcessor,
+    PredictorParamsBase,
+    PredictorParamsCfg,
+    PredictorResult,
+    PredictorStats,
+)
 
 MODEL = AIGFLOW.Selection.predictor
-FREG  = FitRegister(MODEL)
-DREG  = None
-DESC  = 'AIG SELECTION STAGE ► AGENTS PREDICTOR ► APPLY TRAINED AGENTS TO PREDICT ON OOT SAMPLE'
-DEPS  = (
+FREG = FitRegister(MODEL)
+DREG = None
+DESC = "AIG SELECTION STAGE ► AGENTS PREDICTOR ► APPLY TRAINED AGENTS TO PREDICT ON OOT SAMPLE"
+DEPS = (
     AIGFLOW.Training.agent1,
     AIGFLOW.Training.agent2,
     AIGFLOW.Training.agent3,
@@ -102,9 +95,11 @@ DEPS  = (
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'AgentsPredictor'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    AIG = "AgentsPredictor"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -113,42 +108,50 @@ class REG(DictClass):
 @Dataclass.mapping
 class PredictorParamslDefault:
     """Direct assignment → no global flow params."""
+
     params = Dataclass.schema(PredictorParamsBase)
-    setup  = dict(params)
+    setup = dict(params)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """       
-    
+    """
+
     @FREG.register(REG.AIG)
     class AgentsPredictorFitter(PredictorParamsBase):
-        
-        config: dict|PredictorParamsCfg = PredictorParamsCfg(
-            target     = None,
-            preprocess = None
+
+        config: dict | PredictorParamsCfg = PredictorParamsCfg(
+            target=None, preprocess=None
         )
 
-        def _build(self, params:PredictorParamsBase, config:dict) -> PredictorProcessor:            
-            setup  = dict(params) | config
-            return PredictorProcessor(**setup) 
+        def _build(
+            self, params: PredictorParamsBase, config: dict
+        ) -> PredictorProcessor:
+            setup = dict(params) | config
+            return PredictorProcessor(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterBase[PredictorParamsBase]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """     
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
-    
-    def fit(self, data:pDF): 
+
+    def fit(self, data: pDF):
         """
         Execute predictions with all agents on the provided data.
 
@@ -161,12 +164,12 @@ class Fitter(FitterBase[PredictorParamsBase]):
         Returns
         -------
         self
-        """   
+        """
         self.result: PredictorResult = self.model.transform(data)
-        self.stats:  PredictorStats  = self.model.get_stats()
+        self.stats: PredictorStats = self.model.get_stats()
         return self
-            
-    def transfrom(self, data:pDF, agents:tuple = tuple(AGENTS)) -> PredictorResult:
+
+    def transfrom(self, data: pDF, agents: tuple = tuple(AGENTS)) -> PredictorResult:
         """
         Predict with selected agents on new data.
 
@@ -182,9 +185,10 @@ class Fitter(FitterBase[PredictorParamsBase]):
         PredictorResult
             One prediction DataFrame per requested agent.
         """
-        return self.model.transform(data, agents = agents)    
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬        
+        return self.model.transform(data, agents=agents)
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -193,43 +197,45 @@ class Fitter(FitterBase[PredictorParamsBase]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    agent1: list|None
-    agent2: list|None
-    agent3: list|None
-    agent4: list|None
+
+    agent1: list | None
+    agent2: list | None
+    agent3: list | None
+    agent4: list | None
+
 
 @Dataclass.base
 class TransResData(PredictorResult):
     """Transfomer data output design."""
 
+
 class Transformer(TransformerBase[Fitter, PredictorStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
-    
+
     ModelFitter = Fitter
 
     def _set_cols(self):
         res = self.fitter.result
         f = lambda x: list(x.columns) if x is not None else None
         return TransResCols(
-            agent1 = f(res.agent1),
-            agent2 = f(res.agent2),
-            agent3 = f(res.agent3),
-            agent4 = f(res.agent4),
+            agent1=f(res.agent1),
+            agent2=f(res.agent2),
+            agent3=f(res.agent3),
+            agent4=f(res.agent4),
         )
 
-    def transform(self, data:pDF, agents:tuple = tuple(AGENTS)) -> TransResData: 
+    def transform(self, data: pDF, agents: tuple = tuple(AGENTS)) -> TransResData:
         """Model meta-transform."""
-        return TransResData(
-            **self.fitter.transfrom(data, agents)
-        )     
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return TransResData(**self.fitter.transfrom(data, agents))
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -238,39 +244,40 @@ class Transformer(TransformerBase[Fitter, PredictorStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
+
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
     Transformer - Fitter before execution begins.
     """
 
-    MODEL  = MODEL
-    DESC   = DESC
+    MODEL = MODEL
+    DESC = DESC
 
-    Config  = PredictorParamsCfg
+    Config = PredictorParamsCfg
     Mapping = PredictorParamslDefault
 
-    ModelTransformer  = Transformer
+    ModelTransformer = Transformer
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"AgentsPredictorInput"):
+    def get_choice(self, fx_choice: str, inputs: "AgentsPredictorInput"):
         defaults = self.Config(
-            target     = AigParam.di(inputs.target, self.setup.target),
-            preprocess = None
-        )  
+            target=AigParam.di(inputs.target, self.setup.target), preprocess=None
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)   
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-        
-    def get_params(self, fx_choice:str, inputs:"AgentsPredictorInput"):
-        agents  = self.get_model_dependecy(DEPS, is_req=False)
-        params_ = PredictorParamsBase(
-            predictors = PredictorAdapter(agents)
-        )        
-        params: PredictorParamsBase = self.get_fit_params(fx_choice, inputs.fx_params, params_)
-        return params, self.setup
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return RegGet.choice(fx_choice, fx_config)
 
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "AgentsPredictorInput"):
+        agents = self.get_model_dependecy(DEPS, is_req=False)
+        params_ = PredictorParamsBase(predictors=PredictorAdapter(agents))
+        params: PredictorParamsBase = self.get_fit_params(
+            fx_choice, inputs.fx_params, params_
+        )
+        return params, self.setup
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -300,7 +307,9 @@ class AgentsPredictorInput(ModelInput):
     Use `transform(data, agents=(1, 2))` to restrict to a
     subset.
     """
-    data: pDF 
+
+    data: pDF
+
 
 @Dataclass.base(dynamic_params=True)
 class AgentsPredictorResult(ModelResult):
@@ -336,13 +345,17 @@ class AgentsPredictorResult(ModelResult):
     into the Comparator (scoring), Transition (cross-agent
     analysis), and Selector (champion evaluation) stages.
     """
+
     agent1: pDF | None
     agent2: pDF | None
     agent3: pDF | None
     agent4: pDF | None
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class AgentsPredictor(Processor, ModelBase):   
+
+class AgentsPredictor(Processor, ModelBase):
     """
     Agent Predictor — Unified Multi-Agent Prediction Interface.
 
@@ -378,7 +391,7 @@ class AgentsPredictor(Processor, ModelBase):
     **Not Analytical**: This model does not score, rank, or
     compare agents. It simply produces the synchronized
     predictions that the analytical stages (Comparator,
-    Transition) consume. 
+    Transition) consume.
 
     **Agent Selection**: By default, all registered agents
     predict. Use `transform(data, agents=(1, 2))` to restrict
@@ -400,18 +413,20 @@ class AgentsPredictor(Processor, ModelBase):
 
     def _save(self, save_path) -> None:
         features = dict(self.cols)
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _get_result(self, res: TransResData):
         return AgentsPredictorResult(
-            agent1 = lambda: res.agent1, 
-            agent2 = lambda: res.agent2, 
-            agent3 = lambda: res.agent3, 
-            agent4 = lambda: res.agent4, 
-        )        
+            agent1=lambda: res.agent1,
+            agent2=lambda: res.agent2,
+            agent3=lambda: res.agent3,
+            agent4=lambda: res.agent4,
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def fit(self, inputs: AgentsPredictorInput, fx_choice: str = REG.AIG, **params):
         """
         Execute predictions with all agents on the provided data.
@@ -433,24 +448,21 @@ class AgentsPredictor(Processor, ModelBase):
         AgentsPredictor
             The fitted model instance. Predictions access by `.fitted`.
         """
-        verify  = len(inputs.data)
+        verify = len(inputs.data)
 
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs)
-        
+
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-                
-    def transform(self, 
-        data:   pDF, 
-        agents: tuple = tuple(AGENTS)
+
+    def transform(
+        self, data: pDF, agents: tuple = tuple(AGENTS)
     ) -> AgentsPredictorResult:
         """
         Predict with one or more agents on a new dataset.
@@ -482,7 +494,9 @@ class AgentsPredictor(Processor, ModelBase):
         fitted state. It produces a fresh prediction on the new
         data. The original fit results remain accessible via
         `.fitted`.
-        """     
+        """
         res = self.processor.transform(data, agents)
         return self._get_result(res)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

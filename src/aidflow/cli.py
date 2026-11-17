@@ -17,16 +17,13 @@ from .deps.common import (
     sys,
     Path,
 )
-from . import (
-    UIGetter, 
-    UIPaths
-)
+from . import UIGetter, UIPaths
 
 _PATHS = UIGetter.get_paths()
 _GETTER = {
     UIPaths.NTB: UIGetter.get_notebook,
     UIPaths.CLI: UIGetter.get_script,
-}    
+}
 
 
 class _Utils:
@@ -45,37 +42,38 @@ class _Utils:
     @staticmethod
     def create_dir(args) -> Path:
         """Create opt. directory."""
-        target = Path(args.dir) if args.dir else Path('.')
+        target = Path(args.dir) if args.dir else Path(".")
         target.mkdir(parents=True, exist_ok=True)
-        print(f'  → scaffolding to {target.resolve()}')
+        print(f"  → scaffolding to {target.resolve()}")
         return target
 
     @staticmethod
-    def copy_assets(target:Path, subset: tuple=(UIPaths.NTB, UIPaths.CLI)
+    def copy_assets(
+        target: Path, subset: tuple = (UIPaths.NTB, UIPaths.CLI)
     ) -> dict[str, Path] | Path:
         paths = {}
         for k in subset:
             paths[k] = _GETTER[k](target)
 
         for key, p in paths.items():
-            print(f'    ✓ {key:<10} {p}')
+            print(f"    ✓ {key:<10} {p}")
 
         return paths[k] if len(subset) == 1 else paths
 
     @staticmethod
-    def create_venv(args, target:Path) -> None:
+    def create_venv(args, target: Path) -> None:
         """Create optional venv."""
         if not args.venv:
-            return 
+            return
         from .deps.cli import subprocess
 
-        venv_dir = target / '.venv'
-        print(f'\n  → creating venv at {venv_dir}')
-        subprocess.call([sys.executable, '-m', 'venv', str(venv_dir)])
+        venv_dir = target / ".venv"
+        print(f"\n  → creating venv at {venv_dir}")
+        subprocess.call([sys.executable, "-m", "venv", str(venv_dir)])
 
-        pip = venv_dir / ('Scripts' if os.name == 'nt' else 'bin') / 'pip'
-        print(f'  → installing AIDflow into venv')
-        subprocess.call([str(pip), 'install', '-q', 'aidflow'])    
+        pip = venv_dir / ("Scripts" if os.name == "nt" else "bin") / "pip"
+        print(f"  → installing AIDflow into venv")
+        subprocess.call([str(pip), "install", "-q", "aidflow"])
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -90,18 +88,22 @@ def cmd_init(args):
     """
 
     target = _Utils.create_dir(args)
-    paths  = _Utils.copy_assets(target)
+    paths = _Utils.copy_assets(target)
 
     _Utils.create_venv(args, target)
 
     # ── next steps ────────────────────────────────────────────────
-    print(f'\n  Next steps:')
+    print(f"\n  Next steps:")
     if args.venv:
-        act = r'.venv\Scripts\activate' if os.name == 'nt' else 'source .venv/bin/activate'
-        print(f'    {act}')
-    print(f'    Interactive : jupyter notebook {paths[UIPaths.NTB].name}')
-    print(f'    Console     : python {paths[UIPaths.CLI].name}')
-    print(f'    Or          : aidflow run --size {args.size}')
+        act = (
+            r".venv\Scripts\activate"
+            if os.name == "nt"
+            else "source .venv/bin/activate"
+        )
+        print(f"    {act}")
+    print(f"    Interactive : jupyter notebook {paths[UIPaths.NTB].name}")
+    print(f"    Console     : python {paths[UIPaths.CLI].name}")
+    print(f"    Or          : aidflow run --size {args.size}")
     print()
 
 
@@ -119,17 +121,17 @@ def cmd_run(args):
     from .deps.cli import importlib
 
     target = _Utils.create_dir(args)
-    path   = _Utils.copy_assets(target, (UIPaths.CLI,))
+    path = _Utils.copy_assets(target, (UIPaths.CLI,))
 
-    spec = importlib.util.spec_from_file_location('aidflow_script', path)
-    mod  = importlib.util.module_from_spec(spec)
+    spec = importlib.util.spec_from_file_location("aidflow_script", path)
+    mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 
     os.chdir(target)
 
-    print('► Executing demo script:')
-    print(f'  → size  : {args.size}')
-    print(f'  → phase : {args.phase}')
+    print("► Executing demo script:")
+    print(f"  → size  : {args.size}")
+    print(f"  → phase : {args.phase}")
     print()
 
     mod.main(phase=args.phase, size=args.size)
@@ -148,17 +150,17 @@ def cmd_notebook(args):
     from .deps.cli import subprocess
 
     target = _Utils.create_dir(args)
-    path   = _Utils.copy_assets(target, (UIPaths.NTB,))
-    
+    path = _Utils.copy_assets(target, (UIPaths.NTB,))
+
     try:
         import notebook
     except ImportError:
-        print('\n  ✗ notebook not installed.')
-        print('    Install with:  pip install aidflow[notebook]')
+        print("\n  ✗ notebook not installed.")
+        print("    Install with:  pip install aidflow[notebook]")
         sys.exit(1)
 
-    print(f'  → opening {path.name}')
-    subprocess.call(['jupyter', 'notebook', str(path)])
+    print(f"  → opening {path.name}")
+    subprocess.call(["jupyter", "notebook", str(path)])
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -171,9 +173,9 @@ def cmd_assets(args):
     Prints a table of asset name → source path for every
     static file included in the package.
     """
-    print('  Bundled assets:')
+    print("  Bundled assets:")
     for key, p in _PATHS.items():
-        print(f'    {key:<10} {p}')
+        print(f"    {key:<10} {p}")
     print()
 
 
@@ -198,86 +200,76 @@ def main():
     If no subcommand is provided, prints help and exits.
     """
     from .deps.cli import argparse
+
     _Utils.banner()
 
     parser = argparse.ArgumentParser(
-        prog='aidflow',
-        description='AIDflow — Automated Interactive Development Framework',
+        prog="aidflow",
+        description="AIDflow — Automated Interactive Development Framework",
         epilog=_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sub = parser.add_subparsers(dest='cmd')
+    sub = parser.add_subparsers(dest="cmd")
 
     # ── init ───────────────────────────────────────────────────────
     p_init = sub.add_parser(
-        'init',
-        help='Scaffold project assets to a directory',
-        description='Copy bundled assets (console script + notebook) to a target directory.',
+        "init",
+        help="Scaffold project assets to a directory",
+        description="Copy bundled assets (console script + notebook) to a target directory.",
     )
     p_init.add_argument(
-        'dir',
-        nargs='?',
-        default='',
-        help='Target directory (default: .)'
+        "dir", nargs="?", default="", help="Target directory (default: .)"
     )
     p_init.add_argument(
-        '--venv',
-        action='store_true',
-        help='Create a virtualenv and install AIDflow'
+        "--venv", action="store_true", help="Create a virtualenv and install AIDflow"
     )
     p_init.add_argument(
-        '--size',
-        choices=['small', 'medium', 'large'],
-        default='small',
-        help='Default data size for quick-start hint (default: small)'
+        "--size",
+        choices=["small", "medium", "large"],
+        default="small",
+        help="Default data size for quick-start hint (default: small)",
     )
     p_init.set_defaults(func=cmd_init)
 
     # ── run ────────────────────────────────────────────────────────
     p_run = sub.add_parser(
-        'run',
-        help='Run the console pipeline',
-        description='Execute the full or partial AIDflow pipeline with generated data.',
+        "run",
+        help="Run the console pipeline",
+        description="Execute the full or partial AIDflow pipeline with generated data.",
     )
     p_run.add_argument(
-        'dir',
-        nargs='?',
-        default='',
-        help='Target directory (default: .)'
-    )      
-    p_run.add_argument(
-        '--size',
-        choices=['small', 'medium', 'large'],
-        default='small',
-        help='Synthetic data size (default: small)'
+        "dir", nargs="?", default="", help="Target directory (default: .)"
     )
     p_run.add_argument(
-        '--phase',
-        choices=['all', 'data', 'encoding', 'training', 'selection'],
-        default='all',
-        help='Pipeline phase to run (default: all)'
+        "--size",
+        choices=["small", "medium", "large"],
+        default="small",
+        help="Synthetic data size (default: small)",
+    )
+    p_run.add_argument(
+        "--phase",
+        choices=["all", "data", "encoding", "training", "selection"],
+        default="all",
+        help="Pipeline phase to run (default: all)",
     )
     p_run.set_defaults(func=cmd_run)
 
     # ── notebook ───────────────────────────────────────────────────
     p_nb = sub.add_parser(
-        'notebook',
-        help='Open the interactive notebook',
-        description='Launch the bundled Jupyter notebook.',
+        "notebook",
+        help="Open the interactive notebook",
+        description="Launch the bundled Jupyter notebook.",
     )
     p_nb.add_argument(
-        'dir',
-        nargs='?',
-        default='',
-        help='Target directory (default: .)'
-    )        
+        "dir", nargs="?", default="", help="Target directory (default: .)"
+    )
     p_nb.set_defaults(func=cmd_notebook)
 
     # ── assets ─────────────────────────────────────────────────────
     p_assets = sub.add_parser(
-        'assets',
-        help='List bundled assets',
-        description='Show all static files shipped with AIDflow.',
+        "assets",
+        help="List bundled assets",
+        description="Show all static files shipped with AIDflow.",
     )
     p_assets.set_defaults(func=cmd_assets)
 
@@ -291,5 +283,5 @@ def main():
     args.func(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

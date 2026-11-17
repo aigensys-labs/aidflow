@@ -29,20 +29,14 @@ for memory-constrained prototyping. These are disabled by default
 (fraction = 1.0) and only active when explicitly configured.
 """
 
-from ...deps.data           import  np, pDF, pSe
-from ...deps.types          import  Literal
+from ...deps.data import np, pDF, pSe
+from ...deps.types import Literal
 
-from ...core.factory        import  (
-                                    Dataclass,
-                                    DictClass
-                                    )
-from ...core.interop        import  (
-                                    Pd,
-                                    DataStandard
-                                    )
-from ...core.accessor       import  Rgb
+from ...core.factory import Dataclass, DictClass
+from ...core.interop import Pd, DataStandard
+from ...core.accessor import Rgb
 
-from ...ml.sampling         import  Sampling
+from ...ml.sampling import Sampling
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -55,11 +49,13 @@ class FX(DictClass):
     Each lambda takes a split label ('train', 'test', 'total', 'data')
     and produces the corresponding stats dictionary key.
     """
-    obs     = lambda x: f'obs_{x}'
-    target  = lambda x: f'target_{x}'
-    time_n  = lambda x: f'time_n_{x}'
-    time_x  = lambda x: f'time_x_{x}'
-    time_f  = lambda x: f'full_time_{x}'
+
+    obs = lambda x: f"obs_{x}"
+    target = lambda x: f"target_{x}"
+    time_n = lambda x: f"time_n_{x}"
+    time_x = lambda x: f"time_x_{x}"
+    time_f = lambda x: f"full_time_{x}"
+
 
 class TT(DictClass):
     """
@@ -68,15 +64,17 @@ class TT(DictClass):
     Provides the canonical labels used throughout the module
     for referencing train and test data in stats output.
     """
-    TT        = ['train', 'test']
+
+    TT = ["train", "test"]
     OBS_TRAIN = FX.obs(TT[0])
-    OBS_TEST  = FX.obs(TT[1])
+    OBS_TEST = FX.obs(TT[1])
     TARGET_TR = FX.target(TT[0])
     TARGET_TE = FX.target(TT[1])
     TIME_N_TR = FX.time_n(TT[0])
     TIME_N_TE = FX.time_n(TT[1])
     TIME_X_TR = FX.time_x(TT[0])
     TIME_X_TE = FX.time_x(TT[1])
+
 
 class LBL(TT):
     """
@@ -85,19 +83,21 @@ class LBL(TT):
     Used for user-facing display of the data split summary.
     Inherits train/test keys from `TT`.
     """
-    OBS_T    = FX.obs('total')
-    TARGET_T = FX.target('total')
-    F_TIME_D = FX.time_f('data')
-    F_TIME_U = FX.time_f('unique')
-    F_TIME_S = FX.time_f('obs_start')
-    F_TIME_E = FX.time_f('obs_end')
-    D_SUBSET = FX.obs('data')
-    VARS_CNT = 'variables_cnt'
-    T_SUBSET = 'temporal_subset'
-    TIME_N_D = FX.time_n('data')
-    TIME_X_D = FX.time_x('data')
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    OBS_T = FX.obs("total")
+    TARGET_T = FX.target("total")
+    F_TIME_D = FX.time_f("data")
+    F_TIME_U = FX.time_f("unique")
+    F_TIME_S = FX.time_f("obs_start")
+    F_TIME_E = FX.time_f("obs_end")
+    D_SUBSET = FX.obs("data")
+    VARS_CNT = "variables_cnt"
+    T_SUBSET = "temporal_subset"
+    TIME_N_D = FX.time_n("data")
+    TIME_X_D = FX.time_x("data")
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -129,11 +129,13 @@ class DataProcParamsBase:
         Feature sampling fraction (1.0 = no sampling).
         Values < 1.0 enable random feature subsampling for prototyping.
     """
+
     import_start: float
-    import_end:   float
-    train_test:   int|float
-    smp_train:    int|float
-    smp_feature:  int|float
+    import_end: float
+    train_test: int | float
+    smp_train: int | float
+    smp_feature: int | float
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class DataProcParamsCfg:
@@ -149,13 +151,16 @@ class DataProcParamsCfg:
     flow_vars : list
         ID-like columns to preserve (excluded from feature counting).
     """
-    target:     str
-    time_var:   str
-    flow_vars:  list    
+
+    target: str
+    time_var: str
+    flow_vars: list
+
 
 @Dataclass.base
 class DataProcParams(DataProcParamsBase, DataProcParamsCfg):
-    """Transfomer params input design."""       
+    """Transfomer params input design."""
+
 
 @Dataclass.base
 class DataProcResult:
@@ -171,9 +176,11 @@ class DataProcResult:
     vars_type : pSe
         Feature type mapping (post-sampling if feature sampling is active).
     """
+
     train_data: pDF
-    test_data:  pDF
-    vars_type:  pSe
+    test_data: pDF
+    vars_type: pSe
+
 
 @Dataclass.base
 class DataProcStats:
@@ -190,10 +197,14 @@ class DataProcStats:
     sampling_info : list
         Human-readable messages about active sampling (feature/observation).
     """
-    data_stats:     dict
-    train_sample:   pDF
-    sampling_info:  list
+
+    data_stats: dict
+    train_sample: pDF
+    sampling_info: list
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class ProcUtils:
@@ -205,27 +216,25 @@ class ProcUtils:
     - Target rates (positives per split).
     - Time ranges (min/max period per split).
     - A stratified sample view of the training data.
-    """  
+    """
 
-    def __init__(self, params:DataProcParams):
+    def __init__(self, params: DataProcParams):
         self.prm = params
-    
-    def _vars_cnt(self, vars_type:pSe) -> int:
+
+    def _vars_cnt(self, vars_type: pSe) -> int:
         """Count the number of feature variables (excluding flow vars and time)."""
         out = self.prm.flow_vars
         return sum([True for x in vars_type.index if x not in out])
 
-    def _time_nx(self, data:pDF):
-        """Return the time range (min, max) of a dataset."""        
-        return (
-            data[self.prm.time_var].min(),
-            data[self.prm.time_var].max()
-        )
-    def _target_sum(self, data:pDF):
-        """Count total target positives in a dataset."""        
+    def _time_nx(self, data: pDF):
+        """Return the time range (min, max) of a dataset."""
+        return (data[self.prm.time_var].min(), data[self.prm.time_var].max())
+
+    def _target_sum(self, data: pDF):
+        """Count total target positives in a dataset."""
         return data[self.prm.target].sum()
-    
-    def _input_data_stats(self, data:pDF) -> dict:
+
+    def _input_data_stats(self, data: pDF) -> dict:
         """
         Compute stats for the full input data (pre-split).
 
@@ -234,23 +243,23 @@ class ProcUtils:
         dict
             Observation count, target sum, unique time periods,
             and the import window indices (start/end).
-        """        
-        obs    = len(data)
+        """
+        obs = len(data)
         target = self._target_sum(data)
         time_d = data[self.prm.time_var]
         time_u = np.unique(time_d)
-        time_s = int(len(time_u)*self.prm.import_start)
-        time_e = int(len(time_u)*self.prm.import_end)-1        
+        time_s = int(len(time_u) * self.prm.import_start)
+        time_e = int(len(time_u) * self.prm.import_end) - 1
         return {
-            LBL.OBS_T:    obs,
+            LBL.OBS_T: obs,
             LBL.TARGET_T: target,
             LBL.F_TIME_D: time_d,
             LBL.F_TIME_U: time_u,
             LBL.F_TIME_S: time_s,
             LBL.F_TIME_E: time_e,
         }
-    
-    def _data_stats(self, data:pDF, vars_type:pSe, time_se:tuple) -> dict:
+
+    def _data_stats(self, data: pDF, vars_type: pSe, time_se: tuple) -> dict:
         """
         Compute stats for the temporally-subset data.
 
@@ -258,17 +267,17 @@ class ProcUtils:
         -------
         dict
             Observation count, feature count, and time range.
-        """        
+        """
         tnd, txd = self._time_nx(data)
         return {
             LBL.D_SUBSET: len(data),
             LBL.VARS_CNT: self._vars_cnt(vars_type),
             LBL.T_SUBSET: time_se,
             LBL.TIME_N_D: tnd,
-            LBL.TIME_X_D: txd
-        }    
-         
-    def _tt_stats(self, train:pDF, test:pDF) -> dict:
+            LBL.TIME_X_D: txd,
+        }
+
+    def _tt_stats(self, train: pDF, test: pDF) -> dict:
         """
         Compute train/test split stats.
 
@@ -276,21 +285,21 @@ class ProcUtils:
         -------
         dict
             Per-split: observation count, target sum, time range.
-        """        
+        """
         tntr, txtr = self._time_nx(train)
         tnte, txte = self._time_nx(test)
         return {
             LBL.OBS_TRAIN: len(train),
-            LBL.OBS_TEST:  len(test),
+            LBL.OBS_TEST: len(test),
             LBL.TARGET_TR: self._target_sum(train),
             LBL.TARGET_TE: self._target_sum(test),
             LBL.TIME_N_TR: tntr,
             LBL.TIME_X_TR: txtr,
             LBL.TIME_N_TE: tnte,
             LBL.TIME_X_TE: txte,
-        }    
+        }
 
-    def _final_stats(self, stats:dict, train:pDF, fe_info:str, data_info:str):
+    def _final_stats(self, stats: dict, train: pDF, fe_info: str, data_info: str):
         """
         Assemble the final DataProcStats output.
 
@@ -309,28 +318,26 @@ class ProcUtils:
         -------
         DataProcStats
             Complete stats object for display.
-        """        
+        """
         sample = self._make_view_sample(train)
         return DataProcStats(
-            data_stats    = stats,
-            train_sample  = sample,
-            sampling_info = [fe_info] + [data_info]
-        )     
-    
-    def _make_view_sample(self, data:pDF):
+            data_stats=stats, train_sample=sample, sampling_info=[fe_info] + [data_info]
+        )
+
+    def _make_view_sample(self, data: pDF):
         """
         Generate a 100-row stratified sample for user inspection.
 
         The sample is sorted chronologically and stratified by target
         to show a representative view of the training data.
-        """        
-        return DataStandard.sort( 
-            Sampling(100, stratify=data[self.prm.target]).subsample(data), 
-            self.prm.time_var
-        )  
+        """
+        return DataStandard.sort(
+            Sampling(100, stratify=data[self.prm.target]).subsample(data),
+            self.prm.time_var,
+        )
 
     @staticmethod
-    def _info(d:Literal['data','train','test']) -> str:
+    def _info(d: Literal["data", "train", "test"]) -> str:
         """
         Generate a styled label for the data section in sampling info messages.
 
@@ -343,11 +350,17 @@ class ProcUtils:
         -------
         str
             Styled label string.
-        """        
-        if d=='data':  return 'Input Data'
-        if d=='train': return Rgb.bold_blue('TRAIN')
-        if d=='test':  return Rgb.bold('TEST')    
+        """
+        if d == "data":
+            return "Input Data"
+        if d == "train":
+            return Rgb.bold_blue("TRAIN")
+        if d == "test":
+            return Rgb.bold("TEST")
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class DataProcessor:
@@ -416,81 +429,79 @@ class DataProcessor:
     >>> result = proc.process(data)
     >>> len(result.train_data), len(result.test_data)  # doctest: +SKIP
     """
-    
+
     stats: DataProcStats = None
-    
+
     def __init__(self, params: DataProcParams):
         self.prm = params
-    
-    def _get_temporal_ix(self, stats:dict) -> tuple[str, str]:
+
+    def _get_temporal_ix(self, stats: dict) -> tuple[str, str]:
         """
         Resolve the import window boundaries to actual time values.
 
         Converts the fractional import_start/import_end (computed in
-        stats) to the corresponding time period values.        
+        stats) to the corresponding time period values.
         """
         t = stats[LBL.F_TIME_U]
         return t[stats[LBL.F_TIME_S]], t[stats[LBL.F_TIME_E]]
-    
-    def _temporal_subset(self, ts:pSe, stats:dict):
+
+    def _temporal_subset(self, ts: pSe, stats: dict):
         """Resolve the import window to data indices."""
-        s,e = self._get_temporal_ix(stats)
-        st  = ts[ts==s].index.min()
-        et  = ts[ts==e].index.max()
-        return st,et
-    
-    def _data_temporal_subset(self, data:pDF, stats:dict) -> pDF:
+        s, e = self._get_temporal_ix(stats)
+        st = ts[ts == s].index.min()
+        et = ts[ts == e].index.max()
+        return st, et
+
+    def _data_temporal_subset(self, data: pDF, stats: dict) -> pDF:
         """Apply the import window to subset the data temporally."""
-        s,e = self._temporal_subset(data[self.prm.time_var], stats)
-        return data.loc[s:e,:].reset_index(drop=True), (s, e)
-    
-    def _vars_types(self, data:pDF) -> pSe:
+        s, e = self._temporal_subset(data[self.prm.time_var], stats)
+        return data.loc[s:e, :].reset_index(drop=True), (s, e)
+
+    def _vars_types(self, data: pDF) -> pSe:
         """Extract the dtype mapping from the data columns."""
         return data.dtypes
-    
-    def _set_remove_flow_vars_types(self, vars_type:pSe) -> pSe:
+
+    def _set_remove_flow_vars_types(self, vars_type: pSe) -> pSe:
         """
         Separate flow variables from feature types.
 
         Flow variables (ID columns) are removed from the active
         feature list but preserved internally for re-attachment
-        after sampling.        
-        """        
+        after sampling.
+        """
         self._flow_vars_types = None
         if not self.prm.flow_vars:
-            return vars_type    
+            return vars_type
         m = vars_type.index.isin(self.prm.flow_vars)
         self._flow_vars_types = vars_type[m]
         return vars_type[~m]
-    
-    def _add_flow_vars_types(self, vars_types:pSe) -> pSe:
+
+    def _add_flow_vars_types(self, vars_types: pSe) -> pSe:
         """Re-attach flow variable types after sampling (preserves them in the mapping)."""
         return Pd.concat([self._flow_vars_types, vars_types])
-    
-    def _fe_sampling(self, data:pDF, vars_type:pSe) -> tuple[pDF, pSe, str]:
+
+    def _fe_sampling(self, data: pDF, vars_type: pSe) -> tuple[pDF, pSe, str]:
         """
         Apply feature subsampling (optional, for prototyping).
 
         If `smp_feature` is 1.0, returns data unchanged.
         Otherwise, randomly samples a fraction of features (preserving
-        flow vars and target) and trims the data accordingly.        
-        """        
+        flow vars and target) and trims the data accordingly.
+        """
         if self.prm.smp_feature == 1:
-            return data, vars_type, ''
-        
+            return data, vars_type, ""
+
         features, info = Sampling(
-            self.prm.smp_feature, 
-            verbose = True,
-            info = ProcUtils._info('train')
+            self.prm.smp_feature, verbose=True, info=ProcUtils._info("train")
         ).features(vars_type)
 
         if len(vars_type) != len(features):
             vars_type = features
-            vars_all  = self.prm.flow_vars + list(vars_type.index)
-            data = data[vars_all] 
+            vars_all = self.prm.flow_vars + list(vars_type.index)
+            data = data[vars_all]
         return data, vars_type, info
 
-    def _train_sampling(self, data:pDF) -> tuple[pDF, str]:
+    def _train_sampling(self, data: pDF) -> tuple[pDF, str]:
         """
         Apply observation subsampling to training data (optional).
 
@@ -499,34 +510,30 @@ class DataProcessor:
         target class balance) and sorts chronologically.
         """
         if self.prm.smp_train == 1:
-            return data, ''
-        
+            return data, ""
+
         data_sample, info = Sampling(
-            self.prm.smp_train,
-            verbose = True, 
-            info = ProcUtils._info('train')
-        ).subsample(data, reset_index = True)
-        
+            self.prm.smp_train, verbose=True, info=ProcUtils._info("train")
+        ).subsample(data, reset_index=True)
+
         if len(data) != len(data_sample):
-            data = DataStandard.sort(data_sample, self.prm.time_var).reset_index(drop=True)
+            data = DataStandard.sort(data_sample, self.prm.time_var).reset_index(
+                drop=True
+            )
         return data, info
 
-    def _train_test_split(self, data:pDF) -> tuple[pDF, pDF]:
+    def _train_test_split(self, data: pDF) -> tuple[pDF, pDF]:
         """
         Apply the temporal train/test split.
 
         Splits the data chronologically: earlier periods → train,
-        later periods → test.        
+        later periods → test.
         """
-        return (
-            Sampling(self.prm.train_test)
-            .time_split(
-                data, 
-                time_var = self.prm.time_var, 
-                reset_index = True
-        ))
+        return Sampling(self.prm.train_test).time_split(
+            data, time_var=self.prm.time_var, reset_index=True
+        )
 
-    def process(self, input_data:pDF) -> DataProcResult:
+    def process(self, input_data: pDF) -> DataProcResult:
         """
         Execute the full data processing pipeline.
 
@@ -557,26 +564,28 @@ class DataProcessor:
         """
         t_utl = ProcUtils(self.prm)
         stats = t_utl._input_data_stats(input_data)
-        
+
         vars_type = self._vars_types(input_data)
         vars_type = self._set_remove_flow_vars_types(vars_type)
 
-        data, time_se  = self._data_temporal_subset(input_data, stats)
+        data, time_se = self._data_temporal_subset(input_data, stats)
         stats = stats | t_utl._data_stats(data, vars_type, time_se)
-    
-        train, test = self._train_test_split(data)        
+
+        train, test = self._train_test_split(data)
         stats = stats | t_utl._tt_stats(train, test)
 
-        train, vars_type, fe_info = self._fe_sampling(train, vars_type)        
-        train, d_info  = self._train_sampling(train)        
+        train, vars_type, fe_info = self._fe_sampling(train, vars_type)
+        train, d_info = self._train_sampling(train)
 
         vars_type = self._add_flow_vars_types(vars_type)
 
         self.stats = t_utl._final_stats(stats, train, fe_info, d_info)
-        
+
         return DataProcResult(
-            train_data = train,
-            test_data  = test,
-            vars_type  = vars_type,
-        )   
+            train_data=train,
+            test_data=test,
+            vars_type=vars_type,
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

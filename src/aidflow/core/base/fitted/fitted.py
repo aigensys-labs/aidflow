@@ -21,14 +21,8 @@ mandatory result that every pipeline step must produce.
 For secondary model-level results (e.g., auxiliary outputs), see `result.py`.
 """
 
-from ...parameters import  (
-    Parameters
-)
-from .base import  (
-    FittedIDBase, 
-    FittedResultBase,
-    FittedIORegistry
-)
+from ...parameters import Parameters
+from .base import FittedIDBase, FittedResultBase, FittedIORegistry
 
 
 class _FittedRoute:
@@ -40,7 +34,7 @@ class _FittedRoute:
     and identify the correct data-holding instance.
 
     Parameters:
-        instance (Any): The object from which to resolve the route.    
+        instance (Any): The object from which to resolve the route.
     """
 
     def __init__(self, instance):
@@ -53,9 +47,10 @@ class _FittedRoute:
 
         Returns:
             tuple: (FitterBase, ModelBase, ModelUIBase, _ModelRunner)
-        """        
+        """
         from ..model import FitterBase, ModelBase, ModelUIBase
         from ..model_ui import _ModelRunner
+
         return FitterBase, ModelBase, ModelUIBase, _ModelRunner
 
     @staticmethod
@@ -65,8 +60,9 @@ class _FittedRoute:
 
         Returns:
             FIT: The FIT namespace containing routing constants.
-        """        
+        """
         from ..model import FIT
+
         return FIT
 
     def get_model_instance(self):
@@ -78,7 +74,7 @@ class _FittedRoute:
 
         Returns:
             ModelBase | Any: The resolved Model instance.
-        """        
+        """
         FitterBase, ModelBase, ModelUIBase, _ModelRunner = self.get_allowed()
 
         if isinstance(self.instance, ModelUIBase):
@@ -92,7 +88,7 @@ class _FittedRoute:
 
         Returns:
             bool: True if the instance is a FitterBase or _ModelRunner.
-        """        
+        """
         FitterBase, ModelBase, ModelUIBase, _ModelRunner = self.get_allowed()
         return isinstance(self.instance, (FitterBase, _ModelRunner))
 
@@ -109,10 +105,10 @@ class _FittedRoute:
         """
         if self.is_target_instance():
             return False
-        
-        model = self.get_model_instance()            
+
+        model = self.get_model_instance()
         return model._has_get_result()
-    
+
 
 class FittedID(FittedIDBase):
     """
@@ -128,29 +124,29 @@ class FittedID(FittedIDBase):
     This is the "primary" FittedID used by the mandatory pipeline result
     that flows from Fitter through Model to the Worker interface.
     """
-    
+
     @property
     def setup(self) -> Parameters:
         Fitter, Model, ModelUI, Runner = _FittedRoute.get_allowed()
 
         if isinstance(self.instance, (Model, Fitter)):
             return self.instance.setup
-        
+
         if isinstance(self.instance, (ModelUI, Runner)):
             return self.instance.model.setup
-                
-        raise TypeError(self._error())   
-    
+
+        raise TypeError(self._error())
+
     @property
     def model(self) -> str:
         Fitter, Model, ModelUI, Runner = _FittedRoute.get_allowed()
 
         if isinstance(self.instance, (Model, Fitter)):
             return self.instance.MODEL
-        
+
         if isinstance(self.instance, (ModelUI, Runner)):
             return self.instance.model.MODEL
-        
+
         raise TypeError(self._error())
 
     def get_target_instance(self):
@@ -176,7 +172,7 @@ class FittedID(FittedIDBase):
 
         if route.is_target_instance():
             return self.instance
-        
+
         # (A) _get_result defined → Fitter is the final data placeholder
         if route.has_get_result():
             model = route.get_model_instance()
@@ -188,7 +184,7 @@ class FittedID(FittedIDBase):
 
         raise TypeError(self._error())
 
-    def _get_fitted(self, descriptor:bool=False):
+    def _get_fitted(self, descriptor: bool = False):
         """
         Retrieve the result data (or its descriptor) from the target instance.
 
@@ -202,31 +198,32 @@ class FittedID(FittedIDBase):
 
         Returns:
             FittedResult | Any: The descriptor or the result data.
-        """        
+        """
         from ..model import FitterBase
         from ..model_ui import _ModelRunner
 
         instance = self.get_target_instance()
         cls_ = type(instance)
-        
+
         if isinstance(instance, FitterBase):
             desc: FittedResult = cls_.result
-        else: 
+        else:
             desc: FittedResult = cls_.fitted
 
-        if descriptor:        
+        if descriptor:
             return desc
 
         return desc.get_result(instance)
 
     def _error(self):
         FIT = _FittedRoute.get_fit()
-        return ('AIG SAFETY ► '
-            f'FittedResult does not support {type(self.instance)}:'
-            f'\n► When result is routed to the Fitter, verify that {FIT.GRESULT} is implemented.'
-            '\n► FittedResult supports '
-            'FitterBase | ModelBase | ModelUIBase | _ModelRunner '
-            'instance only.\n'
+        return (
+            "AIG SAFETY ► "
+            f"FittedResult does not support {type(self.instance)}:"
+            f"\n► When result is routed to the Fitter, verify that {FIT.GRESULT} is implemented."
+            "\n► FittedResult supports "
+            "FitterBase | ModelBase | ModelUIBase | _ModelRunner "
+            "instance only.\n"
         )
 
 
@@ -245,6 +242,7 @@ class FittedResult(FittedResultBase):
 
     When set (e.g., during `fit()`), it caches the result and
     registers the IO handler for future offload operations.
-    """    
+    """
+
     _id = FittedID
     _io = FittedIORegistry()

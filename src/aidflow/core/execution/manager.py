@@ -28,45 +28,33 @@ By decoupling "how it runs" (infrastructure) from "what it does"
 and environment-aware.
 """
 
-from ...deps.common             import  (
-                                        platform, 
-                                        sys, 
-                                        )
-from ...deps.display            import  HTML
-from ...deps.types              import  Literal
+from ...deps.common import (
+    platform,
+    sys,
+)
+from ...deps.display import HTML
+from ...deps.types import Literal
 
-from ...utils.platform          import  Platform
-from ...utils.ignore            import  Warnings
-from ...display.css             import  (
-                                        CSS, 
-                                        CssStyle,
-                                        )
-from ...display.format          import  (
-                                        FormatUI, 
-                                        FormatHTML, 
-                                        FormatANSI
-                                        )
-from ...display.rgb             import  (
-                                        RgbUI, 
-                                        RgbANSI, 
-                                        RgbHTML,
-                                        )
-from ...display.spinner         import  (
-                                        SpinnerUI,
-                                        SpinnerANSI,
-                                        SpinnerHTML,
-                                        )
-from ..factory                  import  (
-                                        DictClass, 
-                                        Dataclass
-                                        )
-from ..config                   import  THEME
-from .parallel                  import  (
-                                        Parallel, 
-                                        ParallelRay, 
-                                        ParallelMulti
-                                        )
-
+from ...utils.platform import Platform
+from ...utils.ignore import Warnings
+from ...display.css import (
+    CSS,
+    CssStyle,
+)
+from ...display.format import FormatUI, FormatHTML, FormatANSI
+from ...display.rgb import (
+    RgbUI,
+    RgbANSI,
+    RgbHTML,
+)
+from ...display.spinner import (
+    SpinnerUI,
+    SpinnerANSI,
+    SpinnerHTML,
+)
+from ..factory import DictClass, Dataclass
+from ..config import THEME
+from .parallel import Parallel, ParallelRay, ParallelMulti
 
 if (3, 12) > (sys.version_info.major, sys.version_info.minor):
     raise RuntimeError(
@@ -75,20 +63,27 @@ if (3, 12) > (sys.version_info.major, sys.version_info.minor):
         f"{sys.version_info.major}.{sys.version_info.minor}."
     )
 
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # GLOBAL SETTINGS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class UI(DictClass):
     """UI environment ANSI | HTML."""
-    ANSI = 'ansi'
-    HTML = 'html'
+
+    ANSI = "ansi"
+    HTML = "html"
+
 
 class PARALLEL(DictClass):
     """Parallel backend RAY | MULTI | OFF."""
-    RAY   = 'ray'
-    MULTI = 'multi'
-    OFF   = 'off'
+
+    RAY = "ray"
+    MULTI = "multi"
+    OFF = "off"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 @Dataclass.base
 class Config:
@@ -118,18 +113,19 @@ class Config:
     parallel : ParallelRay | ParallelMulti
         Active parallel execution backend.
     """
-    platform        : str
-    python_version  : str
-    ui              : str
-    theme           : str    
-    ui_css          : dict[str, HTML]
-    rgb             : RgbHTML | RgbANSI
-    formatter       : FormatHTML | FormatANSI
-    spinner         : SpinnerHTML | SpinnerANSI
-    parallel        : ParallelRay | ParallelMulti
-    
-    def get_css_id(self, 
-        name: Literal['panel', 'tuning', 'button', 'step', 'line']
+
+    platform: str
+    python_version: str
+    ui: str
+    theme: str
+    ui_css: dict[str, HTML]
+    rgb: RgbHTML | RgbANSI
+    formatter: FormatHTML | FormatANSI
+    spinner: SpinnerHTML | SpinnerANSI
+    parallel: ParallelRay | ParallelMulti
+
+    def get_css_id(
+        self, name: Literal["panel", "tuning", "button", "step", "line"]
     ) -> str:
         """
         Resolve a semantic CSS class name to its concrete
@@ -145,18 +141,18 @@ class Config:
         -------
         str
             The CSS class string for the current theme.
-        """        
+        """
         m = {
-            'panel':    CSS.PANEL,
-            'tuning':   CSS.TUNING,
-            'button':   CSS.BUTTON,
-            'graph':    CSS.GRAPH,
-            'step':     CSS.STEP,
-            'line':     CSS.LINE
+            "panel": CSS.PANEL,
+            "tuning": CSS.TUNING,
+            "button": CSS.BUTTON,
+            "graph": CSS.GRAPH,
+            "step": CSS.STEP,
+            "line": CSS.LINE,
         }
         return m[name]
-    
-    def update_theme(self, theme:THEME) -> "Config":
+
+    def update_theme(self, theme: THEME) -> "Config":
         """
         Return a new Config with the theme changed.
 
@@ -170,10 +166,10 @@ class Config:
         Config
             A new Config instance with the updated theme.
         """
-        prm = self.to_dict() | dict(theme = theme)
+        prm = self.to_dict() | dict(theme=theme)
         return Config(**prm)
-    
-    def update_ui(self, ui:UI) -> "Config":
+
+    def update_ui(self, ui: UI) -> "Config":
         """
         Return a new Config with the rendering engine changed.
 
@@ -186,13 +182,15 @@ class Config:
         -------
         Config
             A new Config instance with the updated UI mode.
-        """        
-        prm = self.to_dict() | dict(ui = ui)
+        """
+        prm = self.to_dict() | dict(ui=ui)
         return Config(**prm)
-        
+
     def is_html(self) -> bool:
         """Check whether the active rendering engine is HTML."""
         return self.ui == UI.HTML
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -211,16 +209,18 @@ class ConfigManager:
     The manager is initialized with a default ANSI/Multi
     configuration for worker threads (no HTML, no Ray).
     """
+
     def __init__(self):
         self._registry: dict[str, Config] = {}
-        self._def_name = 'ansi_multi'
-        self.build(self._def_name, UI.ANSI, PARALLEL.MULTI, THEME.DARK)  
+        self._def_name = "ansi_multi"
+        self.build(self._def_name, UI.ANSI, PARALLEL.MULTI, THEME.DARK)
         # default ANSI config for workers
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _apply_css(ui:str, theme:str|None) -> HTML | None:
-        """Generate CSS style definitions for HTML rendering."""        
+    def _apply_css(ui: str, theme: str | None) -> HTML | None:
+        """Generate CSS style definitions for HTML rendering."""
         if ui != UI.HTML:
             return None
         return CssStyle(theme).ui()
@@ -240,23 +240,25 @@ class ConfigManager:
         return PARALLEL.MULTI
 
     @staticmethod
-    def _normalize_parallel(parallel:str) -> str|None:
+    def _normalize_parallel(parallel: str) -> str | None:
         if parallel == PARALLEL.OFF:
             return None
         return parallel
-    
+
     @staticmethod
-    def _get_default_theme(ui:str) -> str | None:
+    def _get_default_theme(ui: str) -> str | None:
         if ui != UI.HTML:
             return None
         return THEME.METAL
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def build(self, 
-        name:     str, 
-        ui:       UI = UI.ANSI, 
+
+    def build(
+        self,
+        name: str,
+        ui: UI = UI.ANSI,
         parallel: PARALLEL = PARALLEL.MULTI,
-        theme:    THEME = THEME.METAL,
+        theme: THEME = THEME.METAL,
     ) -> Config:
         """
         Build a new Config and register it under the given name.
@@ -286,29 +288,29 @@ class ConfigManager:
         Platform.cross_platform_save_load()
         Platform.joblib_dependecy_workaround()
         Warnings.local_redundant()
-        
-        css         = self._apply_css(ui, theme)
-        rgb         = RgbUI.get_formatter(ui)
-        formatter   = FormatUI.get_formatter(ui)
-        spinner     = SpinnerUI.get_spinner(ui)
-        parallel_   = self._normalize_parallel(parallel)
-        parallel_   = Parallel.get_backend(parallel_)
+
+        css = self._apply_css(ui, theme)
+        rgb = RgbUI.get_formatter(ui)
+        formatter = FormatUI.get_formatter(ui)
+        spinner = SpinnerUI.get_spinner(ui)
+        parallel_ = self._normalize_parallel(parallel)
+        parallel_ = Parallel.get_backend(parallel_)
 
         config = Config(
-            platform        = platform.system().lower(),
-            python_version  = sys.version.split()[0],
-            ui              = ui,
-            theme           = theme,
-            ui_css          = css,
-            rgb             = rgb,
-            formatter       = formatter,
-            spinner         = spinner,
-            parallel        = parallel_,
+            platform=platform.system().lower(),
+            python_version=sys.version.split()[0],
+            ui=ui,
+            theme=theme,
+            ui_css=css,
+            rgb=rgb,
+            formatter=formatter,
+            spinner=spinner,
+            parallel=parallel_,
         )
         self._registry[name] = config
         return config
-    
-    def update(self, name:str, config:Config) -> None:
+
+    def update(self, name: str, config: Config) -> None:
         """
         Replace an existing config in the registry.
 
@@ -321,7 +323,7 @@ class ConfigManager:
         """
         self._registry[name] = config
 
-    def set_default(self, name:str) -> Config:
+    def set_default(self, name: str) -> Config:
         """
         Set the active default config for all pipeline steps.
 
@@ -330,7 +332,7 @@ class ConfigManager:
         name : str
             Registry key to set as default.
         """
-        self._def_name = name        
+        self._def_name = name
 
     def get(self, name: str) -> Config:
         """
@@ -350,6 +352,7 @@ class ConfigManager:
         if name not in self._registry:
             return self.build(name)
         return self._registry[name]
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @property
@@ -371,19 +374,22 @@ class ConfigManager:
     def spinner(self):
         """The active waiting spinner engine."""
         return self.default.spinner
-    
+
     @property
     def parallel(self):
         """The active parallel execution backend."""
         return self.default.parallel
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-    
+
+
 def set_backend(
-    config:   ConfigManager, 
-    name:     str = 'env-config', 
+    config: ConfigManager,
+    name: str = "env-config",
     parallel: PARALLEL = None,
-    ui:       UI = None,
-    theme:    THEME = None,
+    ui: UI = None,
+    theme: THEME = None,
 ) -> Config:
     """
     Build a new configuration and set it as the pipeline default.
@@ -401,8 +407,8 @@ def set_backend(
         Registry name for this configuration.
     parallel : PARALLEL, default=None
         Auto-detects parallel environment when default None is set.
-        Parallel execution backend: 
-        - PARALLEL.RAY   → preferred 
+        Parallel execution backend:
+        - PARALLEL.RAY   → preferred
         - PARALLEL.MULTI → fallback
         - PARALLEL.OFF   → off
     ui : UI, default=None
@@ -417,7 +423,7 @@ def set_backend(
     -------
     Config
         The active configuration (for programmatic access).
-    """ 
+    """
     ui = ui or config._get_ui_backend()
     pl = parallel or config._get_parallel_backend()
     th = theme or config._get_default_theme(ui)
@@ -426,9 +432,11 @@ def set_backend(
     config.build(name, ui, pl, th)
 
     if Platform.is_main():
-        print( RgbANSI.bold_green('AIDflow library imported √') )
+        print(RgbANSI.bold_green("AIDflow library imported √"))
 
     return config.get(name)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 config_manager = ConfigManager()

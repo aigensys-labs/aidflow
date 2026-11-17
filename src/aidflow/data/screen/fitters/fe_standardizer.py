@@ -26,35 +26,25 @@ Design Principles
   screening.
 """
 
-from ....deps.data                  import  np, pDF, pSe
-from ....deps.struct                import  dataclass
-from ....deps.display               import  display
-from ....deps.types                 import  Callable
+from ....deps.data import np, pDF, pSe
+from ....deps.struct import dataclass
+from ....deps.display import display
+from ....deps.types import Callable
 
-from ....core.base                  import  (
-                                            FitterDataBase,
-                                            FitterModelBase
-                                            )
-from ....core.factory               import  Dataclass
-from ....core.foundation            import  (
-                                            AigParam, 
-                                            AigStop
-                                            )
-from ....core.interop               import  Pd
-from ....core.display               import  Display
-from ....core.interop               import  TypeStandard
-from ....core.standard              import  (
-                                            TypeDef, 
-                                            TypeDefinitions
-                                            )
-from ....core.accessor              import  Rgb, Format
-from ....core.logging               import  Logger
+from ....core.base import FitterDataBase, FitterModelBase
+from ....core.factory import Dataclass
+from ....core.foundation import AigParam, AigStop
+from ....core.interop import Pd
+from ....core.display import Display
+from ....core.interop import TypeStandard
+from ....core.standard import TypeDef, TypeDefinitions
+from ....core.accessor import Rgb, Format
+from ....core.logging import Logger
 
-from ....ml.features                import  Correlation
+from ....ml.features import Correlation
 
-from ....utils.builtins             import  List, Str
-from ....display.verbosity          import  Verbosity
-
+from ....utils.builtins import List, Str
+from ....display.verbosity import Verbosity
 
 logger = Logger(__name__)
 
@@ -81,12 +71,14 @@ class FitStandards:
     num_cast : Callable
         Safe downcast of float64 → float32 (preserves precision where needed).
     """
+
     aig_time = TypeStandard.aig_time
     time_num = TypeStandard.time_to_num
     bool_num = TypeStandard.bool_to_num
-    obj_num  = TypeStandard.obj_to_num
+    obj_num = TypeStandard.obj_to_num
     obj_bool = TypeStandard.obj_to_bool
     num_cast = TypeStandard.safe_num_downcast
+
 
 @Dataclass.base
 class FitParamsBase:
@@ -123,13 +115,15 @@ class FitParamsBase:
         Enable safe float64 → float32 downcast for memory efficiency.
         Set to False to preserve full precision (e.g., for regulatory
         reproducibility requirements).
-    """      
+    """
+
     max_miss: float = 0.7
-    max_1val: float = 0.9 
-    max_corr: float = 0.9 
-    max_var:  float = 0.9 
-    cat_max:  int   = 50
-    downcast: bool|int = True
+    max_1val: float = 0.9
+    max_corr: float = 0.9
+    max_var: float = 0.9
+    cat_max: int = 50
+    downcast: bool | int = True
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -149,16 +143,19 @@ class FitParamsCfg:
         excluded from quality screening and type conversion.
     verbose : bool | Verbosity, default=True
         Enable progress display, warnings, and result output.
-    """    
-    time_var:     str
-    time_format:  str
+    """
+
+    time_var: str
+    time_format: str
     new_time_var: str
-    flow_vars:   list
-    verbose: bool|Verbosity = True
+    flow_vars: list
+    verbose: bool | Verbosity = True
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -191,16 +188,18 @@ class FitResult:
     missing : pSe
         Missing rate per feature in the training data (for drift detection).
     """
-    vars_type:      pSe 
-    vars_all:       list 
-    numeric:        list
-    object:         list
-    t_type_fix:     list
-    timedelta:      list       
-    bool:           list
-    vars_n_o:       list
-    vars_dropped:   list
-    missing:        pSe   
+
+    vars_type: pSe
+    vars_all: list
+    numeric: list
+    object: list
+    t_type_fix: list
+    timedelta: list
+    bool: list
+    vars_n_o: list
+    vars_dropped: list
+    missing: pSe
+
 
 @Dataclass.base
 class FitStats:
@@ -221,13 +220,16 @@ class FitStats:
     corr_removed : int
         Number of features removed due to correlation redundancy.
     """
-    vars_org:     pSe
-    d_typefix:    list  
-    corr_upper:   pDF
+
+    vars_org: pSe
+    d_typefix: list
+    corr_upper: pDF
     corr_removed: int
+
 
 SCHEMA = Dataclass.schema(TypeDefinitions)
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class FitBase:
@@ -243,23 +245,23 @@ class FitBase:
 
     @dataclass(slots=True)
     class VarData:
-        x:   str    # var name
-        xs:  pSe    # var data series
-        xc:  int    # var non-miss count
-        xvc: pSe    # var non-miss value counts
+        x: str  # var name
+        xs: pSe  # var data series
+        xc: int  # var non-miss count
+        xvc: pSe  # var non-miss value counts
 
-    def __init__(self, params:FitParams, verbose=True):
+    def __init__(self, params: FitParams, verbose=True):
         self._assert()
 
         self.prm = params
         self.verbose = verbose
 
-        self.adj_cols       = {}
-        self.vars_dropped   = []
-        self.t_tdelta       = []     # train timedelta type
-        self.t_bool         = []     # train bool type
-        self.t_typefix      = []     # train typefix obj -> num
-        self.d_typefix      = []     # dash info of typefix
+        self.adj_cols = {}
+        self.vars_dropped = []
+        self.t_tdelta = []  # train timedelta type
+        self.t_bool = []  # train bool type
+        self.t_typefix = []  # train typefix obj -> num
+        self.d_typefix = []  # dash info of typefix
 
     @staticmethod
     def _assert():
@@ -270,23 +272,25 @@ class FitBase:
         ------
         ValueError
             If any required type key is missing from the FitResult schema.
-        """        
+        """
         fr = Dataclass.schema(FitResult)
         if any(
-            x not in fr.keys() for x in [
-                SCHEMA.numeric, 
-                SCHEMA.object, 
-                SCHEMA.timedelta, 
-                SCHEMA.bool, 
-                SCHEMA.missing
-        ]):
+            x not in fr.keys()
+            for x in [
+                SCHEMA.numeric,
+                SCHEMA.object,
+                SCHEMA.timedelta,
+                SCHEMA.bool,
+                SCHEMA.missing,
+            ]
+        ):
             raise ValueError(
-                'AIG SAFETY ► FitResult must match TypeDefinitions types exactly.'
+                "AIG SAFETY ► FitResult must match TypeDefinitions types exactly."
             )
 
     # Data ops
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    def set_remove_flow_vars_type(self, vars_types:pSe) -> pSe:
+    def set_remove_flow_vars_type(self, vars_types: pSe) -> pSe:
         """
         Partition features into "screen" and "preserve" sets.
 
@@ -303,20 +307,22 @@ class FitBase:
         -------
         pSe
             Dtypes of exogenous features to screen (flow vars removed).
-        """        
+        """
         self.flow_vars_types = None
         f = self.prm.flow_vars
         v = vars_types.index
         n = v.isin(f)
         if sum(n):
-            self.flow_vars_types = vars_types[n]    # keep types of vars needed in the flow
-        r = v.isin( f + [self.prm.time_var] )       # vars to remove from processing
-        return self.data.dtypes[v[~r]]              # exogenous vars-types for processing
-    
-    def add_flow_vars_type(self, vars_types:pSe) -> pSe:
+            self.flow_vars_types = vars_types[
+                n
+            ]  # keep types of vars needed in the flow
+        r = v.isin(f + [self.prm.time_var])  # vars to remove from processing
+        return self.data.dtypes[v[~r]]  # exogenous vars-types for processing
+
+    def add_flow_vars_type(self, vars_types: pSe) -> pSe:
         """Re-append preserved flow var types to the screened result."""
         return Pd.concat([self.flow_vars_types, vars_types])
-    
+
     def set_vars_type_to_process(self, vars_types: pSe) -> None:
         """Register the active type mapping for the current screening pass."""
         self.vars_types_ = vars_types.copy()
@@ -334,11 +340,11 @@ class FitBase:
         -------
         pSe
             Feature name → dtype mapping.
-        """        
+        """
         vt = self.vars_types_
-        if sort: 
-            return vt.sort_index()       
-        return vt 
+        if sort:
+            return vt.sort_index()
+        return vt
 
     def update_vars_type(self) -> None:
         """Refresh the dtype entry for the current feature after conversion."""
@@ -348,34 +354,32 @@ class FitBase:
         """List feature names classified as numeric."""
         vt = self.get_vars_type(sort)
         return [x for x in vt.index if vt[x] in TypeDef.numeric]
-        
+
     def get_obj_vars(self, sort=True) -> list:
         """List feature names classified as object/categorical."""
         vt = self.get_vars_type(sort)
         return [x for x in vt.index if vt[x] in TypeDef.object]
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-        
-    def set_data(self, data:pDF) -> None:
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def set_data(self, data: pDF) -> None:
         """Set the working data frame for the current pass."""
         self.data = data
 
-    def _update_data(self, du:pDF | list[pDF], cols:list) -> None:     
+    def _update_data(self, du: pDF | list[pDF], cols: list) -> None:
         if not cols:
             return
-        data = Pd.concat(
-            List.ensure(du) + [self.data.drop(cols, axis=1)],
-            axis=1
-        )
+        data = Pd.concat(List.ensure(du) + [self.data.drop(cols, axis=1)], axis=1)
         self.data = data[self.data.columns]
 
-    def update_data(self, du:pDF) -> None:
-        """Replace specific columns in the working data with transformed versions."""            
+    def update_data(self, du: pDF) -> None:
+        """Replace specific columns in the working data with transformed versions."""
         cols = list(du.columns)
         self._update_data(du, cols)
 
     def consolidate_data(self) -> None:
         """Merge all pending column adjustments back into the main data frame."""
-        du = list( self.adj_cols.values() )
+        du = list(self.adj_cols.values())
         self._update_data(du, self.adj_cols)
 
     def apply_adj(self, fx: Callable) -> None:
@@ -390,7 +394,7 @@ class FitBase:
         ----------
         fx : Callable
             Transformation function `(data, col, inplace) → data`.
-        """        
+        """
         d = self.adj_cols.get(self.x)
         d = self.data if d is None else d
 
@@ -398,8 +402,8 @@ class FitBase:
         if not len(d.columns):
             return
         self.adj_cols[self.x] = d
-    
-    def downcast_float_vars(self, x:str=None):
+
+    def downcast_float_vars(self, x: str = None):
         """
         Apply safe float64 → float32 downcast.
 
@@ -407,75 +411,75 @@ class FitBase:
         ----------
         x : str, optional
             Specific feature to downcast. If None, downcasts all numeric columns.
-        """        
+        """
         if not self.prm.downcast:
             return
         if x:
             self.apply_adj(FitStandards.num_cast)
         else:
             dn = FitStandards.num_cast(self.data, inplace=False)
-            self.update_data(dn)          
-
+            self.update_data(dn)
 
     # Var ops
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     @staticmethod
-    def _ensure_se(d:pDF|pSe) -> pSe:
+    def _ensure_se(d: pDF | pSe) -> pSe:
         if isinstance(d, pSe):
             return d
         return d.squeeze()
-    
+
     @staticmethod
-    def _counts(xs:pSe) -> tuple[int, pSe]:
-        xc  = xs.count()
-        xvc = xs.value_counts()  
+    def _counts(xs: pSe) -> tuple[int, pSe]:
+        xc = xs.count()
+        xvc = xs.value_counts()
         return xc, xvc
-    
+
     def get_col(self, x: str) -> pSe:
-        """Retrieve a feature column, preferring the adjustment buffer."""        
+        """Retrieve a feature column, preferring the adjustment buffer."""
         if x in self.adj_cols:
-            return self._ensure_se( self.adj_cols[x] )
+            return self._ensure_se(self.adj_cols[x])
         return self.data[x]
-    
-    def set_var(self, x:str) -> None:   
-        """Load a feature into the working state for quality evaluation."""        
+
+    def set_var(self, x: str) -> None:
+        """Load a feature into the working state for quality evaluation."""
         self.x = x
         xs = self.get_col(x)
         self.var = self.VarData(x, xs, *self._counts(xs))
-    
+
     def update_var(self) -> None:
         """Re-read the current feature and refresh its type in the registry."""
         self.set_var(self.x)
         self.update_vars_type()
-   
-    def remove_var(self, reason:str, x:str=None) -> None:
+
+    def remove_var(self, reason: str, x: str = None) -> None:
         """Mark a feature as dropped and record the reason."""
-        if x is None: x = self.x
+        if x is None:
+            x = self.x
         self.vars_dropped.append(
-            {'Feature':x, 'Type':self.vars_types_[x], 'Reason':reason}
+            {"Feature": x, "Type": self.vars_types_[x], "Reason": reason}
         )
         del self.vars_types_[x]
 
-    def is_var_type(self, t:str) -> bool:
+    def is_var_type(self, t: str) -> bool:
         """Check if the current feature belongs to a type group (e.g., 'numeric', 'bool')."""
         return self.vars_types_[self.x] in TypeDef[t]
-    
+
     # Quality Checks def
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     def is_blank(self) -> bool:
         """True if the feature has zero non-missing values (100% NaN)."""
         return not self.var.xc
-    
+
     def is_missing(self) -> bool:
         """True if missing rate exceeds `max_miss` threshold."""
-        c = ( self.var.xs.isnull().sum() / len(self.var.xs) )
-        return c  > self.prm.max_miss
-    
+        c = self.var.xs.isnull().sum() / len(self.var.xs)
+        return c > self.prm.max_miss
+
     def is_non_informative(self) -> bool:
         """True if the most frequent value exceeds `max_1val` share (near-constant)."""
-        c = ( self.var.xvc.iloc[0] / self.var.xc )
+        c = self.var.xvc.iloc[0] / self.var.xc
         return c > self.prm.max_1val
-    
+
     def is_num_noisy(self) -> bool:
         """
         True if the numerical feature is likely an ID or timestamp.
@@ -483,14 +487,14 @@ class FitBase:
         Computed as the fraction of values that become unique when rounded
         to 0 decimal places. A ratio > `max_var` (default 90%) indicates
         the column carries per-row identity rather than signal.
-        """        
-        c = ( len( self.var.xvc.index.round(0).value_counts() ) / self.var.xc )
+        """
+        c = len(self.var.xvc.index.round(0).value_counts()) / self.var.xc
         return c > self.prm.max_var
-    
+
     def is_cat_noisy(self) -> bool:
         """True if the number of distinct categories exceeds `cat_max`."""
         return len(self.var.xvc) > self.prm.cat_max
-    
+
     # Data Type Convertors by fx
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     def timedelta_to_num(self):
@@ -498,9 +502,9 @@ class FitBase:
         Convert timedelta-type feature to numeric (if applicable).
 
         No-op if the feature is not of timedelta type.
-        """        
+        """
         if not self.is_var_type(SCHEMA.timedelta):
-            return 
+            return
         self.apply_adj(FitStandards.time_num)
         self.update_var()
         self.t_tdelta.append(self.x)
@@ -510,13 +514,13 @@ class FitBase:
         Convert boolean-type feature to 0/1 numeric (if applicable).
 
         No-op if the feature is not of bool type.
-        """        
+        """
         if not self.is_var_type(SCHEMA.bool):
             return
         self.apply_adj(FitStandards.bool_num)
         self.update_var()
-        self.t_bool.append(self.x)        
-        
+        self.t_bool.append(self.x)
+
     def fix_numerical_and_string(self):
         """
         Detect and auto-repair mixed numeric/string or numeric-as-string columns.
@@ -528,40 +532,43 @@ class FitBase:
           values are parseable as numeric → cast to numeric.
 
         A repair log entry is recorded for user visibility.
-        """        
+        """
         num = TypeStandard.safe_to_numeric(self.var.xs).notnull().sum()
-        
+
         if not num:
             return
-        
-        str_ = (self.var.xvc.index.map(type)==str).sum()
-        
-        if (            
-            str_ or
-            ( ( not str_ ) and self.is_var_type(SCHEMA.object) )
-        ):
-            self._fix_numerical_and_string(num, 'Mixed Data Type - Numerical and String')
 
-    def _fix_numerical_and_string(self, num:int, w:str):   
-        str_= self.var.xc - num
+        str_ = (self.var.xvc.index.map(type) == str).sum()
+
+        if str_ or ((not str_) and self.is_var_type(SCHEMA.object)):
+            self._fix_numerical_and_string(
+                num, "Mixed Data Type - Numerical and String"
+            )
+
+    def _fix_numerical_and_string(self, num: int, w: str):
+        str_ = self.var.xc - num
         dcs = str_ / num
-        decision = 'Categorical'
+        decision = "Categorical"
         if dcs < 1:
             self.apply_adj(FitStandards.obj_num)
             self.downcast_float_vars(self.x)
-            decision = 'Numerical'
+            decision = "Numerical"
         d = {
-            'Feature':self.x, 'Non-Missing': f'{self.var.xc:,}', 
-            'NUM Events': f'{num:,}','CAT Events': f'{str_:,}', 
-            'CAT/NUM': f'{dcs:.1%}', 'Reason':w + ' → ' + decision
+            "Feature": self.x,
+            "Non-Missing": f"{self.var.xc:,}",
+            "NUM Events": f"{num:,}",
+            "CAT Events": f"{str_:,}",
+            "CAT/NUM": f"{dcs:.1%}",
+            "Reason": w + " → " + decision,
         }
         logger.warning(
-            f'Conversion → {decision} → ' +
-            ' | '.join(f'{k}: {v}' for k, v in d.items() if k!='Reason')
+            f"Conversion → {decision} → "
+            + " | ".join(f"{k}: {v}" for k, v in d.items() if k != "Reason")
         )
         self.d_typefix.append(d)
         self.update_var()
-        self.t_typefix.append(self.x)   
+        self.t_typefix.append(self.x)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def corr(self):
@@ -576,18 +583,22 @@ class FitBase:
         (count) for the stats output.
         """
         num = self.get_num_vars()
-        self.corr_upper, self.corr_removed = [None]*2
+        self.corr_upper, self.corr_removed = [None] * 2
         if not num:
             return
-        corr, to_drop = (
-            Correlation(self.prm.max_corr, verbose=self.verbose).process(self.data[num])
+        corr, to_drop = Correlation(self.prm.max_corr, verbose=self.verbose).process(
+            self.data[num]
         )
         self.corr_upper = corr.astype(np.float32).round(5)
         self.corr_removed = len(to_drop)
-        for x in to_drop:                
-            self.remove_var(f'Correlation over {self.prm.max_corr:.0%} with more populated Feature', x)
+        for x in to_drop:
+            self.remove_var(
+                f"Correlation over {self.prm.max_corr:.0%} with more populated Feature",
+                x,
+            )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def verify_types(self):
         """
         Final cross-check: ensure all remaining features are numeric or object.
@@ -600,17 +611,24 @@ class FitBase:
         if len(current_types) == len(allowed_types):
             return
         miss = [x for x in current_types.index if x not in allowed_types]
-        type_= current_types[miss]
-        for x in miss: 
-            self.remove_var('Unknown Feature Type', x)
+        type_ = current_types[miss]
+        for x in miss:
+            self.remove_var("Unknown Feature Type", x)
         if not self.verbose:
             return
         Format.splitter()
-        Format.display(f'WARNING: Unexpected Data Types of variables: {', '.join(miss)}')
-        Format.display('Please check data structure of these variables before data import ► '
-              'AIG will ignore listed variables for the next Phases')
-        display(type_)    
+        Format.display(
+            f"WARNING: Unexpected Data Types of variables: {', '.join(miss)}"
+        )
+        Format.display(
+            "Please check data structure of these variables before data import ► "
+            "AIG will ignore listed variables for the next Phases"
+        )
+        display(type_)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitWorker(FitBase):
     """
@@ -630,9 +648,9 @@ class FitWorker(FitBase):
 
     The output is a `FitResult` (learned type mapping + drop list) and
     `FitStats` (diagnostic data for display/audit).
-    """             
+    """
 
-    def __init__(self,params:FitParams, verbose:bool=True):
+    def __init__(self, params: FitParams, verbose: bool = True):
         super().__init__(params, verbose)
 
     # Quality Checks by Var
@@ -649,79 +667,84 @@ class FitWorker(FitBase):
         ----------
         x : str
             Feature name to screen.
-        """        
+        """
         self.set_var(x)
-        
+
         # 1 Missing
         if self.is_blank():
-            self.remove_var('100% Blank Feature')
-            return        
-        
+            self.remove_var("100% Blank Feature")
+            return
+
         # 2 Time Features
         if self.is_var_type(SCHEMA.datetime):
-            self.remove_var('Unspecified Static Time Feature')
-            return 
-        
-        # 3 Convert to proper type Num/Obj   
+            self.remove_var("Unspecified Static Time Feature")
+            return
+
+        # 3 Convert to proper type Num/Obj
         self.fix_numerical_and_string()
         self.timedelta_to_num()
         self.bool_to_num()
 
         # 4 (Any) Excessive Missing Rate
         if self.is_missing():
-            self.remove_var(f'Missing > {self.prm.max_miss:.0%}')
+            self.remove_var(f"Missing > {self.prm.max_miss:.0%}")
 
         # 5 (Any) Non-Informative Feature
         elif self.is_non_informative():
-            self.remove_var(f'Only 1 Value over {self.prm.max_1val:.0%} of all Values')
+            self.remove_var(f"Only 1 Value over {self.prm.max_1val:.0%} of all Values")
 
         # 6 (Num)
         elif self.is_var_type(SCHEMA.numeric):
-            # 6.1 Noisy Feature - ID or Time VAR most likely  
+            # 6.1 Noisy Feature - ID or Time VAR most likely
             if self.is_num_noisy():
-                self.remove_var('Suspiciously High Variability - ID/Time Feature?')
+                self.remove_var("Suspiciously High Variability - ID/Time Feature?")
 
         # 7 (Cat)
         elif self.is_var_type(SCHEMA.object):
-            # 7.1 Noisy Feature - Max Number of Categories    
+            # 7.1 Noisy Feature - Max Number of Categories
             if self.is_cat_noisy():
-                self.remove_var(f'Number of Categories over Max {self.prm.cat_max}')    
+                self.remove_var(f"Number of Categories over Max {self.prm.cat_max}")
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _get_fit_result(self) -> tuple[FitResult, FitStats]:
         num = self.get_num_vars()
-        obj = self.get_obj_vars()        
-        n_o = num + obj                       # sorted num-cat    
+        obj = self.get_obj_vars()
+        n_o = num + obj  # sorted num-cat
 
-        v_t = self.get_vars_type()[n_o]      # vars dtypes sorted num-cat
+        v_t = self.get_vars_type()[n_o]  # vars dtypes sorted num-cat
         v_t = self.add_flow_vars_type(v_t)
         v_all = self.prm.flow_vars + n_o
 
-        missing = self.data[n_o].isna().sum()/len(self.data)
+        missing = self.data[n_o].isna().sum() / len(self.data)
 
         return (
-        FitResult(
-            vars_type    = v_t,
-            vars_all     = v_all,
-            vars_n_o     = n_o,   
-            numeric      = num,
-            object       = obj,
-            vars_dropped = self.vars_dropped,
-            t_type_fix   = self.t_typefix,
-            timedelta    = self.t_tdelta,
-            bool         = self.t_bool,
-            missing      = missing,
-        ), 
-        FitStats(
-            vars_org     = self.vars_types_org,
-            d_typefix    = self.d_typefix,
-            corr_upper   = self.corr_upper,
-            corr_removed = self.corr_removed
-        ))
+            FitResult(
+                vars_type=v_t,
+                vars_all=v_all,
+                vars_n_o=n_o,
+                numeric=num,
+                object=obj,
+                vars_dropped=self.vars_dropped,
+                t_type_fix=self.t_typefix,
+                timedelta=self.t_tdelta,
+                bool=self.t_bool,
+                missing=missing,
+            ),
+            FitStats(
+                vars_org=self.vars_types_org,
+                d_typefix=self.d_typefix,
+                corr_upper=self.corr_upper,
+                corr_removed=self.corr_removed,
+            ),
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    @AigParam.with_setattr_runtime(verbose=None)    
-    def process(self, data:pDF, vars_types:pSe, **kwargs) -> tuple[FitResult, FitStats]:
+
+    @AigParam.with_setattr_runtime(verbose=None)
+    def process(
+        self, data: pDF, vars_types: pSe, **kwargs
+    ) -> tuple[FitResult, FitStats]:
         """
         Execute the full data quality screening pipeline.
 
@@ -739,7 +762,7 @@ class FitWorker(FitBase):
         tuple[FitResult, FitStats]
             Learned type mapping + screening diagnostics.
         """
-        
+
         self.set_data(data)
         self.downcast_float_vars()
         # NOTE: Downcasting is positioned here (not at data load) to preserve
@@ -751,20 +774,21 @@ class FitWorker(FitBase):
         self.vars_types_org = vars_types_
 
         to_scan, progress = Display.processing_progress(
-            vars_types_.index, verbose=self.verbose, desc='Data Quality Check'
+            vars_types_.index, verbose=self.verbose, desc="Data Quality Check"
         )
         for x in to_scan:
             Display.update_progress(progress)
-            self.var_quality_check(x)          
+            self.var_quality_check(x)
 
         self.consolidate_data()
 
         self.corr()
-        self.verify_types()  
+        self.verify_types()
 
         return self._get_fit_result()
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -773,8 +797,12 @@ class FitWorker(FitBase):
 @Dataclass.base
 class TransResCols(FitResult):
     """Transfomer output design."""
-    vars_all:   list 
+
+    vars_all: list
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class TransWorker:
@@ -800,81 +828,75 @@ class TransWorker:
         Pipeline configuration (time vars, downcast, flow vars).
     fit_result : FitResult
         Learned type mapping and screening output from the fit stage.
-    """       
+    """
 
-    def __init__(self, params: FitParams, fit_result:FitResult):
-        self.t_prm   = params
-        self.t_res   = fit_result
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
-    def set_data(self, data:pDF) -> None:
+    def __init__(self, params: FitParams, fit_result: FitResult):
+        self.t_prm = params
+        self.t_res = fit_result
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def set_data(self, data: pDF) -> None:
         """Align data with trained variables."""
-        time = (
-            self.t_prm.time_var, 
-            self.t_prm.time_format,
-            self.t_prm.new_time_var
-        )        
-        cols   = data.columns
+        time = (self.t_prm.time_var, self.t_prm.time_format, self.t_prm.new_time_var)
+        cols = data.columns
         subset = [x for x in self.t_res.vars_all if x in cols]
 
         if not subset:
             raise AigStop.custom(
-                'AIG SAFETY ► Input data has to contain known columns from training, '
-                'provided data has overlap gap.'
+                "AIG SAFETY ► Input data has to contain known columns from training, "
+                "provided data has overlap gap."
             )
 
         if all([True if x in subset else False for x in time[:-1]]):
-            FitStandards.aig_time(data,*time)
-        
+            FitStandards.aig_time(data, *time)
+
         self.data = data[subset]
         self.vars_types = self.get_vars_types()
 
-    def update_data(self, du: pDF | list[pDF|pSe], cols: list=None) -> None:
+    def update_data(self, du: pDF | list[pDF | pSe], cols: list = None) -> None:
         cols = cols or du.columns
-        data = Pd.concat(
-            List.ensure(du) + [self.data.drop(cols, axis=1)], 
-            axis=1
-        )
+        data = Pd.concat(List.ensure(du) + [self.data.drop(cols, axis=1)], axis=1)
         self.data = data[self.data.columns]
 
     def get_data(self) -> pDF:
         return self.data
 
-    def get_cols(self, trained_kind:list) -> list:
+    def get_cols(self, trained_kind: list) -> list:
         return [x for x in trained_kind if x in self.data.columns]
-    
+
     def get_vars_types(self) -> pSe:
         return self.data.dtypes
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _info(self, wrong_x: list, text: Callable[[str], str]):
         for x in wrong_x:
-            w = f'Feature {x} {text(x)}'
+            w = f"Feature {x} {text(x)}"
             logger.warning(w)
 
-    def _info_exact(self, fcc:list):
-        head = 'Applying Trained Types to New Data → Inconsistency present → Forcing Trained Type'
-        data  = {
-            'TRAIN' : self.t_res.vars_type[fcc], 
-            'NEW'   : self.vars_types[fcc]
-        }
-        al  = Str.fx_align(list(data))
-        msg = lambda x: f'{x} DATA {al(x)}→ {data[x].to_dict()}'
+    def _info_exact(self, fcc: list):
+        head = "Applying Trained Types to New Data → Inconsistency present → Forcing Trained Type"
+        data = {"TRAIN": self.t_res.vars_type[fcc], "NEW": self.vars_types[fcc]}
+        al = Str.fx_align(list(data))
+        msg = lambda x: f"{x} DATA {al(x)}→ {data[x].to_dict()}"
 
-        for x in (head, msg('TRAIN'), msg('NEW')):
+        for x in (head, msg("TRAIN"), msg("NEW")):
             logger.warning(x)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
-    def apply_type(self, fx: Callable, cols:list) -> None:
-        dt = fx(self.data, cols, inplace = False)                
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def apply_type(self, fx: Callable, cols: list) -> None:
+        dt = fx(self.data, cols, inplace=False)
         self.update_data(dt)
 
-    def ensure_type(self, 
-        expected_type: str, 
-        fx_transform: Callable = None, 
-        fx_fix_wrong_type: Callable = None, 
-        to_raise: bool = False
-    ) -> None:        
+    def ensure_type(
+        self,
+        expected_type: str,
+        fx_transform: Callable = None,
+        fx_fix_wrong_type: Callable = None,
+        to_raise: bool = False,
+    ) -> None:
         """
         Enforce a trained type on all features of that type.
 
@@ -896,59 +918,64 @@ class TransWorker:
         - Features with wrong type but repaired during train → apply fix silently.
         - Features with wrong type and NOT repaired during train → warn user.
           If `to_raise`, stop execution.
-        """        
+        """
         vars_fitted, type_def = self.t_res[expected_type], TypeDef[expected_type]
-        
+
         vars_fitted = self.get_cols(vars_fitted)
         if not vars_fitted:
             return
-        
-        wrong_type  = [x for x in vars_fitted if self.vars_types[x] not in type_def]
 
-        if wrong_type:                
-            not_fixed_on_train = [x for x in wrong_type if x not in self.t_res.t_type_fix]
+        wrong_type = [x for x in vars_fitted if self.vars_types[x] not in type_def]
+
+        if wrong_type:
+            not_fixed_on_train = [
+                x for x in wrong_type if x not in self.t_res.t_type_fix
+            ]
             # NOTE warn only if different behavior from train
-            
+
             i = lambda x: (
-                f'was determined as {expected_type} during TRAIN '
-                f'but NEW DATA type is {self.vars_types[x]} → Auto Fixed Attempt'
+                f"was determined as {expected_type} during TRAIN "
+                f"but NEW DATA type is {self.vars_types[x]} → Auto Fixed Attempt"
             )
             self._info(not_fixed_on_train, i)
-            
+
             if not_fixed_on_train and to_raise:
                 raise ValueError(
-                    '\n ► AIG EXECUTION HAS BEEN STOPPED'
-                    '\n ► Scoring Data Types must be fixed prior AIG prediction'
+                    "\n ► AIG EXECUTION HAS BEEN STOPPED"
+                    "\n ► Scoring Data Types must be fixed prior AIG prediction"
                 )
-            
+
             if fx_fix_wrong_type is not None:
                 self.apply_type(fx_fix_wrong_type, wrong_type)
 
         if fx_transform is not None:
             self.apply_type(fx_transform, vars_fitted)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def get_downcast_float64(self) -> list:
         if not self.t_prm.downcast:
             return []
-        
+
         v_fitted = [
-            x for x in self.t_res[SCHEMA.numeric] 
+            x
+            for x in self.t_res[SCHEMA.numeric]
             if self.t_res.vars_type[x] in TypeDef.float32
         ]
         v_fitted = self.get_cols(v_fitted)
-        v_types  = self.get_vars_types()
+        v_types = self.get_vars_types()
 
         return [x for x in v_fitted if v_types[x] in TypeDef.float64]
-        
+
     def apply_downcast(self) -> None:
         """Apply float64 → float32 downcast to identified columns."""
         cols = self.get_downcast_float64()
         if not cols:
-            return        
+            return
         self.apply_type(FitStandards.num_cast, cols)
-    # ───────────────────────────────────────────────────────────────────────────────────────────── 
-    
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def ensure_exact_format(self):
         """
         Force exact dtype match with training for all model features.
@@ -963,17 +990,16 @@ class TransWorker:
         cols = self.get_cols(self.t_res.vars_n_o)
         if not cols:
             return
-        fcc = ( self.t_res.vars_type[cols] != vars_type[cols] )
+        fcc = self.t_res.vars_type[cols] != vars_type[cols]
         if not sum(fcc):
             return
-        fcc = fcc[fcc].index.to_list()           
-        du  = []
+        fcc = fcc[fcc].index.to_list()
+        du = []
         for x in fcc:
-            du.append(
-                self.data[x].astype(self.t_res.vars_type[x])
-            )
+            du.append(self.data[x].astype(self.t_res.vars_type[x]))
         self.update_data(du, fcc)
-        self._info_exact(fcc)                  
+        self._info_exact(fcc)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def verify_missing(self):
@@ -990,24 +1016,27 @@ class TransWorker:
         """
         cols = self.get_cols(self.t_res.vars_all)
         miss = self.data[cols].isna().sum() / len(self.data)
-        blank = list(miss[miss == 1].index)            
+        blank = list(miss[miss == 1].index)
 
         cols_ = self.get_cols(self.t_res.vars_n_o)
         signi = {}
         for x in cols_:
             diff = miss[x] - self.t_res.missing[x]
-            if ( diff > 0.15 ) and ( x not in blank ): 
+            if (diff > 0.15) and (x not in blank):
                 signi[x] = diff
-        
-        i = lambda x: 'is 100% missing in NEW DATA but was non-missing in TRAIN '
-        self._info(blank, i)     
-        
-        i =  lambda x: f'has {signi[x]:.1%}% higher Missing rate in NEW DATA → TRAIN missing rate was {self.t_res.missing[x]:.1%}'
-        self._info(signi, i)   
+
+        i = lambda x: "is 100% missing in NEW DATA but was non-missing in TRAIN "
+        self._info(blank, i)
+
+        i = (
+            lambda x: f"has {signi[x]:.1%}% higher Missing rate in NEW DATA → TRAIN missing rate was {self.t_res.missing[x]:.1%}"
+        )
+        self._info(signi, i)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    @AigParam.with_setattr_runtime(verbose=None)    
-    def process(self, data:pDF, **kwargs) -> pDF:
+
+    @AigParam.with_setattr_runtime(verbose=None)
+    def process(self, data: pDF, **kwargs) -> pDF:
         """
         Execute the full type-enforcement pipeline on new data.
 
@@ -1030,22 +1059,25 @@ class TransWorker:
         ValueError
             If a critical type mismatch is detected (timedelta) and
             auto-repair fails.
-        """        
-        self.set_data(data)        
+        """
+        self.set_data(data)
 
-        self.ensure_type(SCHEMA.timedelta, FitStandards.time_num, to_raise=True)      
-        self.ensure_type(SCHEMA.bool,      FitStandards.bool_num, FitStandards.obj_bool)      
-        self.ensure_type(SCHEMA.numeric,   fx_fix_wrong_type = FitStandards.obj_num)      
-        self.ensure_type(SCHEMA.object)    # info only → obj to cat is reponsibility of higher layer
+        self.ensure_type(SCHEMA.timedelta, FitStandards.time_num, to_raise=True)
+        self.ensure_type(SCHEMA.bool, FitStandards.bool_num, FitStandards.obj_bool)
+        self.ensure_type(SCHEMA.numeric, fx_fix_wrong_type=FitStandards.obj_num)
+        self.ensure_type(
+            SCHEMA.object
+        )  # info only → obj to cat is reponsibility of higher layer
 
         self.apply_downcast()
 
         self.ensure_exact_format()
-        self.verify_missing()                 
+        self.verify_missing()
 
         return self.get_data()
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -1053,23 +1085,26 @@ class TransWorker:
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class Fitter(FitterDataBase):
     """Learn and Transform Data Features to expected trained dtypes and format."""
-    
+
     def __init__(self, params: FitParams):
         self.prm = params
-        
-    def fit(self, data:pDF, fe_types:list):
+
+    def fit(self, data: pDF, fe_types: list):
         """Learn-Fix dtypes and format standards of dataset."""
-        fitter = FitWorker(self.prm, self.prm.verbose)        
+        fitter = FitWorker(self.prm, self.prm.verbose)
         result = fitter.process(data, fe_types)
         self.result = result[0]
-        self.stats  = result[1]
+        self.stats = result[1]
         return self
-    
-    def transform(self, data:pDF):        
+
+    def transform(self, data: pDF):
         """Transformation of dataset based on fitted standards."""
         worker = TransWorker(self.prm, self.result)
-        return worker.process(data)    
+        return worker.process(data)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureStandardizer(FitterModelBase[Fitter]):
     """
@@ -1148,10 +1183,10 @@ class FeatureStandardizer(FitterModelBase[Fitter]):
     >>> data_test = std.transform(data_test)
     """
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
 
-    def fit(self, data:pDF, fe_types:list):
+    def fit(self, data: pDF, fe_types: list):
         """
         Screen training data and learn canonical type standards.
 
@@ -1170,8 +1205,8 @@ class FeatureStandardizer(FitterModelBase[Fitter]):
         self._fitter = Fitter(self._params)
         self._fitter.fit(data, fe_types)
         return self
-    
-    def transform(self, data:pDF):
+
+    def transform(self, data: pDF):
         """
         Apply fitted type standards to new data.
 
@@ -1186,4 +1221,6 @@ class FeatureStandardizer(FitterModelBase[Fitter]):
             Type-aligned data ready for modelling.
         """
         return self.fitter.transform(data)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

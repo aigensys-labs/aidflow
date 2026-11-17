@@ -38,37 +38,22 @@ Per feature:
 - A binary verdict (kept / dropped) with reason.
 """
 
-from ....deps.struct                import  dataclass
-from ....deps.data                  import  np, pDF, pSe
-from ....deps.types                 import  Literal
+from ....deps.struct import dataclass
+from ....deps.data import np, pDF, pSe
+from ....deps.types import Literal
 
-from ....core.base                  import  (
-                                            FitterDataBase, 
-                                            FitterModelBase
-                                            )
-from ....core.factory               import  (
-                                            Dataclass,
-                                            DictClass
-                                            )
-from ....core.foundation            import  AigParam
-from ....core.accessor              import  Parallel
-from ....core.interop               import  TypeStandard
-from ....core.standard              import  (
-                                            VarType, 
-                                            VarStd
-                                            )
-from ....core.display               import  Display
-                                            
-from ....ml.features                import  (
-                                            Binning, 
-                                            MinBinResult,
-                                            Encoding,
-                                            EncodingMap
-                                            )
-from ....ml.metrics                 import  SeparationMetrics
-from ....ml.sampling                import  Subsampling
-from ....display.verbosity          import  Verbosity
+from ....core.base import FitterDataBase, FitterModelBase
+from ....core.factory import Dataclass, DictClass
+from ....core.foundation import AigParam
+from ....core.accessor import Parallel
+from ....core.interop import TypeStandard
+from ....core.standard import VarType, VarStd
+from ....core.display import Display
 
+from ....ml.features import Binning, MinBinResult, Encoding, EncodingMap
+from ....ml.metrics import SeparationMetrics
+from ....ml.sampling import Subsampling
+from ....display.verbosity import Verbosity
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -76,19 +61,24 @@ from ....display.verbosity          import  Verbosity
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class LBL(DictClass):
     """Output column labels for categorical encoding stats and verdicts."""
-    V  = 'VAR'
-    R  = 'Reason'
-    M  = VarStd.MISSING
-    B  = 'Cats'
-    GF = 'Gini_TF'
-    GT = 'Gini_T'
-    GO = 'Gini_O'
-    IVF = 'IV_TF'
-    IVT = 'IV_T'
+
+    V = "VAR"
+    R = "Reason"
+    M = VarStd.MISSING
+    B = "Cats"
+    GF = "Gini_TF"
+    GT = "Gini_T"
+    GO = "Gini_O"
+    IVF = "IV_TF"
+    IVT = "IV_T"
+
 
 class STAT(DictClass):
     """Stats output list selectors (for user-facing display)."""
-    out = lambda x: f'stats_out_{x}'
+
+    out = lambda x: f"stats_out_{x}"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -112,9 +102,11 @@ class FitParamsBase:
         Minimum share of observations per category (3%). Categories
         below this threshold are merged with their neighbour (by target
         response) to ensure stable WOE estimates in production.
-    """   
-    gini_cutoff:   float = 0.02
-    min_bin_share: int|float = 0.03
+    """
+
+    gini_cutoff: float = 0.02
+    min_bin_share: int | float = 0.03
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -127,13 +119,16 @@ class FitParamsCfg:
         Target column name. Encoding is optimized against this target.
     verbose : bool | Verbosity, default=True
         Enable progress display and stats output.
-    """     
-    target:  str
-    verbose: bool|Verbosity = True
+    """
+
+    target: str
+    verbose: bool | Verbosity = True
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -153,10 +148,12 @@ class FitResult:
         Mapping of original feature name → final encoded feature name
         (after min-share grouping).
     """
-    encoding:       dict
-    vars_cat:       list
-    vars_dropped:   list
-    vars_map:       dict
+
+    encoding: dict
+    vars_cat: list
+    vars_dropped: list
+    vars_map: dict
+
 
 @Dataclass.base
 class FitStats:
@@ -175,11 +172,13 @@ class FitStats:
     stats_out_a : list
         Features DROPPED at the after gate (merging destroyed signal).
     """
-    fit_worker:  dict
-    stats_in:    list
+
+    fit_worker: dict
+    stats_in: list
     stats_out_p: list
     stats_out_a: list
-    
+
+
 @Dataclass.base
 class WorkerResult:
     """
@@ -196,11 +195,15 @@ class WorkerResult:
     stats : pDF | None
         Additional diagnostics (unused for categorical, reserved).
     """
+
     encoding: pDF
-    encoded:  pDF
+    encoded: pDF
     original: pDF
-    stats:    pDF|None = None
+    stats: pDF | None = None
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class FitWorker:
@@ -218,29 +221,32 @@ class FitWorker:
     Unlike numerical discretization, there is no bin search — the
     categories are already discrete. The optimization is purely in
     the merging of rare categories to ensure WOE stability.
-    """   
-    def __init__(self, params:FitParams):
-        self.prm        = params
-        self.target     = params.target
-        self.cutoff     = params.gini_cutoff
-        self.min_share  = params.min_bin_share
-        self.verbose    = params.verbose
-        
+    """
+
+    def __init__(self, params: FitParams):
+        self.prm = params
+        self.target = params.target
+        self.cutoff = params.gini_cutoff
+        self.min_share = params.min_bin_share
+        self.verbose = params.verbose
+
         self.result: FitResult = Dataclass.create_default_instance(FitResult)
-        self.stats:  FitStats  = Dataclass.create_default_instance(FitStats)
-        
-        self._diag  = SeparationMetrics(incl_miss=True)
+        self.stats: FitStats = Dataclass.create_default_instance(FitStats)
+
+        self._diag = SeparationMetrics(incl_miss=True)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @dataclass(slots=True)
     class VarData:
-        """Per-feature working state during the encoding pipeline."""        
-        x:     str      # var in processing
-        xG:    str      # var in processing naming standard Min Share Grouped
-        x_t:   list     # target-var names
-        df:    pDF      # data of x_t full length
-        ds:    pDF      # data of non missing d_xt space
-        miss:  float    # missing rate of d_xt
+        """Per-feature working state during the encoding pipeline."""
+
+        x: str  # var in processing
+        xG: str  # var in processing naming standard Min Share Grouped
+        x_t: list  # target-var names
+        df: pDF  # data of x_t full length
+        ds: pDF  # data of non missing d_xt space
+        miss: float  # missing rate of d_xt
 
     @Dataclass.base
     class Performance:
@@ -263,17 +269,19 @@ class FitWorker:
             Encoded feature IV (non-missing only).
         iv_enc_f : float
             Encoded feature IV (full data).
-        """        
-        gini_org:   float|int
-        gini_full:  float|int
-        iv_full:    float|int
-        gini_enc_o: float|int = 0
-        gini_enc_f: float|int = 0
-        iv_enc_o:   float|int = 0
-        iv_enc_f:   float|int = 0
-    # ───────────────────────────────────────────────────────────────────────────────────────────── 
-    
-    def create_var(self, data:pDF, x:str) -> VarData:   
+        """
+
+        gini_org: float | int
+        gini_full: float | int
+        iv_full: float | int
+        gini_enc_o: float | int = 0
+        gini_enc_f: float | int = 0
+        iv_enc_o: float | int = 0
+        iv_enc_f: float | int = 0
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def create_var(self, data: pDF, x: str) -> VarData:
         """
         Initialize the working state for a categorical feature.
 
@@ -291,44 +299,41 @@ class FitWorker:
         -------
         VarData
             Working state with data subsets and naming.
-        """        
-        xG    = VarStd.fe_g(x)
-        x_t   = [x, self.target]
-        d_xt  = data.loc[:, x_t].copy() # Including Missing
-        space = d_xt.loc[( d_xt[x] != VarStd.MISSING ) & ( d_xt[x].notnull() )] 
+        """
+        xG = VarStd.fe_g(x)
+        x_t = [x, self.target]
+        d_xt = data.loc[:, x_t].copy()  # Including Missing
+        space = d_xt.loc[(d_xt[x] != VarStd.MISSING) & (d_xt[x].notnull())]
         return self.VarData(
-            x  = x,
-            xG = xG,
-            x_t  = x_t,
-            df   = d_xt,
-            ds   = space,
-            miss = 1 - ( len(space) / len(d_xt) )
+            x=x, xG=xG, x_t=x_t, df=d_xt, ds=space, miss=1 - (len(space) / len(d_xt))
         )
 
-    def update_var_dx_missing(self, var:VarData) -> None:
+    def update_var_dx_missing(self, var: VarData) -> None:
         """
         Add a 'Missing' category and impute NaN rows in the full data.
 
         Rows with NaN are assigned the 'Missing' label so they
         participate in WOE computation as a distinct group.
-        """        
-        x  = var.x
+        """
+        x = var.x
         df = var.df
-        df[x] = TypeStandard.cat_fill_missing(df[x])  # Add New Missing category + impute by 'Missing'
+        df[x] = TypeStandard.cat_fill_missing(
+            df[x]
+        )  # Add New Missing category + impute by 'Missing'
 
-    def get_enc_data(self, d: tuple[pDF,pSe] | pDF, x: str|None) -> tuple[pSe,pSe]:
+    def get_enc_data(self, d: tuple[pDF, pSe] | pDF, x: str | None) -> tuple[pSe, pSe]:
         """
         Normalize the data input to a (target, feature) pair.
 
         Accepts either a pre-split tuple or a DataFrame with column
         selection, returning a consistent (target, x) pair.
-        """        
+        """
         if isinstance(d, tuple):
             d_, x_ = d
             return d_[self.target], x_
-        return d[self.target], d[x]   
+        return d[self.target], d[x]
 
-    def encode_x(self, target:pSe, x:pSe) -> tuple[pSe, float]:
+    def encode_x(self, target: pSe, x: pSe) -> tuple[pSe, float]:
         """
         Encode a feature to WOE and compute its total IV.
 
@@ -343,20 +348,17 @@ class FitWorker:
         -------
         tuple[pSe, float]
             WOE-encoded values and total IV.
-        """        
+        """
         x_, woe, _ = Encoding(
-            transform   = True,
-            ensure_enc  = True, 
-            add_iv      = True,
-            incl_miss   = True
+            transform=True, ensure_enc=True, add_iv=True, incl_miss=True
         ).process(target, x)
         return x_, self._diag.iv_total(woe)
 
-    def calc_gini(self, target:pSe, x:pSe|None) -> float:
+    def calc_gini(self, target: pSe, x: pSe | None) -> float:
         """Compute the Gini coefficient of target separation by feature groups."""
         return self._diag.gini(target, x)
-    
-    def calc_perf(self, *dx, x:str=None) -> list[dict[str, float]]:
+
+    def calc_perf(self, *dx, x: str = None) -> list[dict[str, float]]:
         """
         Compute Gini and IV for one or more data subsets.
 
@@ -371,16 +373,16 @@ class FitWorker:
         -------
         list[dict]
             One {'gini': ..., 'iv': ...} per input.
-        """        
+        """
         r = []
         for d in dx:
-            t,  x_ = self.get_enc_data(d, x)
+            t, x_ = self.get_enc_data(d, x)
             xe, iv = self.encode_x(t, x_)
-            gini   = self.calc_gini(t, xe)
-            r.append({'gini':gini, 'iv':iv})
+            gini = self.calc_gini(t, xe)
+            r.append({"gini": gini, "iv": iv})
         return r
-    
-    def org_perf(self, var:VarData) -> Performance:
+
+    def org_perf(self, var: VarData) -> Performance:
         """
         Measure the original (unencoded) feature performance.
 
@@ -391,17 +393,15 @@ class FitWorker:
         -------
         Performance
             Original feature metrics.
-        """        
-        pf, po = self.calc_perf(var.df, var.ds, x = var.x)
-        # NOTE abs has to be present at this step 
-        # once encoded, Gini is always positive value by Encoding woe design        
+        """
+        pf, po = self.calc_perf(var.df, var.ds, x=var.x)
+        # NOTE abs has to be present at this step
+        # once encoded, Gini is always positive value by Encoding woe design
         return self.Performance(
-            gini_org  = abs(po['gini']),
-            gini_full = abs(pf['gini']),
-            iv_full   = pf['iv']
+            gini_org=abs(po["gini"]), gini_full=abs(pf["gini"]), iv_full=pf["iv"]
         )
-    
-    def update_perf(self, var:VarData, perf:Performance, xg:pSe) -> Performance:
+
+    def update_perf(self, var: VarData, perf: Performance, xg: pSe) -> Performance:
         """
         Update performance with encoded (post-MBS) metrics.
 
@@ -421,21 +421,24 @@ class FitWorker:
         -------
         Performance
             Full performance record (original + encoded).
-        """        
-        pf, po = self.calc_perf( (var.df, xg), (var.ds, xg[xg != VarStd.MISSING]) )
-        
-        return self.Performance(
-            gini_org    = perf.gini_org,
-            gini_full   = perf.gini_full,
-            iv_full     = perf.iv_full,
-            gini_enc_o  = po['gini'],
-            gini_enc_f  = pf['gini'],
-            iv_enc_o    = po['iv'],
-            iv_enc_f    = pf['iv']
-        )  
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        """
+        pf, po = self.calc_perf((var.df, xg), (var.ds, xg[xg != VarStd.MISSING]))
 
-    def is_predictive(self, var:VarData, perf:Performance, step:Literal['p','a']='p') -> bool:
+        return self.Performance(
+            gini_org=perf.gini_org,
+            gini_full=perf.gini_full,
+            iv_full=perf.iv_full,
+            gini_enc_o=po["gini"],
+            gini_enc_f=pf["gini"],
+            iv_enc_o=po["iv"],
+            iv_enc_f=pf["iv"],
+        )
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def is_predictive(
+        self, var: VarData, perf: Performance, step: Literal["p", "a"] = "p"
+    ) -> bool:
         """
         Gate: check if the feature (or its encoding) meets the Gini threshold.
 
@@ -454,21 +457,23 @@ class FitWorker:
         bool
             True if the feature passes the threshold. If False, the
             feature is registered as dropped with the reason.
-        """        
-        if step == 'p':
+        """
+        if step == "p":
             g = perf.gini_full
-        else: 
+        else:
             g = perf.gini_enc_f
-        if ( g > self.cutoff ):
+        if g > self.cutoff:
             return True
-        if step=='p':
-              reason = f'Gini of Original Values < TH {self.cutoff}'
-        else: reason = f'Transformation < TH {self.cutoff}'
-        self.set_res_vars_out(var, perf, step, reason)        
-        return False    
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        if step == "p":
+            reason = f"Gini of Original Values < TH {self.cutoff}"
+        else:
+            reason = f"Transformation < TH {self.cutoff}"
+        self.set_res_vars_out(var, perf, step, reason)
+        return False
 
-    def add_missing(self, var:VarData) -> None:
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def add_missing(self, var: VarData) -> None:
         """
         Handle missing values by converting NaN → 'Missing' category.
 
@@ -477,7 +482,7 @@ class FitWorker:
         """
         self.update_var_dx_missing(var)
 
-    def encode(self, var:VarData, perf:Performance) -> None:
+    def encode(self, var: VarData, perf: Performance) -> None:
         """
         Apply min-bin-share merging and register the final encoding.
 
@@ -495,25 +500,30 @@ class FitWorker:
         perf : Performance
             Original performance (to preserve in the final record).
         """
-        x  = var.x
+        x = var.x
         xG = var.xG
         df = var.df
 
-        th  = self.min_share
-        mbs = Binning.min_bin_share(df, self.target, x, th, vtype='C', xG=xG)   # MBS Fx to Optimize minimal share of bins
-        map = mbs.mapping[[x, xG]]                                              # Final Transformed Var with MBS Treatment
-        
+        th = self.min_share
+        mbs = Binning.min_bin_share(
+            df, self.target, x, th, vtype="C", xG=xG
+        )  # MBS Fx to Optimize minimal share of bins
+        map = mbs.mapping[[x, xG]]  # Final Transformed Var with MBS Treatment
+
         xg = Binning.transform_categorical_data(df, map, x, xG)
         perf = self.update_perf(var, perf, xg)
 
-        if not self.is_predictive(var, perf, 'a'):
+        if not self.is_predictive(var, perf, "a"):
             return
 
         self.set_res_vars_in(var, perf, mbs)
-        self.set_res_mapping(var, perf, map, mbs)        
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        self.set_res_mapping(var, perf, map, mbs)
 
-    def set_res_mapping(self, var:VarData, perf:Performance, map:pDF, mbs:MinBinResult) -> None:
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def set_res_mapping(
+        self, var: VarData, perf: Performance, map: pDF, mbs: MinBinResult
+    ) -> None:
         """
         Register the final encoding for a passed feature.
 
@@ -521,21 +531,16 @@ class FitWorker:
         - The encoding map in `result.encoding`.
         - The final feature name in `result.vars_map`.
         - The worker diagnostics in `stats.fit_worker`.
-        """        
+        """
         self.result.vars_map[var.x] = var.xG
         self.result.encoding[var.x] = EncodingMap(
-            vars  = [var.x, var.xG], 
-            type  = VarType.C,
-            map   = map, 
-            stats = perf
+            vars=[var.x, var.xG], type=VarType.C, map=map, stats=perf
         )
         self.stats.fit_worker[var.x] = WorkerResult(
-                encoding = mbs.mapping,
-                encoded  = mbs.dt,
-                original = mbs.do
+            encoding=mbs.mapping, encoded=mbs.dt, original=mbs.do
         )
 
-    def get_res_cats(self, var:VarData, mbs:MinBinResult=None) -> int:
+    def get_res_cats(self, var: VarData, mbs: MinBinResult = None) -> int:
         """
         Count final categories after MBS.
 
@@ -553,13 +558,19 @@ class FitWorker:
         -------
         int
             Number of categories (post-MBS if mbs provided, else original).
-        """        
-        miss = 0 if var.miss else -1    # non-Missing present on Train should be considered
+        """
+        miss = (
+            0 if var.miss else -1
+        )  # non-Missing present on Train should be considered
         if mbs is not None:
-            return len(mbs.dt) + miss   # number of Bins after MBS by default w Missing Category          
+            return (
+                len(mbs.dt) + miss
+            )  # number of Bins after MBS by default w Missing Category
         return len(var.df[var.x].unique())
 
-    def stats_io(self, IO:list, x:str, miss:float, cats:int, reason:str, perf:Performance) -> None: 
+    def stats_io(
+        self, IO: list, x: str, miss: float, cats: int, reason: str, perf: Performance
+    ) -> None:
         """
         Append a feature's verdict record to the stats output list.
 
@@ -577,39 +588,44 @@ class FitWorker:
             Verdict reason.
         perf : Performance
             Performance metrics.
-        """        
-        IO.append({
-            LBL.V:   x,
-            LBL.R:   reason,
-            LBL.B:   cats,
-            LBL.M:   miss,
-            LBL.IVF: perf.iv_enc_f,
-            LBL.IVT: perf.iv_enc_o,            
-            LBL.GF:  perf.gini_enc_f,
-            LBL.GT:  perf.gini_enc_o,
-            LBL.GO:  perf.gini_org
-        })
+        """
+        IO.append(
+            {
+                LBL.V: x,
+                LBL.R: reason,
+                LBL.B: cats,
+                LBL.M: miss,
+                LBL.IVF: perf.iv_enc_f,
+                LBL.IVT: perf.iv_enc_o,
+                LBL.GF: perf.gini_enc_f,
+                LBL.GT: perf.gini_enc_o,
+                LBL.GO: perf.gini_org,
+            }
+        )
 
-    def set_res_vars_in(self, var:VarData, perf:Performance, mbs:MinBinResult) -> None: 
+    def set_res_vars_in(
+        self, var: VarData, perf: Performance, mbs: MinBinResult
+    ) -> None:
         """Register a feature as PASSED (encoded and kept)."""
         self.result.vars_cat.append(var.xG)
-        io      = self.stats.stats_in
-        cats    = self.get_res_cats(var, mbs)
-        reason  = f'Passed TH {self.cutoff}'
+        io = self.stats.stats_in
+        cats = self.get_res_cats(var, mbs)
+        reason = f"Passed TH {self.cutoff}"
         self.stats_io(io, var.xG, var.miss, cats, reason, perf)
 
-    def set_res_vars_out(self, 
-        var:VarData, perf:Performance, step:Literal['p','a'], reason:str
-    ) -> None: 
+    def set_res_vars_out(
+        self, var: VarData, perf: Performance, step: Literal["p", "a"], reason: str
+    ) -> None:
         """Register a feature as DROPPED (failed a gate)."""
         self.result.vars_dropped.append(var.x)
-        io      = self.stats[STAT.out(step)]
-        cats    = self.get_res_cats(var)
-        reason  = 'Unpredictive → ' + reason
+        io = self.stats[STAT.out(step)]
+        cats = self.get_res_cats(var)
+        reason = "Unpredictive → " + reason
         self.stats_io(io, var.x, var.miss, cats, reason, perf)
-    # ───────────────────────────────────────────────────────────────────────────────────────────── 
 
-    def pipeline(self, data:pDF, cat:list, **kwargs) -> None:     
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def pipeline(self, data: pDF, cat: list, **kwargs) -> None:
         """
         Execute the full per-feature encoding pipeline for all features.
 
@@ -631,22 +647,23 @@ class FitWorker:
             Forwarded to progress display.
         """
         Nloop, progress = Display.processing_progress(
-            cat, kwargs, self.verbose, desc='Categorical Features Transformation'
+            cat, kwargs, self.verbose, desc="Categorical Features Transformation"
         )
         for x in Nloop:
             Display.update_progress(progress)
 
-            var  = self.create_var(data, x)
+            var = self.create_var(data, x)
             perf = self.org_perf(var)
 
             if not self.is_predictive(var, perf):
                 continue
-    
+
             self.add_missing(var)
             self.encode(var, perf)
-    # ───────────────────────────────────────────────────────────────────────────────────────────── 
-        
-    def process(self, data:pDF, num:list, **kwargs) -> tuple[FitParams, FitStats]:     
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def process(self, data: pDF, num: list, **kwargs) -> tuple[FitParams, FitStats]:
         """
         Entry point: execute the encoding pipeline and return results.
 
@@ -663,10 +680,13 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Encoding maps + diagnostic stats.
-        """        
+        """
         self.pipeline(data, num, **kwargs)
         return self.result, self.stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterDataBase):
     """
@@ -685,19 +705,16 @@ class Fitter(FitterDataBase):
         Encoding thresholds and pipeline configuration.
     """
 
-    def __init__(self, params:FitParams):
-        self.prm = params 
+    def __init__(self, params: FitParams):
+        self.prm = params
 
-    def _parallel_th(self, data:pDF, cat:list):
+    def _parallel_th(self, data: pDF, cat: list):
         d = data[cat]
-        m = d.describe().T['unique'].mean()
-        p_th = (
-            ( len(data) > 5e4 and len(cat) > 20 ) or 
-            ( len(cat)*(m) > 1e3 )
-        )
+        m = d.describe().T["unique"].mean()
+        p_th = (len(data) > 5e4 and len(cat) > 20) or (len(cat) * (m) > 1e3)
         return 0 if p_th else np.inf
 
-    def fit(self, data:pDF, cat:list):
+    def fit(self, data: pDF, cat: list):
         """
         Fit the categorical encoding on all features.
 
@@ -718,26 +735,26 @@ class Fitter(FitterDataBase):
         self
             Fitted instance with `encoding` and `features` set.
         """
-        p_th   = self._parallel_th(data, cat)
+        p_th = self._parallel_th(data, cat)
         worker = FitWorker(self.prm)
-        p_fit  = Parallel(
-            data_and_fe = 1, 
-            th          = p_th, 
-            kwargs_pos  = True, 
-            verbose     = self.prm.verbose,
-            spin_title  = 'Categorical transformation in progress'
+        p_fit = Parallel(
+            data_and_fe=1,
+            th=p_th,
+            kwargs_pos=True,
+            verbose=self.prm.verbose,
+            spin_title="Categorical transformation in progress",
         ).process(worker.process)
         result, stats = p_fit(data, cat)
-        
+
         self.result: FitResult = result
-        self.stats:   FitStats = stats
+        self.stats: FitStats = stats
 
         self.encoding = self.result.encoding
         self.features = self.result.vars_cat
-        
+
         return self
-   
-    def transform(self, data:pDF) -> pDF:
+
+    def transform(self, data: pDF) -> pDF:
         """
         Apply fitted category mappings to new data.
 
@@ -754,20 +771,23 @@ class Fitter(FitterDataBase):
         pDF
             DataFrame with one column per encoded feature (merged
             categories, including 'Missing' where applicable).
-        """     
+        """
         dt = {}
         for cat in data.columns:
-            if cat not in self.encoding: # removed variables during fit - not predictive
-                continue                            
-            fitted:EncodingMap = self.encoding[cat]
-            x, xG   = fitted.vars
+            if (
+                cat not in self.encoding
+            ):  # removed variables during fit - not predictive
+                continue
+            fitted: EncodingMap = self.encoding[cat]
+            x, xG = fitted.vars
             mapping = fitted.map
             XG = Binning.transform_categorical_data(data, mapping, cat, xG)
-            dt.update( {xG: XG} )
+            dt.update({xG: XG})
 
-        return pDF(dt)        
+        return pDF(dt)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -825,15 +845,15 @@ class CategoricalEncoder(FitterModelBase[Fitter]):
     >>> encoded.columns  # ['region_G', 'segment_G', 'channel_G', ...]
     """
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
 
-    def _get_cat(self, data:pDF, cat:list|None) -> list:
+    def _get_cat(self, data: pDF, cat: list | None) -> list:
         if cat is not None:
             return cat
-        return [x for x in data.columns if x!=self._params.target]
-    
-    def _subsample(self, data:pDF, cat:list) -> pDF:
+        return [x for x in data.columns if x != self._params.target]
+
+    def _subsample(self, data: pDF, cat: list) -> pDF:
         """
         Stratified subsample for efficient encoding fit.
 
@@ -842,8 +862,8 @@ class CategoricalEncoder(FitterModelBase[Fitter]):
         """
         t = self._params.target
         return Subsampling(data[cat + [t]], data[t]).univar()[0]
-        
-    def fit(self, data:pDF, cat_features:list = None):        
+
+    def fit(self, data: pDF, cat_features: list = None):
         """
         Fit the categorical encoding on all features.
 
@@ -859,14 +879,14 @@ class CategoricalEncoder(FitterModelBase[Fitter]):
         -------
         self
             Fitted instance ready for `transform`.
-        """       
-        cat   = self._get_cat(data, cat_features)
+        """
+        cat = self._get_cat(data, cat_features)
         data_ = self._subsample(data, cat)
         self._fitter = Fitter(self._params)
         self._fitter.fit(data_, cat)
         return self
-    
-    def transform(self, data:pDF) -> pDF:
+
+    def transform(self, data: pDF) -> pDF:
         """
         Apply fitted category mappings to new data.
 
@@ -882,4 +902,6 @@ class CategoricalEncoder(FitterModelBase[Fitter]):
             WOE encoding.
         """
         return self.fitter.transform(data)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

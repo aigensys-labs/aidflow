@@ -9,14 +9,8 @@ Routing Logic:
     - Otherwise route via its Model.
 """
 
-from .base import (
-    FittedResultBase,
-    FittedIORegistry
-)
-from .fitted import (
-    FittedID as FittedIDBase, 
-    _FittedRoute
-)
+from .base import FittedResultBase, FittedIORegistry
+from .fitted import FittedID as FittedIDBase, _FittedRoute
 
 
 class FittedID(FittedIDBase):
@@ -32,7 +26,7 @@ class FittedID(FittedIDBase):
 
     This is the FittedID used by the optional relay that flows around Fitter.
     """
-    
+
     def get_target_instance(self):
         """
         Resolve the instance that holds the relay data.
@@ -58,10 +52,10 @@ class FittedID(FittedIDBase):
 
         if isinstance(model, Model):
             return model.fx.fitter
-        
+
         raise TypeError(self._error())
 
-    def _get_fitted(self, descriptor:bool=False):
+    def _get_fitted(self, descriptor: bool = False):
         """
         Retrieve the relay data (or its descriptor) from the target instance.
 
@@ -74,30 +68,32 @@ class FittedID(FittedIDBase):
 
         Returns:
             FitterDataRelay | Any: The descriptor or the result data.
-        """        
+        """
         from ..model import FitterBase
 
         instance: FitterBase = self.get_target_instance()
         cls_ = type(instance)
-        
+
         desc: FitterDataRelay = cls_._relay
 
-        if descriptor:        
+        if descriptor:
             return desc
 
         return desc.get_result(instance)
 
-    def _error(self):        
-        return ('AIG SAFETY ► '
-            f'FitterDataRelay does not support {type(self.instance)}: '
-            'FitterDataRelay supports FitterBase instance only.'
+    def _error(self):
+        return (
+            "AIG SAFETY ► "
+            f"FitterDataRelay does not support {type(self.instance)}: "
+            "FitterDataRelay supports FitterBase instance only."
         )
+
 
 class FitterDataRelay(FittedResultBase):
     """
     The FitterDataRelay descriptor for pipeline Fitter.
 
-    This is the descriptor that gets attached to Fitter classes to provide 
+    This is the descriptor that gets attached to Fitter classes to provide
     transparent offload/re-hydration of the relay data.
 
     When accessed (`fitter._relay`), it transparently:
@@ -107,6 +103,7 @@ class FitterDataRelay(FittedResultBase):
 
     When set (e.g., during `fit()`), it caches the result and
     registers the IO handler for future offload operations.
-    """    
+    """
+
     _id = FittedID
     _io = FittedIORegistry()

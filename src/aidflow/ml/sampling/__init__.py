@@ -31,15 +31,6 @@ Submodules
   - General data alignment across pipeline stages.
 """
 
-from .sampling import (
-    Sampling,
-    Bootstrap
-)
-from .subsampling import (
-    Subsampling,
-    SubsamplingSpec
-)
-from .dataset import (
-    DatasetCV,
-    DataUtils
-)
+from .sampling import Sampling, Bootstrap
+from .subsampling import Subsampling, SubsamplingSpec
+from .dataset import DatasetCV, DataUtils

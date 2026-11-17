@@ -47,28 +47,21 @@ Output
   are already computed in the previous stage).
 """
 
-from ....deps.data                  import  np, pDF
-from ....deps.types                 import  Literal
+from ....deps.data import np, pDF
+from ....deps.types import Literal
 
-from ....core.base                  import  (
-                                            FitterDataBase, 
-                                            FitterModelBase,
-                                            )
-from ....core.factory               import  (
-                                            Dataclass,
-                                            DictClass
-                                            )
-from ....core.foundation            import  AigParam
-from ....core.accessor              import  Parallel
-from ....core.standard              import  VarStd
+from ....core.base import (
+    FitterDataBase,
+    FitterModelBase,
+)
+from ....core.factory import Dataclass, DictClass
+from ....core.foundation import AigParam
+from ....core.accessor import Parallel
+from ....core.standard import VarStd
 
-from ....ml.features.stability      import  (
-                                            LBL, 
-                                            STAB,
-                                            FeConsistency
-                                            )
-from ....ml.sampling                import  Subsampling
-from ....display.verbosity          import  Verbosity
+from ....ml.features.stability import LBL, STAB, FeConsistency
+from ....ml.sampling import Subsampling
+from ....display.verbosity import Verbosity
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -76,8 +69,11 @@ from ....display.verbosity          import  Verbosity
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class TT(DictClass):
     """Sample type identifiers for stability test results."""
-    TRAIN = 'TRAIN'
-    TEST  = 'TEST'
+
+    TRAIN = "TRAIN"
+    TEST = "TEST"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -105,8 +101,10 @@ class FitParamsBase:
         Statistical significance level for the bin-level consistency
         test (e.g., t-test on target rates across time units).
     """
+
     stability_cutoff: float = 0.65
     alpha: float = 0.05
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -131,15 +129,18 @@ class FitParamsCfg:
     verbose : bool | Verbosity, default=True
         Enable progress display and stats output.
     """
-    target:         str
-    time_var:       str
-    time_unit:      Literal['week','day',None] = None
+
+    target: str
+    time_var: str
+    time_unit: Literal["week", "day", None] = None
     max_time_units: int = None
-    verbose:        bool|Verbosity = True
+    verbose: bool | Verbosity = True
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -155,8 +156,10 @@ class FitResult:
         WOE feature names that failed the stability check
         (temporally unstable, excluded from model).
     """
-    vars_woe:     list
+
+    vars_woe: list
     vars_dropped: list
+
 
 @Dataclass.base
 class FitStats:
@@ -171,8 +174,12 @@ class FitStats:
         and for the `update` method (re-evaluate with a new
         threshold without re-running the full test).
     """
+
     consistency: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class FitWorker:
@@ -193,10 +200,10 @@ class FitWorker:
         Stability thresholds and configuration.
     """
 
-    def __init__(self, params:FitParams):
+    def __init__(self, params: FitParams):
         self.prm = params
 
-    def run_consistency(self, fes:list=None) -> FeConsistency:
+    def run_consistency(self, fes: list = None) -> FeConsistency:
         """
         Instantiate the feature consistency tester.
 
@@ -209,17 +216,18 @@ class FitWorker:
         -------
         FeConsistency
             Configured consistency tester.
-        """        
-        return FeConsistency( 
-            fes, self.prm.target, 
-            time_var       = self.prm.time_var, 
-            c_test_th      = self.prm.stability_cutoff, 
-            t_test_alpha   = self.prm.alpha,
-            time_unit      = self.prm.time_unit, 
-            max_time_units = self.prm.max_time_units 
+        """
+        return FeConsistency(
+            fes,
+            self.prm.target,
+            time_var=self.prm.time_var,
+            c_test_th=self.prm.stability_cutoff,
+            t_test_alpha=self.prm.alpha,
+            time_unit=self.prm.time_unit,
+            max_time_units=self.prm.max_time_units,
         )
 
-    def run_test(self, data:pDF, fes:list, **kwargs) -> dict:
+    def run_test(self, data: pDF, fes: list, **kwargs) -> dict:
         """
         Run the stability test on a single sample.
 
@@ -237,13 +245,13 @@ class FitWorker:
         -------
         dict | None
             Per-feature consistency results, or None.
-        """        
+        """
         if data is None:
             return None
         fec = self.run_consistency(fes)
-        return fec.test(data, verbose = self.prm.verbose, **kwargs)
+        return fec.test(data, verbose=self.prm.verbose, **kwargs)
 
-    def get_fes_by_status(self, stat:dict) -> tuple[list, list]:
+    def get_fes_by_status(self, stat: dict) -> tuple[list, list]:
         """
         Partition features into stable (in) and unstable (out).
 
@@ -256,12 +264,12 @@ class FitWorker:
         -------
         tuple[list, list]
             (stable_features, unstable_features)
-        """        
-        fes_in  = [x for x,v in stat.items() if v[LBL.IS]==STAB.Y]
+        """
+        fes_in = [x for x, v in stat.items() if v[LBL.IS] == STAB.Y]
         fes_out = [x for x in stat if x not in fes_in]
-        return {'in':fes_in, 'out':fes_out}
-    
-    def get_result(self, train:dict, test:dict) -> tuple[FitResult, FitStats]:
+        return {"in": fes_in, "out": fes_out}
+
+    def get_result(self, train: dict, test: dict) -> tuple[FitResult, FitStats]:
         """
         Assemble the final stability result from train and test outcomes.
 
@@ -279,17 +287,17 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Final verdicts and diagnostic stats.
-        """        
+        """
         vars_io = self.get_fes_by_status(train)
         return (
             FitResult(
-                vars_woe     = vars_io['in'],
-                vars_dropped = vars_io['out'],
+                vars_woe=vars_io["in"],
+                vars_dropped=vars_io["out"],
             ),
-            FitStats(consistency = {TT.TRAIN: train, TT.TEST: test})
+            FitStats(consistency={TT.TRAIN: train, TT.TEST: test}),
         )
 
-    def process(self, data_woe:pDF, fes:list, data_test_woe:pDF=None, **kwargs):
+    def process(self, data_woe: pDF, fes: list, data_test_woe: pDF = None, **kwargs):
         """
         Execute the full stability test on train (and optionally test).
 
@@ -308,12 +316,12 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Stability verdicts and diagnostics.
-        """        
-        stat_train = self.run_test(data_woe,      fes, **kwargs)
-        stat_test  = self.run_test(data_test_woe, fes, **kwargs)
+        """
+        stat_train = self.run_test(data_woe, fes, **kwargs)
+        stat_test = self.run_test(data_test_woe, fes, **kwargs)
         return self.get_result(stat_train, stat_test)
-    
-    def update(self, stats:dict|FitStats):
+
+    def update(self, stats: dict | FitStats):
         """
         Re-evaluate stability verdicts with a new threshold.
 
@@ -330,15 +338,18 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Updated verdicts.
-        """        
+        """
         if isinstance(stats, FitStats):
             stats = stats.consistency
         fec = self.run_consistency()
         res = {}
         for tx, d in stats.items():
-            res[tx] = fec.update(d)            
+            res[tx] = fec.update(d)
         return self.get_result(res[TT.TRAIN], res[TT.TEST])
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterDataBase):
     """
@@ -358,19 +369,20 @@ class Fitter(FitterDataBase):
     params : FitParams
         Stability cutoff, alpha, time configuration.
     """
-    def __init__(self, params:FitParams):
-        self.prm = params 
+
+    def __init__(self, params: FitParams):
+        self.prm = params
 
     @staticmethod
-    def _parallel_th(fes:list):
-        p_th = ( len(fes) > 1e2 )       # check data complexity 
-        return 0 if p_th else np.inf    # only run parallel (p_th=0) if complex data
+    def _parallel_th(fes: list):
+        p_th = len(fes) > 1e2  # check data complexity
+        return 0 if p_th else np.inf  # only run parallel (p_th=0) if complex data
 
     def _set_results(self, result: tuple[FitResult, FitStats]) -> None:
         self.result, self.stats = result
         self.features = self.result.vars_woe
 
-    def fit(self, data:pDF, test_data:pDF, features:list):
+    def fit(self, data: pDF, test_data: pDF, features: list):
         """
         Run stability analysis on all WOE features.
 
@@ -388,21 +400,21 @@ class Fitter(FitterDataBase):
         self
             Fitted instance with `features` (stable WOE names) set.
         """
-        p_th   = self._parallel_th(features)
+        p_th = self._parallel_th(features)
         worker = FitWorker(self.prm)
-        p_fit  = Parallel(
-            data_and_fe = 1, 
-            th          = p_th, 
-            kwargs_pos  = True, 
-            verbose     = self.prm.verbose,
-            spin_title  = 'WoE stability analysis in progress'
-        ).process(worker.process)        
+        p_fit = Parallel(
+            data_and_fe=1,
+            th=p_th,
+            kwargs_pos=True,
+            verbose=self.prm.verbose,
+            spin_title="WoE stability analysis in progress",
+        ).process(worker.process)
         result = p_fit(data, features, test_data)
         self._set_results(result)
 
         return self
-    
-    def update(self, stats:dict|FitStats):
+
+    def update(self, stats: dict | FitStats):
         """
         Re-evaluate stability verdicts with a new threshold.
 
@@ -425,8 +437,8 @@ class Fitter(FitterDataBase):
         self._set_results(result)
 
         return self
-    
-    def transform(self, data:pDF) -> pDF:
+
+    def transform(self, data: pDF) -> pDF:
         """
         Select stable WOE features from the input data.
 
@@ -445,8 +457,9 @@ class Fitter(FitterDataBase):
             Subset containing only the stable WOE columns.
         """
         return data[self.features]
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -518,48 +531,51 @@ class WoeStabilityAnalyzer(FitterModelBase[Fitter]):
     ...     time_unit='week',
     ... )
     >>> stab.fit(train_data, test_data, features=woe_features)
-    >>> stable_features = stab.transform(data) 
+    >>> stable_features = stab.transform(data)
     >>> stable_features.columns  # Only time-stable WOE features
     """
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
 
-    def _get_fes(self, data:pDF, fes:list|None) -> list:
+    def _get_fes(self, data: pDF, fes: list | None) -> list:
         if fes is not None:
             return fes
-        return [x for x in data.columns if x not in [self._params.target, self._params.time_var]]
+        return [
+            x
+            for x in data.columns
+            if x not in [self._params.target, self._params.time_var]
+        ]
 
     def _get_woe_cols(self, fes: list) -> list:
-        tt  = [self._params.target, self._params.time_var]
+        tt = [self._params.target, self._params.time_var]
         woe = [x for x in fes if VarStd.is_woe_fe(x)]
         if not woe:
             raise ValueError(
-                'AIG SAFETY ► Input data must contain WOE Features to analyze.'
+                "AIG SAFETY ► Input data must contain WOE Features to analyze."
             )
         return tt + woe
-    
+
     @staticmethod
-    def _verify_test(test:pDF, cols:list) -> None:
+    def _verify_test(test: pDF, cols: list) -> None:
         m = [x for x in cols if x not in test.columns]
         if not m:
             return
-        raise ValueError('AIG SAFETY'
-            '\n► Test Data must contain all WOE features as Train data, '
-            'including Target and Time Variable.'
-            f'\n► Missing columns\n: {', '.join(m)}'
+        raise ValueError(
+            "AIG SAFETY"
+            "\n► Test Data must contain all WOE features as Train data, "
+            "including Target and Time Variable."
+            f"\n► Missing columns\n: {', '.join(m)}"
         )
-        
-    def _subsample(self, data:pDF, test:pDF, cols:list) -> list[pDF, pDF]:
-        self._verify_test(test, cols)        
+
+    def _subsample(self, data: pDF, test: pDF, cols: list) -> list[pDF, pDF]:
+        self._verify_test(test, cols)
         res = []
         for d in (data, test):
-            res.append(
-                Subsampling(d[cols], d[self._params.target]).univar()[0]
-            )
+            res.append(Subsampling(d[cols], d[self._params.target]).univar()[0])
         return res
 
-    def fit(self, train_data:pDF, test_data:pDF, features:list = None):        
+    def fit(self, train_data: pDF, test_data: pDF, features: list = None):
         """
         Run stability analysis on all WOE features.
 
@@ -577,17 +593,17 @@ class WoeStabilityAnalyzer(FitterModelBase[Fitter]):
         -------
         self
             Fitted instance with `features` (stable WOE names) set.
-        """      
-        fes  = self._get_fes(train_data, features)
+        """
+        fes = self._get_fes(train_data, features)
         cols = self._get_woe_cols(fes)
         d, t = self._subsample(train_data, test_data, cols)
-        
+
         self._fitter = Fitter(self._params)
         self._fitter.fit(d, t, fes)
 
         return self
-    
-    def update(self, stats:dict|FitStats, woe_stability:float=None):        
+
+    def update(self, stats: dict | FitStats, woe_stability: float = None):
         """
         Re-evaluate stability verdicts with a new threshold.
 
@@ -609,13 +625,13 @@ class WoeStabilityAnalyzer(FitterModelBase[Fitter]):
         """
         if woe_stability is not None:
             self._params = AigParam.param_ar_kw(
-                FitParams, self._params, woe_stability = woe_stability
+                FitParams, self._params, woe_stability=woe_stability
             )
         self._fitter = Fitter(self._params)
         self._fitter.update(stats)
         return self
-    
-    def transform(self, data:pDF) -> pDF:
+
+    def transform(self, data: pDF) -> pDF:
         """
         Select stable WOE features from the input data.
 
@@ -629,5 +645,7 @@ class WoeStabilityAnalyzer(FitterModelBase[Fitter]):
         pDF
             Subset containing only the time-stable WOE columns.
         """
-        return self.fitter.transform(data) 
+        return self.fitter.transform(data)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

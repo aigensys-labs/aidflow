@@ -79,6 +79,10 @@ all = [
     "ray[data]>=2.59; python_version<'3.14'",
     "notebook >= 7.6"
 ]
+dev = [
+    "black >= 25.0",
+    "ruff >= 0.14",
+]
 
 [project.urls]
 Homepage = "https://github.com/aigensys-labs/aidflow"

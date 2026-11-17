@@ -1,11 +1,11 @@
 """
-Low-level infrastructure Arrow ops providing high-performance data bridges 
+Low-level infrastructure Arrow ops providing high-performance data bridges
 and structural manipulation tools.
 
-It serves as the primary engine for optimizing memory usage and ensuring 
+It serves as the primary engine for optimizing memory usage and ensuring
 data integrity during the hand-off between different execution layers.
 
-Facilitates the use of PyArrow Tables for large-scale dataset handling, reducing 
+Facilitates the use of PyArrow Tables for large-scale dataset handling, reducing
 memory overhead during high-volume data transformations.
 
 Design Rationale:
@@ -22,38 +22,34 @@ Design Rationale:
       confuse external libraries (e.g., `ArrowDtype` markers).
 """
 
-from ...deps.common     import  (
-                                wraps, 
-                                )
-from ...deps.data       import  (
-                                np, 
-                                pa, 
-                                pd, pDF, pSe,
-                                )
-from ...deps.types      import  (
-                                Any, 
-                                Literal,
-                                Callable,
-                                FuncType
-                                )
-from ...utils.builtins  import  List
-from ..factory          import  (
-                                Dataclass
-                                )
-from ..standard         import  TypeDef
+from ...deps.common import (
+    wraps,
+)
+from ...deps.data import (
+    np,
+    pa,
+    pd,
+    pDF,
+    pSe,
+)
+from ...deps.types import Any, Literal, Callable, FuncType
+from ...utils.builtins import List
+from ..factory import Dataclass
+from ..standard import TypeDef
+
 
 class Arrow:
     """
     Apache Arrow ↔ Pandas interoperability engine.
 
     Provides a set of methods for seamless data transitions between
-    PyArrow's columnar format and Pandas' row-oriented format. 
-    
-    The primary interface is the `transition` decorator, which creates 
-    a transparent bridge for any function that needs to work with Arrow 
+    PyArrow's columnar format and Pandas' row-oriented format.
+
+    The primary interface is the `transition` decorator, which creates
+    a transparent bridge for any function that needs to work with Arrow
     Tables at the boundary but standard DataFrames internally.
     """
-    
+
     @Dataclass.base
     class Contract:
         """
@@ -65,32 +61,32 @@ class Arrow:
 
         Parameters
         ----------
-        safe_conversion : bool = False 
-            When True, the resulting DataFrame is guaranteed to have 
-            standard numpy dtypes (no `ArrowDtype` markers), at the 
+        safe_conversion : bool = False
+            When True, the resulting DataFrame is guaranteed to have
+            standard numpy dtypes (no `ArrowDtype` markers), at the
             cost of an additional memory copy. When False, the conversion
             is zero-copy but may retain Arrow-backed dtypes.
 
-        input_columns : list = None 
-            Optional list of expected column names. If provided, 
-            only these columns are extracted from the input Arrow 
-            Table (others are dropped). If `validate_input` is True, 
+        input_columns : list = None
+            Optional list of expected column names. If provided,
+            only these columns are extracted from the input Arrow
+            Table (others are dropped). If `validate_input` is True,
             missing columns raise a `KeyError`.
 
-        convert_output : bool | list = None  
-            Controls output conversion back to `pa.Table`. If `True`, 
-            the entire result is converted. If a list of ids [string|int], 
+        convert_output : bool | list = None
+            Controls output conversion back to `pa.Table`. If `True`,
+            the entire result is converted. If a list of ids [string|int],
             only those results as res[id] in the output are converted to
-            Arrow arrays (e.g. result object is dict or list with inner dfs). 
+            Arrow arrays (e.g. result object is dict or list with inner dfs).
             If `None` or `False`, the output is returned as-is (Pandas).
 
-        preserve_index : bool = True 
-            Whether to preserve the DataFrame index during the 
-            Pandas → Arrow conversion. 
+        preserve_index : bool = True
+            Whether to preserve the DataFrame index during the
+            Pandas → Arrow conversion.
 
-        validate_input : bool = True 
-            Whether to raise an error when expected columns are missing from 
-            the input Arrow Table. 
+        validate_input : bool = True
+            Whether to raise an error when expected columns are missing from
+            the input Arrow Table.
 
         Example:
             >>> contract = Arrow.Contract(
@@ -99,12 +95,13 @@ class Arrow:
             ...     safe_conversion = True,
             ...     validate_input  = True
             ... )
-        """        
+        """
+
         safe_conversion: bool = False
-        input_columns:   list = None
-        convert_output:  bool | list = None
-        preserve_index:  bool = True
-        validate_input:  bool = True
+        input_columns: list = None
+        convert_output: bool | list = None
+        preserve_index: bool = True
+        validate_input: bool = True
 
     @staticmethod
     def _get_cols(d: pa.Table | pDF) -> list:
@@ -116,13 +113,9 @@ class Arrow:
         if isinstance(d, pa.Table):
             return d.select(cols)
         return d.loc[cols, :]
-    
+
     @classmethod
-    def convert_input(cls, 
-        obj: Any, 
-        contract: Contract, 
-        func: FuncType
-    ) -> Any:
+    def convert_input(cls, obj: Any, contract: Contract, func: FuncType) -> Any:
         """
         Convert an input object to a Pandas DataFrame if it is an Arrow Table.
 
@@ -157,12 +150,11 @@ class Arrow:
             memory copy. When False (default), the conversion is
             zero-copy but may retain Arrow-backed dtypes.
         """
-        if (
-            ( not isinstance(obj, (pDF, pa.Table)) ) or
-            ( not contract.safe_conversion and isinstance(pDF) )
+        if (not isinstance(obj, (pDF, pa.Table))) or (
+            not contract.safe_conversion and isinstance(pDF)
         ):
             return obj
-        
+
         table: pa.Table | pDF = obj
         cols = cls._get_cols(table)
 
@@ -174,7 +166,7 @@ class Arrow:
                     f"{func.__name__}: missing columns \n► {sorted(missing)}"
                 )
 
-            cols  = [c for c in contract.input_columns if c in cols]            
+            cols = [c for c in contract.input_columns if c in cols]
             table = cls._get_subset(table)
 
         if isinstance(table, pa.Table):
@@ -182,10 +174,9 @@ class Arrow:
 
         if contract.safe_conversion:
             return cls.to_safe_datatype(table)
-            
+
         return table
 
-                
     @staticmethod
     def convert_output(obj: Any, contract: Contract) -> Any:
         """
@@ -214,16 +205,16 @@ class Arrow:
             The index preservation behavior is controlled by
             `contract.preserve_index`. When set to False, the
             resulting Arrow Table will have a default range index.
-        """        
+        """
         c = contract.convert_output
-        
+
         if c is None:
             return obj
-        
+
         from_pd = lambda x: pa.Table.from_pandas(
-            x, preserve_index = contract.preserve_index
+            x, preserve_index=contract.preserve_index
         )
-                
+
         if isinstance(c, list):
             for x in c:
                 obj[x] = from_pd(obj[x])
@@ -232,7 +223,7 @@ class Arrow:
             if isinstance(obj, (tuple, list)):
                 no = []
                 for v in obj:
-                    no.append( from_pd(v) )
+                    no.append(from_pd(v))
                 obj = type(obj)(no)
             else:
                 obj = from_pd(obj)
@@ -240,14 +231,15 @@ class Arrow:
         return obj
 
     @classmethod
-    def _wrapper(cls, 
-        func:       Callable, 
-        args:       tuple, 
-        kwargs:     dict,
-        contract:   Contract, 
-    ) -> Any:                
+    def _wrapper(
+        cls,
+        func: Callable,
+        args: tuple,
+        kwargs: dict,
+        contract: Contract,
+    ) -> Any:
         ci = lambda x: cls.convert_input(x, contract, func)
-        
+
         new_args = []
         for arg in args:
             new_args.append(ci(arg))
@@ -260,7 +252,7 @@ class Arrow:
         del new_args, new_kwargs
 
         return cls.convert_output(res, contract)
-        
+
     @classmethod
     def transition(cls, contract: Contract = Contract()) -> Callable:
         """
@@ -301,8 +293,8 @@ class Arrow:
             ...     convert_output  = False,
             ... ))
             ... def train_model(df: pDF) -> pDF:
-            ...     # converted input df is guaranteed to have only chosen  
-            ...     # input_columns and be a pandas standard DataFrame with 
+            ...     # converted input df is guaranteed to have only chosen
+            ...     # input_columns and be a pandas standard DataFrame with
             ...     # `standard dtypes`
             ...     return df.describe()
             ...
@@ -312,28 +304,29 @@ class Arrow:
             ...     convert_output  = True,
             ... ))
             ... def train_model(df: pDF) -> pDF:
-            ...     # converted input df is guaranteed to have only chosen 
+            ...     # converted input df is guaranteed to have only chosen
             ...     # input_columns and be a pandas DataFrame with Arrow backend
-            ...     return df.describe()            
+            ...     return df.describe()
             >>>
             >>> # Accepts both:
             >>> result = train_model(pandas_df)      # Passthrough
             >>> result = train_model(arrow_table)    # Auto-converted
         """
+
         def decorator(func):
             @wraps(func)
-            def wrapper(*args, **kwargs):                
-                return cls._wrapper(
-                    func, args, kwargs, contract
-                )
+            def wrapper(*args, **kwargs):
+                return cls._wrapper(func, args, kwargs, contract)
+
             return wrapper
+
         return decorator
-        
+
     @classmethod
     def to_safe_datatype(cls, data: pDF | pSe | np.ndarray) -> pDF | pSe | np.ndarray:
         """
         Ensures that pd DataFrame has all values in pd/np native standards.
-        If no ArrowDtype columns are present returns data as-is.   
+        If no ArrowDtype columns are present returns data as-is.
 
         Executes from_pandas - to_pandas while stripping pandas metadata
         → critical for standard py libs (numpy, scikit, lgb, ...).
@@ -341,12 +334,12 @@ class Arrow:
         The original index is preserved.
 
         Parameters:
-            data (pDF  | pSe | np.ndarray): The source DataFrame, potentially 
+            data (pDF  | pSe | np.ndarray): The source DataFrame, potentially
                 containing Arrow-backed columns or non-standard metadata.
 
         Returns:
-            pDF | pSe | np.ndarray: A clean DataFrame with standard numpy dtypes 
-                and no Arrow-specific metadata. Safe for consumption by any standard 
+            pDF | pSe | np.ndarray: A clean DataFrame with standard numpy dtypes
+                and no Arrow-specific metadata. Safe for consumption by any standard
                 ML library.
         """
         if isinstance(data, np.ndarray):
@@ -356,14 +349,14 @@ class Arrow:
             if not isinstance(data.dtype, pd.ArrowDtype):
                 return data
 
-            s = cls._conversion(data).iloc[:, 0]            
+            s = cls._conversion(data).iloc[:, 0]
             s.name = data.name
             return s
 
-        x = [x for x,t in data.dtypes.items() if isinstance(t, pd.ArrowDtype)] 
+        x = [x for x, t in data.dtypes.items() if isinstance(t, pd.ArrowDtype)]
         if not x:
-            return data    
-        
+            return data
+
         d = cls._conversion(data, x)
         c = data.columns
         r = [z for z in c if z not in x]
@@ -372,10 +365,10 @@ class Arrow:
         return d[c]
 
     @staticmethod
-    def _conversion(data:pDF|pSe, x:list=None) -> pDF|pSe:
+    def _conversion(data: pDF | pSe, x: list = None) -> pDF | pSe:
         if isinstance(data, pSe):
             d = data.to_frame()
-        else: 
+        else:
             d = data[x]
         d = (
             pa.Table.from_pandas(d, preserve_index=False)
@@ -383,27 +376,29 @@ class Arrow:
             .to_pandas()
         )
         d.index = data.index
-        return d  
+        return d
 
     def to_pandas(data: pa.Table | pa.ChunkedArray | pDF | pSe) -> pDF | pSe:
         """
-        Converts arrow Table to pd dataframe while keeping same mem 
-        object by using data.to_pandas(`types_mapper = pd.ArrowDtype`) 
+        Converts arrow Table to pd dataframe while keeping same mem
+        object by using data.to_pandas(`types_mapper = pd.ArrowDtype`)
         → native pyarrow dtypes present in the output pDF.
 
         Pandas input is returned as-is.
         """
         if isinstance(data, (pa.Table, pa.ChunkedArray)):
-            return data.to_pandas(types_mapper = pd.ArrowDtype)
-        
+            return data.to_pandas(types_mapper=pd.ArrowDtype)
+
         if not isinstance(data, (pDF, pSe)):
             raise ValueError(
-                'AIG SAFETY ► to_pandas() accepts Arrow or Pandas data objects.'
+                "AIG SAFETY ► to_pandas() accepts Arrow or Pandas data objects."
             )
         return data
 
     @staticmethod
-    def take(table:pa.Table, indicies:int|list = 100, random_state:int = 42) -> pDF:
+    def take(
+        table: pa.Table, indicies: int | list = 100, random_state: int = 42
+    ) -> pDF:
         """
         Extract a subset of rows from an Arrow Table as a Pandas DataFrame.
 
@@ -431,16 +426,20 @@ class Arrow:
             >>>
             >>> # Specific rows:
             >>> rows = Arrow.take(arrow_table, [0, 5, 10, 50])
-        """        
+        """
         if isinstance(indicies, int):
             idx = table.num_rows
             rng = np.random.default_rng(random_state)
-            indicies = rng.choice(list(range(idx)), size=indicies, replace=False, shuffle=False)
+            indicies = rng.choice(
+                list(range(idx)), size=indicies, replace=False, shuffle=False
+            )
             indicies.sort()
         return table.take(indicies).to_pandas()
 
     @staticmethod
-    def move_column_inplace(table:pa.Table, col:list|str, pos:list|int) -> pa.Table:
+    def move_column_inplace(
+        table: pa.Table, col: list | str, pos: list | int
+    ) -> pa.Table:
         """
         Reorder a column to a new position in the Arrow Table.
 
@@ -465,14 +464,16 @@ class Arrow:
             >>>
             >>> # Move 'id' to the last position:
             >>> table = Arrow.move_column_inplace(table, 'id', len(table.column_names) - 1)
-        """        
+        """
         cols = list(table.column_names)
         cols.remove(col)
         cols.insert(pos, col)
-        return table.select(cols) 
+        return table.select(cols)
 
     @staticmethod
-    def stable_sort(table:pa.Table, sortby:str|list, ascending:bool=True) -> pa.Table:
+    def stable_sort(
+        table: pa.Table, sortby: str | list, ascending: bool = True
+    ) -> pa.Table:
         """
         Perform a deterministic (stable) sort on an Arrow Table.
 
@@ -500,14 +501,14 @@ class Arrow:
             >>> # Multi-key sort (date desc, then id asc):
             >>> table = Arrow.stable_sort(table, ['date', 'id'], ascending=False)
         """
-        kind = 'descending'
+        kind = "descending"
         if ascending:
-            kind = 'ascending'
+            kind = "ascending"
         return table.sort_by([(x, kind) for x in List.ensure(sortby)])
 
     @staticmethod
     def add_column(
-        data:pa.Table, name:str, array:pSe|pa.ChunkedArray, position:int=None
+        data: pa.Table, name: str, array: pSe | pa.ChunkedArray, position: int = None
     ) -> pa.Table:
         """
         Add a new column to an Arrow Table.
@@ -535,21 +536,28 @@ class Arrow:
             >>>
             >>> # Insert as the first column:
             >>> table = Arrow.add_column(table, 'id', id_array, position=0)
-        """        
+        """
         array = pa.array(array)
         if position is not None:
-            return data.add_column(position, name, array)        
+            return data.add_column(position, name, array)
         return data.append_column(name, array)
 
     @staticmethod
     def add_columns(
-        data: pa.Table, 
-        new_data: pa.Table, 
+        data: pa.Table,
+        new_data: pa.Table,
         cols: list[str] = None,
         keys: str | list[str] = None,
         join_type: Literal[
-            "left semi", "right semi", "left anti", "right anti", 
-            "inner", "left outer", "right outer", "full outer"] = 'left outer'
+            "left semi",
+            "right semi",
+            "left anti",
+            "right anti",
+            "inner",
+            "left outer",
+            "right outer",
+            "full outer",
+        ] = "left outer",
     ) -> pa.Table:
         """
         Merge columns from a source Arrow Table into a target Arrow Table.
@@ -615,14 +623,16 @@ class Arrow:
 
         existing = [c for c in cols if c in data.column_names]
         if existing:
-            data = data.drop_columns(existing)      
+            data = data.drop_columns(existing)
 
         if keys:
             if isinstance(keys, str):
                 keys = [keys]
-            return data.join(new_data.select(keys + cols), keys=keys, join_type=join_type)
-        
+            return data.join(
+                new_data.select(keys + cols), keys=keys, join_type=join_type
+            )
+
         for col_name in cols:
             col_array = new_data.column(col_name)
             data = data.append_column(col_name, col_array)
-        return data    
+        return data

@@ -1,29 +1,17 @@
 """
 Visual Presentation Engine and Async Feedback System.
 
-This module implements the final aesthetic layer of AIDflow, providing 
-specialized utilities for high-fidelity data styling and real-time execution 
-feedback. It ensures that the transition from raw computation to user 
+This module implements the final aesthetic layer of AIDflow, providing
+specialized utilities for high-fidelity data styling and real-time execution
+feedback. It ensures that the transition from raw computation to user
 presentation is seamless, professional, and visually intuitive.
 """
 
-from ..deps.common      import  (
-                                os, 
-                                math, 
-                                time,
-                                threading,
-                                contextmanager
-                                )
-from ..deps.data        import  pDF
-from ..deps.data_view   import  JavascriptFunction
-from ..deps.display     import  (
-                                wg, 
-                                HTML, 
-                                display_html, 
-                                display, 
-                                clear_output
-                                )
-from ..utils.builtins   import  List
+from ..deps.common import os, math, time, threading, contextmanager
+from ..deps.data import pDF
+from ..deps.data_view import JavascriptFunction
+from ..deps.display import wg, HTML, display_html, display, clear_output
+from ..utils.builtins import List
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -40,7 +28,8 @@ class ItablesStyle:
     """
 
     @staticmethod
-    def bool_color(var: str, colors: tuple = ('#2BCF91', '#B50064')
+    def bool_color(
+        var: str, colors: tuple = ("#2BCF91", "#B50064")
     ) -> JavascriptFunction:
         """
         Color-format a boolean column: True → green, False → red.
@@ -73,9 +62,9 @@ class ItablesStyle:
             }}
         }}
         """)
-    
+
     @staticmethod
-    def number_color(th:float=0, color:str='#B50064') -> None:
+    def number_color(th: float = 0, color: str = "#B50064") -> None:
         """
         Conditionally color numeric values exceeding a threshold.
 
@@ -161,9 +150,10 @@ class ItablesStyle:
         function(td, cellData, rowData, row, col) {{
             {js_body}
         }}
-        """)   
+        """)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-        
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -199,13 +189,14 @@ class PdStyle:
         str
             CSS declaration (e.g., ``'color: #B50064'``) or
             empty string if no style is defined.
-        """ 
-        color = color_dict.get(col, {}).get(row, '')             
-        return f'{color_bg}: {color}' if color else ''
+        """
+        color = color_dict.get(col, {}).get(row, "")
+        return f"{color_bg}: {color}" if color else ""
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
-    def df_apply_styles(cls, df:pDF, color_dict:dict, color_bg:str='color') -> pDF:
+    def df_apply_styles(cls, df: pDF, color_dict: dict, color_bg: str = "color") -> pDF:
         """
         Generate a full style matrix (same shape as ``df``) with
         CSS declarations from the color mapping.
@@ -225,17 +216,20 @@ class PdStyle:
             DataFrame of CSS strings (same index/columns as
             ``df``).
         """
-        styles = pDF('', index=df.index, columns=df.columns)
-        
+        styles = pDF("", index=df.index, columns=df.columns)
+
         for col in df.columns:
             for row in df.index:
-                styles.loc[row, col] = cls.df_color_cells(col, row, color_dict, color_bg)    
-        
+                styles.loc[row, col] = cls.df_color_cells(
+                    col, row, color_dict, color_bg
+                )
+
         return styles
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
-    def df_apply_color_style(cls, df:pDF, color_dict:dict, color_bg='color'):
+    def df_apply_color_style(cls, df: pDF, color_dict: dict, color_bg="color"):
         """
         Apply a cell color mapping to a DataFrame and return the
         styled object (for notebook display).
@@ -253,11 +247,14 @@ class PdStyle:
         -------
         pandas.io.formats.style.Styler
             Styled DataFrame ready for display.
-        """      
+        """
         df_ = df.copy()
-        return df_.style.apply(lambda x: cls.df_apply_styles(df_, color_dict, color_bg), axis=None)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return df_.style.apply(
+            lambda x: cls.df_apply_styles(df_, color_dict, color_bg), axis=None
+        )
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -272,18 +269,18 @@ class TableStyle:
     scroll fatigue typical of sequential Jupyter outputs.
     """
 
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     # DISPLAY TABLES NEXT TO EACH OTHER
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     @staticmethod
-    def combine_pdf_tables( 
-        dfs:         list[pDF|str], 
-        names:       list[str] = None, 
-        bg_color:    str = '#EAEDF3', 
-        header_bold: bool|list = True, 
-        max_tables:  int = 6, 
-        show:        bool = True
-    ) -> str | None:    
+    def combine_pdf_tables(
+        dfs: list[pDF | str],
+        names: list[str] = None,
+        bg_color: str = "#EAEDF3",
+        header_bold: bool | list = True,
+        max_tables: int = 6,
+        show: bool = True,
+    ) -> str | None:
         """
         Combine multiple DataFrames (or HTML strings) into a
         single inline HTML table layout.
@@ -309,70 +306,82 @@ class TableStyle:
         -------
         str | None
             HTML string (when ``show=False``) or None.
-        """     
+        """
         count = 0
         names = names or []
 
         dfs = List.ensure(dfs)
-        if not names: names = ['' for x in range(len(dfs))]
+        if not names:
+            names = ["" for x in range(len(dfs))]
         names = List.ensure(names)
 
-        b  = 'font-weight:bold;'
-        n  = 'font-weight:normal;'
+        b = "font-weight:bold;"
+        n = "font-weight:normal;"
 
-        th = [n]*len(dfs)
-        
+        th = [n] * len(dfs)
+
         # Determine which headers should be bold based on header_bold argument
         if isinstance(header_bold, list):
             for i in header_bold:
                 if i not in range(len(dfs)):
-                    raise ValueError('When header_bold is provided as a list, values represent tables position for which headers will be bold')
+                    raise ValueError(
+                        "When header_bold is provided as a list, values represent tables position for which headers will be bold"
+                    )
                 th[i] = b
         elif header_bold:
-            th = [b]*len(dfs)
+            th = [b] * len(dfs)
 
-        html_str = ''   # Initialize HTML string to build the table
-        html_th  = ''   # Accumulator for <th> elements (table headers)
-        html_td  = ''   # Accumulator for <td> elements (table data)
+        html_str = ""  # Initialize HTML string to build the table
+        html_th = ""  # Accumulator for <th> elements (table headers)
+        html_td = ""  # Accumulator for <td> elements (table data)
 
         for i, (df, name) in enumerate(zip(dfs, names)):
             df_html = df.to_html(index=True) if not isinstance(df, str) else df
-            
+
             # columns in a row
             if count < (max_tables):
-                if name: html_th += (''.join(f'<th style="text-align:center; font-size: 9pt; {th[i]}">{name}</th>'))
-                html_td += (''.join(f'<td style="vertical-align:top; background-color:{bg_color}"> {df_html}</td>'))
+                if name:
+                    html_th += "".join(
+                        f'<th style="text-align:center; font-size: 9pt; {th[i]}">{name}</th>'
+                    )
+                html_td += "".join(
+                    f'<td style="vertical-align:top; background-color:{bg_color}"> {df_html}</td>'
+                )
                 count += 1
 
             # new row
             else:
-                html_str += f'<tr>{html_th}</tr><tr>{html_td}</tr>'
-                if name: html_th = f'<th style="text-align:center; font-size: 9pt; {th[i]}">{name}</th>'
+                html_str += f"<tr>{html_th}</tr><tr>{html_td}</tr>"
+                if name:
+                    html_th = f'<th style="text-align:center; font-size: 9pt; {th[i]}">{name}</th>'
                 html_td = f'<td style="vertical-align:top; background-color:{bg_color}"> {df_html}</td>'
-                if name and name != names[-1]: count = 0
+                if name and name != names[-1]:
+                    count = 0
 
         if count != 0:
-            html_str += f'<tr>{html_th}</tr><tr>{html_td}</tr>'
-        
-        html_str = f'<table>{html_str}</table>'
-        html_str = html_str.replace('<table',f'<table style="display:inline"')
-        
-        if show: display_html(html_str, raw=True)
-        else: return html_str
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+            html_str += f"<tr>{html_th}</tr><tr>{html_td}</tr>"
 
-        
+        html_str = f"<table>{html_str}</table>"
+        html_str = html_str.replace("<table", f'<table style="display:inline"')
+
+        if show:
+            display_html(html_str, raw=True)
+        else:
+            return html_str
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     # COMBINE MULTIPLE HTML TABLES NEXT TO EACH OTHER
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     @staticmethod
     def combine_html_tables(
-        tables:         list[str], 
-        cols_per_row:   int = 2,
-        gap_horizontal: int = 50, 
-        gap_vertical:   int = 20, 
-        align:          str = "left", 
-        show:          bool = True
+        tables: list[str],
+        cols_per_row: int = 2,
+        gap_horizontal: int = 50,
+        gap_vertical: int = 20,
+        align: str = "left",
+        show: bool = True,
     ) -> str | None:
         """
         Arrange HTML tables in a flexbox grid layout.
@@ -404,42 +413,46 @@ class TableStyle:
             "right": "flex-end",
             "between": "space-between",
             "around": "space-around",
-            "evenly": "space-evenly"
+            "evenly": "space-evenly",
         }
         justify_value = align_map.get(align, "flex-start")  # Default to left alignment
 
         # Calculate number of rows needed
         num_tables = len(tables)
-        num_rows = math.ceil(num_tables / cols_per_row)     # Round up to get full rows
-        
+        num_rows = math.ceil(num_tables / cols_per_row)  # Round up to get full rows
+
         combined_html = f'<div style="display: flex; flex-direction: column; gap: {gap_vertical}px;">'  # Outer container (vertical)
 
         for row in range(num_rows):
-            row_tables = tables[row * cols_per_row : (row + 1) * cols_per_row]  # Extract tables for this row
+            row_tables = tables[
+                row * cols_per_row : (row + 1) * cols_per_row
+            ]  # Extract tables for this row
             row_html = f'<div style="display: flex; gap: {gap_horizontal}px; justify-content: {justify_value}; align-items: start;">'
             for table in row_tables:
-                row_html += f'<div>{table.strip()}</div>'
-            row_html += '</div>'
+                row_html += f"<div>{table.strip()}</div>"
+            row_html += "</div>"
             combined_html += row_html  # Append row to main container
 
-        combined_html += '</div>'
-        
-        if not show: 
+        combined_html += "</div>"
+
+        if not show:
             return combined_html
         display_html(combined_html, raw=True)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────         
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
-    def combine_pdf_to_html(cls,
-        pdf_tables: list|dict, 
-        titles:     list|dict = None, 
+    def combine_pdf_to_html(
+        cls,
+        pdf_tables: list | dict,
+        titles: list | dict = None,
         tables_per_block: int = 2,
         p_tables_per_row: int = 4,
-        h_cols_per_row:   int = 3,
+        h_cols_per_row: int = 3,
         h_gap_horizontal: int = 20,
-        h_gap_vertical:   int = 20, 
-        h_align:          str = "left",         
-        show:            bool = True
+        h_gap_vertical: int = 20,
+        h_align: str = "left",
+        show: bool = True,
     ) -> str | None:
         """
         Combine multiple DataFrames into a two-level HTML layout:
@@ -448,7 +461,7 @@ class TableStyle:
         Applies in sequence:
         >>> html = combine_pdf_tables(pdf_tables, titles, max_tables=p_tables_per_row, show=False)
         >>> return combine_html_tables(html, h_cols_per_row, h_gap_horizontal, h_gap_vertical, h_align, show=show)
-        
+
         Parameters
         ----------
         pdf_tables : list | dict
@@ -484,49 +497,57 @@ class TableStyle:
         titles = titles or []
         _is_d_dict = isinstance(pdf_tables, dict)
         _is_t_dict = isinstance(titles, dict)
-        if ( 
+        if (
             _is_d_dict
             and len(titles)
-            and ( (not _is_t_dict) or [k for k in pdf_tables if k not in titles] )
+            and ((not _is_t_dict) or [k for k in pdf_tables if k not in titles])
         ):
             raise TypeError(
-                'AIG SAFETY ► When both tables and titles are provided, ' 
-                'they must be of the same type: either list or dict with same keys'
+                "AIG SAFETY ► When both tables and titles are provided, "
+                "they must be of the same type: either list or dict with same keys"
             )
-        
+
         ld = len(pdf_tables)
         lt = len(titles)
         if (not _is_t_dict) and (ld != lt):
-            titles = ['']*ld
+            titles = [""] * ld
 
         r = range(0, ld, tables_per_block)
         if _is_d_dict:
-              s = lambda x: [x[k] for k in x]
-        else: s = lambda x: [x[i:i+tables_per_block] for i in r]
+            s = lambda x: [x[k] for k in x]
+        else:
+            s = lambda x: [x[i : i + tables_per_block] for i in r]
 
         split_d = s(pdf_tables)
         split_t = s(titles)
-        
+
         comb = []
-        for d,t in zip(split_d, split_t):
-            comb.append( cls.combine_pdf_tables(d, t, max_tables=p_tables_per_row, show=False ) )
+        for d, t in zip(split_d, split_t):
+            comb.append(
+                cls.combine_pdf_tables(d, t, max_tables=p_tables_per_row, show=False)
+            )
 
         return cls.combine_html_tables(
-            comb, 
-            cols_per_row   = h_cols_per_row, 
-            gap_horizontal = h_gap_horizontal,
-            gap_vertical   = h_gap_vertical,
-            align = h_align,
-            show  = show 
+            comb,
+            cols_per_row=h_cols_per_row,
+            gap_horizontal=h_gap_horizontal,
+            gap_vertical=h_gap_vertical,
+            align=h_align,
+            show=show,
         )
-    # ─────────────────────────────────────────────────────────────────────────────────────────────         
 
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     # DISPLAY CLICKABLE TAB
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     @staticmethod
-    def clickable(data:dict|list|pDF, tab:str=None, show:bool=True, hide_columns:bool=True):
+    def clickable(
+        data: dict | list | pDF,
+        tab: str = None,
+        show: bool = True,
+        hide_columns: bool = True,
+    ):
         """
         Render a table with clickable file-path links.
 
@@ -552,30 +573,35 @@ class TableStyle:
         Styler | None
             Styled table (when ``show=False``) or None.
         """
+
         def make_clickable(url):
             link = os.path.basename(url)
             return f'<a href="{url}" Target="_blank">{link}</a>'
-        
-        if not isinstance(data, pDF): 
-            if isinstance(data, dict): data = [data]
+
+        if not isinstance(data, pDF):
+            if isinstance(data, dict):
+                data = [data]
             data = pDF(data)
-        
+
         if tab is None:
             tab = data.columns[-1]
 
         dash = data.style.format({tab: make_clickable}).hide(axis=0)
-        if hide_columns: dash = dash.hide(axis=1)
-        
-        if show: display(dash)
-        else: return dash
-    # ─────────────────────────────────────────────────────────────────────────────────────────────         
-    
+        if hide_columns:
+            dash = dash.hide(axis=1)
 
-    # ─────────────────────────────────────────────────────────────────────────────────────────────         
+        if show:
+            display(dash)
+        else:
+            return dash
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
     # HTML ENHACEMENT
     # ─────────────────────────────────────────────────────────────────────────────────────────────
     @staticmethod
-    def format_html(elements: list) -> str:   
+    def format_html(elements: list) -> str:
         """
         Wrap HTML elements in a standalone document with
         professional CSS styling (typography, spacing, table
@@ -591,11 +617,11 @@ class TableStyle:
         str
             Complete HTML document string.
         """
-        el = ''
+        el = ""
         for e in elements:
             el += f'<div class="section">{e}</div>'
 
-        return f'''
+        return f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -709,5 +735,7 @@ class TableStyle:
             </div>
         </body>
         </html>
-        '''    
+        """
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

@@ -32,20 +32,6 @@ Submodules
   the `PLSBinaryGLM` agent.
 """
 
-from .models import (
-    Logit,
-    Lasso,
-    ElasticNet,
-    LogReg,
-    LGB,
-    XGB,
-    ModelUtils,
-    ModelView
-)
-from .selection import (
-    SparseSelector
-)
-from .pls import (
-    PLSSelector,
-    BinaryPLSRegression
-)
+from .models import Logit, Lasso, ElasticNet, LogReg, LGB, XGB, ModelUtils, ModelView
+from .selection import SparseSelector
+from .pls import PLSSelector, BinaryPLSRegression

@@ -1,71 +1,61 @@
 """
 Domain Interface and Phase Orchestration Layer.
 
-This module serves as the primary API surface for end-users, providing a 
-semantic interface to the underlying AIDflow worker ecosystem. It transforms 
-the generic execution capabilities of the `core/worker` layer into domain-specific 
-pipeline phases (e.g., DataPhase, EncodingPhase), allowing users to interact 
-with the ML pipeline using meaningful business logic rather than technical 
+This module serves as the primary API surface for end-users, providing a
+semantic interface to the underlying AIDflow worker ecosystem. It transforms
+the generic execution capabilities of the `core/worker` layer into domain-specific
+pipeline phases (e.g., DataPhase, EncodingPhase), allowing users to interact
+with the ML pipeline using meaningful business logic rather than technical
 configurations.
 
 Key architectural roles provided by this module:
-1. Worker Registration: Acts as the local namespace where specific model implementations 
-are mapped to unique worker identifiers (e.g., `AIGFLOW.Data.data_loader`), enabling 
+1. Worker Registration: Acts as the local namespace where specific model implementations
+are mapped to unique worker identifiers (e.g., `AIGFLOW.Data.data_loader`), enabling
 a pluggable and extensible set of tools for each pipeline phase.
 
-2. State Lineage Management: Explicitly manages the flow of data between workers 
-   by defining how results from one step (e.g., `train.raw`) are linked as inputs 
+2. State Lineage Management: Explicitly manages the flow of data between workers
+   by defining how results from one step (e.g., `train.raw`) are linked as inputs
    to the next (e.g., `train.clean`), ensuring a strict and traceable data lineage.
-   
-3. Input/Output Schema Enforcement: Integrates specific Input and Result dataclasses 
-   for every worker, providing the user with IDE-assisted type hinting and 
+
+3. Input/Output Schema Enforcement: Integrates specific Input and Result dataclasses
+   for every worker, providing the user with IDE-assisted type hinting and
    guaranteeing that every pipeline step adheres to its required data contract.
 """
 
-from ..core.parameters      import  (
-                                    AIGFLOW
-                                    )
-from ..core.base.worker     import  (
-                                    WorkerConfig,
-                                    WorkerContract,
-                                    DatasetBinding,
-                                    WorkerBase,
-                                    WorkerPhaseBase,
-                                    )
-from ..core.protocol        import  ProjectContextProtocol
+from ..core.parameters import AIGFLOW
+from ..core.base.worker import (
+    WorkerConfig,
+    WorkerContract,
+    DatasetBinding,
+    WorkerBase,
+    WorkerPhaseBase,
+)
+from ..core.protocol import ProjectContextProtocol
 
-from .predict               import  (
-                                    AgentsPredictorInput,
-                                    AgentsPredictorResult,
-                                    AgentsPredictor
-                                    )
-from .compare               import  (
-                                    AgentsComparatorInput, 
-                                    AgentsComparatorResult,
-                                    AgentsComparatorUI
-                                    )
-from .transition            import  (
-                                    AgentsTransitionInput, 
-                                    AgentsTransitionResult,
-                                    AgentsTransitionUI
-                                    )
-from .select                import  (
-                                    AgentSelectorEnvelopeCfg,
-                                    AgentSelectorEnvelope,
-                                    AgentSelectorInput,
-                                    AgentSelectorResult,
-                                    AgentSelectorUI
-                                    )
-from .select.agent          import  (
-                                    AgentPredictorInput,
-                                    AgentPredictorResultDual,
-                                    AgentPredictorUI,
-                                    AgentPredictorDashWaiter
-                                    )
+from .predict import AgentsPredictorInput, AgentsPredictorResult, AgentsPredictor
+from .compare import AgentsComparatorInput, AgentsComparatorResult, AgentsComparatorUI
+from .transition import (
+    AgentsTransitionInput,
+    AgentsTransitionResult,
+    AgentsTransitionUI,
+)
+from .select import (
+    AgentSelectorEnvelopeCfg,
+    AgentSelectorEnvelope,
+    AgentSelectorInput,
+    AgentSelectorResult,
+    AgentSelectorUI,
+)
+from .select.agent import (
+    AgentPredictorInput,
+    AgentPredictorResultDual,
+    AgentPredictorUI,
+    AgentPredictorDashWaiter,
+)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-# SELECTION PHASE 
+# SELECTION PHASE
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class AgentsPredictorWorker(WorkerBase[AgentsPredictorResult]):
     """
@@ -199,31 +189,33 @@ class AgentsPredictorWorker(WorkerBase[AgentsPredictorResult]):
     agents_predictor = ctx.workers.agents_predictor(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Selection.predictor,
-        Model   = AgentsPredictor,
-        Input   = AgentsPredictorInput,
-        Result  = AgentsPredictorResult,
-        offload = AIGFLOW.Selection.predictor,
-        title   = 'AGENTS PREDICTOR'
+        model=AIGFLOW.Selection.predictor,
+        Model=AgentsPredictor,
+        Input=AgentsPredictorInput,
+        Result=AgentsPredictorResult,
+        offload=AIGFLOW.Selection.predictor,
+        title="AGENTS PREDICTOR",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = AgentsPredictorInput(
-                data = self.sets.get('test.ml')
+            defaults=AgentsPredictorInput(data=self.sets.get("test.ml")),
+            datasets=DatasetBinding(
+                fitted={
+                    "predictions.test.agent1": self._result.agent1,
+                    "predictions.test.agent2": self._result.agent2,
+                    "predictions.test.agent3": self._result.agent3,
+                    "predictions.test.agent4": self._result.agent4,
+                    "stats.agents.prediction": self._processor.stats,
+                }
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'predictions.test.agent1' : self._result.agent1,
-                'predictions.test.agent2' : self._result.agent2,
-                'predictions.test.agent3' : self._result.agent3,
-                'predictions.test.agent4' : self._result.agent4,
-                'stats.agents.prediction' : self._processor.stats
-            })
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class AgentsComparatorWorker(WorkerBase[AgentsComparatorResult]):
     """
@@ -371,26 +363,26 @@ class AgentsComparatorWorker(WorkerBase[AgentsComparatorResult]):
     agents_comparator = ctx.workers.agents_comparator(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model  = AIGFLOW.Selection.comparator,
-        Model  = AgentsComparatorUI,
-        Input  = AgentsComparatorInput,
-        Result = AgentsComparatorResult,
-        title  = 'AGENTS COMPARATOR'
+        model=AIGFLOW.Selection.comparator,
+        Model=AgentsComparatorUI,
+        Input=AgentsComparatorInput,
+        Result=AgentsComparatorResult,
+        title="AGENTS COMPARATOR",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = AgentsComparatorInput(
-                data = self.sets.get('test.ml')
+            defaults=AgentsComparatorInput(data=self.sets.get("test.ml")),
+            datasets=DatasetBinding(
+                fitted={"stats.agents.comparison": self._processor.stats}
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'stats.agents.comparison' : self._processor.stats                
-            })
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class AgentsTransitionWorker(WorkerBase[AgentsTransitionResult]):
     """
@@ -539,26 +531,26 @@ class AgentsTransitionWorker(WorkerBase[AgentsTransitionResult]):
     agents_transition = ctx.workers.agents_transition(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model  = AIGFLOW.Selection.transition,
-        Model  = AgentsTransitionUI,
-        Input  = AgentsTransitionInput,
-        Result = AgentsTransitionResult,
-        title  = 'AGENTS TRANSITION'
+        model=AIGFLOW.Selection.transition,
+        Model=AgentsTransitionUI,
+        Input=AgentsTransitionInput,
+        Result=AgentsTransitionResult,
+        title="AGENTS TRANSITION",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = AgentsTransitionInput(
-                data = self.sets.get('test.ml')
+            defaults=AgentsTransitionInput(data=self.sets.get("test.ml")),
+            datasets=DatasetBinding(
+                fitted={"stats.agents.transition": self._processor.stats}
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'stats.agents.transition' : self._processor.stats
-            })
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class AgentPredictorWorker(WorkerBase[AgentPredictorResultDual]):
     """
@@ -735,32 +727,36 @@ class AgentPredictorWorker(WorkerBase[AgentPredictorResultDual]):
     champion_predictor = ctx.workers.champion_predictor(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model  = AIGFLOW.Selection.champion_agent,
-        Model  = AgentPredictorUI,
-        Input  = AgentPredictorInput,
-        Result = AgentPredictorResultDual,
-        title  = 'CHAMPION AGENT'
+        model=AIGFLOW.Selection.champion_agent,
+        Model=AgentPredictorUI,
+        Input=AgentPredictorInput,
+        Result=AgentPredictorResultDual,
+        title="CHAMPION AGENT",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = AgentPredictorInput(
-                train_set = self.sets.get('train.ml'),
-                test_set  = self.sets.get('test.ml'),
+            defaults=AgentPredictorInput(
+                train_set=self.sets.get("train.ml"),
+                test_set=self.sets.get("test.ml"),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'predictions.train.champion_agent'  : self._result.data,
-                'predictions.test.champion_agent'   : self._result.test_data,
-                'features.champion_agent.predicted' : self._result.features,
-                'features.champion_agent.selected'  : self._result.selected,
-                'features.champion_agent.dropped'   : self._result.dropped,
-                'stats.agents.champion_agent'       : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "predictions.train.champion_agent": self._result.data,
+                    "predictions.test.champion_agent": self._result.test_data,
+                    "features.champion_agent.predicted": self._result.features,
+                    "features.champion_agent.selected": self._result.selected,
+                    "features.champion_agent.dropped": self._result.dropped,
+                    "stats.agents.champion_agent": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class AgentSelectorWorker(WorkerBase[AgentSelectorResult]):
     """
@@ -918,62 +914,64 @@ class AgentSelectorWorker(WorkerBase[AgentSelectorResult]):
     agent_selector = ctx.workers.agent_selector(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model  = AIGFLOW.Selection.selector,
-        Model  = AgentSelectorUI,
-        Input  = AgentSelectorInput,
-        Result = AgentSelectorResult,
-        Target = AgentPredictorWorker,
-        title  = 'AGENTS SELECTOR'
+        model=AIGFLOW.Selection.selector,
+        Model=AgentSelectorUI,
+        Input=AgentSelectorInput,
+        Result=AgentSelectorResult,
+        Target=AgentPredictorWorker,
+        title="AGENTS SELECTOR",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = AgentSelectorEnvelope(
-                inputs = AgentSelectorInput(
-                    data = self.sets.get('test.ml'),
-                    predictor = self.get_target_worker()
+            defaults=AgentSelectorEnvelope(
+                inputs=AgentSelectorInput(
+                    data=self.sets.get("test.ml"), predictor=self.get_target_worker()
                 ),
-                config = AgentSelectorEnvelopeCfg(
-                    train_ml = self.sets.get('train.ml'),
-                )
+                config=AgentSelectorEnvelopeCfg(
+                    train_ml=self.sets.get("train.ml"),
+                ),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'stats.agents.selection' : self._processor.stats               
-            })
+            datasets=DatasetBinding(
+                fitted={"stats.agents.selection": self._processor.stats}
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 class SelectionPhase(WorkerPhaseBase):
     """
     AIG Flow Selection Phase Orchestrator.
-    
-    The final decision-making stage of the ML pipeline. This phase coordinates 
-    the transition from a collection of trained agents to a single, validated 
+
+    The final decision-making stage of the ML pipeline. This phase coordinates
+    the transition from a collection of trained agents to a single, validated
     Champion Agent. It orchestrates a rigorous four-step validation process—
-    Prediction, Comparison, Transition, and Selection—ensuring that the chosen 
-    model is objectively superior, stable across data folds, and fully explainable.    
+    Prediction, Comparison, Transition, and Selection—ensuring that the chosen
+    model is objectively superior, stable across data folds, and fully explainable.
     """
 
-    def __init__(self, ctx: ProjectContextProtocol):    
+    def __init__(self, ctx: ProjectContextProtocol):
         super().__init__(ctx)
-        self._register((
-            AgentsPredictorWorker,
-            AgentsComparatorWorker,
-            AgentsTransitionWorker,
-            AgentSelectorWorker
-        ))
+        self._register(
+            (
+                AgentsPredictorWorker,
+                AgentsComparatorWorker,
+                AgentsTransitionWorker,
+                AgentSelectorWorker,
+            )
+        )
 
     def report(self, verbose: bool = None) -> None:
         """
         Final Model Governance Report.
-        
-        Produces a comprehensive, human-readable summary of the champion agent's 
-        identity, performance benchmarks, and feature importance. This serves as 
-        the primary documentation for stakeholders to approve the model for 
+
+        Produces a comprehensive, human-readable summary of the champion agent's
+        identity, performance benchmarks, and feature importance. This serves as
+        the primary documentation for stakeholders to approve the model for
         production deployment.
 
         Parameters
@@ -985,6 +983,8 @@ class SelectionPhase(WorkerPhaseBase):
         -------
         None
             Triggers the visualization/logging of the Champion Agent report.
-        """        
+        """
         AgentPredictorDashWaiter(self.ctx.setup).show(verbose)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

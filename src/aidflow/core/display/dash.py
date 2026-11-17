@@ -1,68 +1,47 @@
 """
 State-Aware Reporting Engine and Visualization Framework for AIDflow.
 
-This module implements the standardized reporting layer used to communicate 
-model performance, feature importance, and pipeline stability. It transforms 
-raw execution results into high-fidelity, interactive dashboards through a 
+This module implements the standardized reporting layer used to communicate
+model performance, feature importance, and pipeline stability. It transforms
+raw execution results into high-fidelity, interactive dashboards through a
 decoupled architecture that separates data computation from visual rendering.
 
 Key architectural capabilities:
-1. Asynchronous Dashboard Synthesis: Utilizes `DashBackground` to offload heavy 
-   visual computations to background processes, ensuring the Jupyter interface 
+1. Asynchronous Dashboard Synthesis: Utilizes `DashBackground` to offload heavy
+   visual computations to background processes, ensuring the Jupyter interface
    remains responsive during complex report generation.
 
-2. Polished Visual Standards: Enforces a unified design language across all reports 
-   via `TableStyle` and integrated Plotly serialization, allowing for consistent 
+2. Polished Visual Standards: Enforces a unified design language across all reports
+   via `TableStyle` and integrated Plotly serialization, allowing for consistent
    branding and readability across different model types.
 
-3. Provenance-Linked Reporting: Integrates directly with the Model's state to 
-   provide time-stamped, reproducible snapshots of performance, enabling a 
+3. Provenance-Linked Reporting: Integrates directly with the Model's state to
+   provide time-stamped, reproducible snapshots of performance, enabling a
    complete audit trail from configuration to final visual output.
 
-4. Polymorphic Display Modes: Supports multiple output targets through `DashInterface`, 
-   allowing reports to be rendered as interactive Jupyter widgets, persisted as 
+4. Polymorphic Display Modes: Supports multiple output targets through `DashInterface`,
+   allowing reports to be rendered as interactive Jupyter widgets, persisted as
    standalone HTML files via `DashPlotlyLink`, or exported for external reporting.
 """
 
-from ...deps.common             import  (
-                                        Path,
-                                        threading,
-                                        Future,
-                                        contextmanager
-                                        )
-from ...deps.plots              import  go
-from ...deps.display            import  display
-from ...deps.data               import  pd_Styler
-from ...deps.types              import  (
-                                        Any,
-                                        Literal,
-                                        FuncType
-                                        )
+from ...deps.common import Path, threading, Future, contextmanager
+from ...deps.plots import go
+from ...deps.display import display
+from ...deps.data import pd_Styler
+from ...deps.types import Any, Literal, FuncType
 
-from ...storage.export          import  (
-                                        Export, 
-                                        FileUtils
-                                        )
-from ...display.style           import  TableStyle
-from ...display.verbosity       import  Verbosity
+from ...storage.export import Export, FileUtils
+from ...display.style import TableStyle
+from ...display.verbosity import Verbosity
 
-from ..parameters               import  Parameters
-from ..foundation               import  (
-                                        AigParam, 
-                                        AigModel, 
-                                        AigStop
-                                        )
-from ..execution                import  BackgroundProcess
-from ..io                       import  Temp
-from ..interop                  import  Dict
-from ..logging                  import  (
-                                        LOG, 
-                                        LogSignature
-                                        )
-from ..accessor                 import  (
-                                        UI, 
-                                        Format
-                                        )
+from ..parameters import Parameters
+from ..foundation import AigParam, AigModel, AigStop
+from ..execution import BackgroundProcess
+from ..io import Temp
+from ..interop import Dict
+from ..logging import LOG, LogSignature
+from ..accessor import UI, Format
+
 
 class DashInterface:
     """
@@ -112,17 +91,18 @@ class DashInterface:
         visually, prints text only, or remains silent.
     """
 
-    def __init__(self, fitter: type, verbose: Verbosity|int|str|bool):
+    def __init__(self, fitter: type, verbose: Verbosity | int | str | bool):
         from ..base import FitterBase
+
         fitter: FitterBase = fitter
-        self._setup     = fitter.setup
-        self._model     = fitter.MODEL
+        self._setup = fitter.setup
+        self._model = fitter.MODEL
         self._signature = LogSignature.get()
         self._timestamp = AigModel.timestamp()
-        self.verbose    = Verbosity.normalize(verbose)
-        self.elements   = {}
+        self.verbose = Verbosity.normalize(verbose)
+        self.elements = {}
 
-    def save(self, save=None, custom_path=None, **kwargs):        
+    def save(self, save=None, custom_path=None, **kwargs):
         """
         Save the dashboard and resolve element paths with validity check.
 
@@ -147,7 +127,7 @@ class DashInterface:
             Override save path.
         report_name : str, default=None
             Optional file name for repor instance.
-            None resolves to AIG model ID.            
+            None resolves to AIG model ID.
         file_type : str | None, default='html'
             File type extension.
         file_suffix : str | None, default=None
@@ -166,6 +146,7 @@ class DashInterface:
             Structure follows `elements structure` (nested supported).
         """
         from ..io import DashIO
+
         return DashIO(self.setup).save(self, save, custom_path, **kwargs)
 
     def summary(self, _is_view=True):
@@ -177,12 +158,10 @@ class DashInterface:
         statistics. Logs to the project logger via the
         `ReportLogger` mechanism.
         """
-        raise NotImplementedError(
-            'AIG SAFETY ► Dashboard must implement `summary()`.'
-        )
+        raise NotImplementedError("AIG SAFETY ► Dashboard must implement `summary()`.")
         self._final_summary()
 
-    @AigParam.with_setattr_runtime(verbose=None)   
+    @AigParam.with_setattr_runtime(verbose=None)
     def build(self, save=None, custom_path=None, **kwargs):
         """
         Synthesize the dashboard's visual components from the model's state.
@@ -201,9 +180,7 @@ class DashInterface:
         **kwargs : dict
             Forwarded to the concrete build implementation.
         """
-        raise NotImplementedError(
-            'AIG SAFETY ► Dashboard must implement `build()`.'
-        )
+        raise NotImplementedError("AIG SAFETY ► Dashboard must implement `build()`.")
 
     def show(self):
         """
@@ -216,10 +193,8 @@ class DashInterface:
         """
         return self._show()
 
-    def _show(self, 
-        verbose: bool|Verbosity = None, 
-        with_signature: bool = True, 
-        **kwargs
+    def _show(
+        self, verbose: bool | Verbosity = None, with_signature: bool = True, **kwargs
     ):
         """
         Internal show — render with verbosity escalation.
@@ -239,50 +214,50 @@ class DashInterface:
         """
         with self._temporary_verbose(verbose):
             if UI.is_html():
-                self.build(save=False, _is_view=True, **kwargs)                
+                self.build(save=False, _is_view=True, **kwargs)
             else:
                 self.summary(True)
             if with_signature:
                 print(self._get_signatures())
-            
+
     def _show_without_sig(self):
         """
         Show dashboard without signature — for delayed/secondary
         views where the signature would be redundant.
         """
-        self._show(with_signature = False)
+        self._show(with_signature=False)
 
     @staticmethod
     def _is_view(kwargs: dict | bool | None) -> bool:
         """
         Returns True if when called from `show()`
         (enforces GUI-level rendering regardless of the
-        current verbosity setting).        
+        current verbosity setting).
         """
         if not kwargs:
             return False
         if isinstance(kwargs, bool):
             return kwargs
-        return bool( kwargs.get('_is_view') )
-    
+        return bool(kwargs.get("_is_view"))
+
     def _get_signatures(self) -> str:
         """Returns project- dashboard signature."""
         return (
-            f'Report Saved at: {self._timestamp} | '
-            f'Project Signature: {self.project_signature} | '
-            f'Report Signature: {self._signature}'
+            f"Report Saved at: {self._timestamp} | "
+            f"Project Signature: {self.project_signature} | "
+            f"Report Signature: {self._signature}"
         )
-    
+
     @property
     def dashboard_signature(self) -> str:
         """Returns dashboard signature."""
         return self._signature
-    
+
     @property
     def project_signature(self) -> str:
         """Project signature of fitted Model-Fitter."""
         return self._setup.project_signature
-    
+
     @property
     def setup(self) -> Parameters:
         """
@@ -294,7 +269,7 @@ class DashInterface:
     def MODEL(self):
         """Returns AIG model ID."""
         return self._model
-    
+
     @property
     def _is_not_verbose(self) -> bool:
         """True if verbosity is QUIET (no display at all)."""
@@ -309,28 +284,28 @@ class DashInterface:
     def _is_gui(self) -> bool:
         """True if verbosity is at GUI level (full visual rendering)."""
         return self.verbose == Verbosity.GUI
-            
+
     def _is_any(self, *conds):
         """Returns True if any condition is truthy."""
         return any(conds)
 
-    def _is_save(self, save:bool|None) -> bool:
+    def _is_save(self, save: bool | None) -> bool:
         """
         Returns True if either directly provided save or global setup.save is True.
         """
         return AigParam.di(save, self.setup.save)
-    
+
     def _set_elements(self, elements: dict) -> None:
         """Sets schema of loadable dash elements."""
         if isinstance(elements, dict):
             self.elements = elements
             return
-        raise ValueError('AIG SAFETY ► elements schema must be a dict type.')
+        raise ValueError("AIG SAFETY ► elements schema must be a dict type.")
 
     def _get_elements(self) -> dict:
         """Returns schema of loadable dash elements."""
         return self.elements
-    
+
     def _snap_init_state(self, **kwargs):
         """
         Snapshot the current instance state for later cloning.
@@ -344,9 +319,9 @@ class DashInterface:
         **kwargs : dict
             Additional state entries to include in the snapshot
             (e.g., data references not stored on `self`).
-        """        
+        """
         self._init_state = Dict.deep_copy(self.__dict__) | kwargs
-        
+
     def _clone_init_state(self, **kwargs):
         """
         Clone a new instance from the initial state snapshot.
@@ -366,15 +341,14 @@ class DashInterface:
         -------
         same class instance
             A new instance with the initial state + overrides.
-        """        
+        """
         new = self.__class__.__new__(self.__class__)
         new.__dict__.update(self._init_state | kwargs)
         return new
-    
+
     @staticmethod
     def _plotly_serialize(
-        d: go.Figure|dict, 
-        to_io_or_from_io: bool|Literal[0,1]=0
+        d: go.Figure | dict, to_io_or_from_io: bool | Literal[0, 1] = 0
     ) -> go.Figure:
         """
         Serialize or deserialize a Plotly figure for storage.
@@ -391,15 +365,15 @@ class DashInterface:
         -------
         dict | go.Figure | None
             The converted representation (or None if input is None).
-        """        
+        """
         if to_io_or_from_io == 0:
-            if d is None: 
+            if d is None:
                 return None
             return d.to_dict()
-        if d is None: 
+        if d is None:
             return None
         return go.Figure(d)
-    
+
     @contextmanager
     def _temporary_verbose(self, verbose: bool | Verbosity = None):
         org = self.verbose
@@ -409,13 +383,14 @@ class DashInterface:
         finally:
             self.verbose = org
 
-    def _info_highlight(self, 
-        message, 
-        center:    bool = False,
+    def _info_highlight(
+        self,
+        message,
+        center: bool = False,
         background: str = "#FF020215",
-        log_only:  bool = False,
-        is_view:   dict | bool = None,
-        **kwargs
+        log_only: bool = False,
+        is_view: dict | bool = None,
+        **kwargs,
     ) -> None:
         """
         Display and log highlighted info banner (styled title block).
@@ -431,39 +406,40 @@ class DashInterface:
         center : bool, default=False
             Center-align the text.
         log_only : bool, default=False
-            Log only, not shown in UI.            
+            Log only, not shown in UI.
         is_view : dict | bool, default=False
-            Report view, no active log.            
+            Report view, no active log.
         **kwargs : dict
-            Forwarded to `Format.title`. Style tweaks / overrides. 
-        """        
+            Forwarded to `Format.title`. Style tweaks / overrides.
+        """
         DashReportLog(
-            verbose  = self.verbose, 
-            log_only = log_only, 
-            is_view  = self._is_view(is_view),
-            **kwargs
+            verbose=self.verbose,
+            log_only=log_only,
+            is_view=self._is_view(is_view),
+            **kwargs,
         ).info_highlight(message, center=center, background=background)
-    
-    def _final_summary(self,
-        num: list|int = None, 
-        cat: list|int = None,
-        out: list|int = None,
-        m_base:    str|FuncType = None, 
-        m_all_in:  str = '',
-        m_all_out: str = '',
-        m:         str|FuncType = None,
-        b:         str = None,
-        margin_t:  int = 24,
-        log_only:  bool = False,
-        is_view:   dict | bool = None,
-        **kwargs
+
+    def _final_summary(
+        self,
+        num: list | int = None,
+        cat: list | int = None,
+        out: list | int = None,
+        m_base: str | FuncType = None,
+        m_all_in: str = "",
+        m_all_out: str = "",
+        m: str | FuncType = None,
+        b: str = None,
+        margin_t: int = 24,
+        log_only: bool = False,
+        is_view: dict | bool = None,
+        **kwargs,
     ) -> None:
         """
         Render the final summary banner — the conclusion of the stage.
 
-        Displays a color-coded status banner summarizing the feature 
-        outcome (all in / all out / partial) with appropriate messaging. 
-        Also serves as the **logging entry point**: the banner text is 
+        Displays a color-coded status banner summarizing the feature
+        outcome (all in / all out / partial) with appropriate messaging.
+        Also serves as the **logging entry point**: the banner text is
         captured by the and written to the project log.
 
         Color Logic
@@ -498,32 +474,33 @@ class DashInterface:
         is_view : dict | bool, default=False
             Report view, no active log.
         **kwargs : dict
-            Forwarded to `Format.title`. Style tweaks / overrides. 
-        """    
+            Forwarded to `Format.title`. Style tweaks / overrides.
+        """
         DashReportLog(
-            verbose  = self.verbose,
-            log_only = log_only,
-            is_view  = self._is_view(is_view),
-            margin_t = margin_t,
-            **kwargs
+            verbose=self.verbose,
+            log_only=log_only,
+            is_view=self._is_view(is_view),
+            margin_t=margin_t,
+            **kwargs,
         ).final_summary(
-            num = num, 
-            cat = cat,
-            out = out,
-            m_base = m_base, 
-            m_all_in = m_all_in,
-            m_all_out = m_all_out,
-            m = m,
-            b = b  
+            num=num,
+            cat=cat,
+            out=out,
+            m_base=m_base,
+            m_all_in=m_all_in,
+            m_all_out=m_all_out,
+            m=m,
+            b=b,
         )
+
 
 class DashReportLog:
     """
     Render the final summary banner — the conclusion of the stage.
 
-    Displays a color-coded status banner summarizing the feature 
-    outcome (all in / all out / partial) with appropriate messaging. 
-    Also serves as the **logging entry point**: the banner text is 
+    Displays a color-coded status banner summarizing the feature
+    outcome (all in / all out / partial) with appropriate messaging.
+    Also serves as the **logging entry point**: the banner text is
     captured by the and written to the project log.
 
     Color Logic
@@ -537,52 +514,54 @@ class DashReportLog:
     ----------
     verbose : Verbosity | int | str | bool
         Display level. Controls whether the dashboard renders
-        visually, prints text only, or remains silent.        
+        visually, prints text only, or remains silent.
     log_only : bool, default=False
-        Log only, not shown in UI.        
+        Log only, not shown in UI.
     margin_t : int, default=24
         Top margin for GUI rendering (0 when not GUI).
     **kwargs : dict
-        Forwarded to `Format.title`. Style tweaks / overrides. 
+        Forwarded to `Format.title`. Style tweaks / overrides.
     """
 
-    def __init__(self,
-        verbose: bool | Verbosity = True, 
-        log_only:  bool = False,
-        is_view:   bool = False,
-        margin_t:  int  = 24,
-        **kwargs
+    def __init__(
+        self,
+        verbose: bool | Verbosity = True,
+        log_only: bool = False,
+        is_view: bool = False,
+        margin_t: int = 24,
+        **kwargs,
     ):
-        self.verbose  = verbose or is_view
+        self.verbose = verbose or is_view
         self.log_only = log_only
-        self.is_view  = is_view
+        self.is_view = is_view
         self.margin_t = margin_t
         self.title_kw = kwargs
 
         # keep console output light
-        self._div = None if not UI.is_html() else 'solid'
+        self._div = None if not UI.is_html() else "solid"
 
     @property
     def is_gui(self) -> bool:
         """True if verbosity is at GUI level (full visual rendering)."""
         return self.verbose == Verbosity.GUI
-        
-    def final_summary(self,
-        num: list|int = None, 
-        cat: list|int = None,
-        out: list|int = None,
-        m_base:    str|FuncType = None, 
-        m_all_in:  str = '',
-        m_all_out: str = '',
-        m:         str|FuncType = None,
-        b:         str = None,        
+
+    def final_summary(
+        self,
+        num: list | int = None,
+        cat: list | int = None,
+        out: list | int = None,
+        m_base: str | FuncType = None,
+        m_all_in: str = "",
+        m_all_out: str = "",
+        m: str | FuncType = None,
+        b: str = None,
     ) -> None:
         """
         Render the final summary banner — the conclusion of the stage.
 
-        Displays a color-coded status banner summarizing the feature 
-        outcome (all in / all out / partial) with appropriate messaging. 
-        Also serves as the **logging entry point**: the banner text is 
+        Displays a color-coded status banner summarizing the feature
+        outcome (all in / all out / partial) with appropriate messaging.
+        Also serves as the **logging entry point**: the banner text is
         captured by the and written to the project log.
 
         Color Logic
@@ -610,7 +589,7 @@ class DashReportLog:
             Override message (bypasses the auto-logic).
         b : str | None
             Override background color (hex).
-        """    
+        """
 
         def lx(nco):
             if nco is None:
@@ -618,51 +597,54 @@ class DashReportLog:
             if isinstance(nco, int):
                 return nco
             return len(nco)
-                
-        ln = lx(num)        
-        lc = lx(cat)        
-        lo = lx(out)        
-        
+
+        ln = lx(num)
+        lc = lx(cat)
+        lo = lx(out)
+
         if m is not None:
             if b is None:
-                b  = "#DBE1F1"
+                b = "#DBE1F1"
                 b2 = "#ABB7E7"
             else:
                 b2 = b
-        
+
         elif not (ln + lc):
-            b  = "#E79FB8"
+            b = "#E79FB8"
             b2 = "#E79FB8"
-            m  = f'► WARNING: All Features were Eliminated {m_all_out}'
-                        
+            m = f"► WARNING: All Features were Eliminated {m_all_out}"
+
         elif not lo:
-            b  = "#7DEDC4"
+            b = "#7DEDC4"
             b2 = "#44F4B3"
-            m  = f'► All Features are Considered as Stable {m_all_in}'
-            f'{' ' if m_all_in else ''}on TRAIN ► No Features were removed from ML Data'
-        
+            m = f"► All Features are Considered as Stable {m_all_in}"
+            f"{' ' if m_all_in else ''}on TRAIN ► No Features were removed from ML Data"
+
         else:
-            b  = "#DBE1F1"
+            b = "#DBE1F1"
             b2 = "#ABB7E7"
-            m  = m_base
-        
+            m = m_base
+
         style_kw = self._align_kw()
 
         Format.title(
             m,
-            show  = self._is_show(),
-            style = Format.StyleTitle(
-                color         = '#000000',
-                color2        = b2,
-                background    = b,
-                gradient_kind = 'right', 
-                margin_t      = self.margin_t if self.is_gui else 0,
-                center        = False, 
-                div           = self._div,
-                **style_kw
-        ), **self.title_kw)
-    
-    def info_highlight(self, message, center:bool=False, background:str = "#FF020223"
+            show=self._is_show(),
+            style=Format.StyleTitle(
+                color="#000000",
+                color2=b2,
+                background=b,
+                gradient_kind="right",
+                margin_t=self.margin_t if self.is_gui else 0,
+                center=False,
+                div=self._div,
+                **style_kw,
+            ),
+            **self.title_kw,
+        )
+
+    def info_highlight(
+        self, message, center: bool = False, background: str = "#FF020223"
     ) -> None:
         """
         Display a highlighted info banner (styled title block).
@@ -678,34 +660,39 @@ class DashReportLog:
         center : bool, default=False
             Center-align the text.
         **kwargs : dict
-            Forwarded to `Format.title`. Style tweaks / overrides. 
-        """        
+            Forwarded to `Format.title`. Style tweaks / overrides.
+        """
         style_kw = self._align_kw()
         Format.title(
             message,
-            show  = self._is_show(),
-            style = Format.StyleStats(
-                center      = center, 
-                color2      = background,
-                background  = background, 
-                div         = self._div,
-                **style_kw
-        ), **self.title_kw)
+            show=self._is_show(),
+            style=Format.StyleStats(
+                center=center,
+                color2=background,
+                background=background,
+                div=self._div,
+                **style_kw,
+            ),
+            **self.title_kw,
+        )
 
     def _is_show(self) -> bool:
         return False if self.log_only else self.verbose
 
     def _align_kw(self) -> dict:
         kw = self._align_kwargs_style(self.title_kw)
-        if not self.is_view: # logging active
+        if not self.is_view:  # logging active
             self.title_kw[LOG.R] = self
         return kw
-        
+
     @staticmethod
-    def _align_kwargs_style(kwargs:dict) -> dict:
+    def _align_kwargs_style(kwargs: dict) -> dict:
         p = AigParam.get_definition(Format.Style)
-        return {k:kwargs.pop(k) for k in kwargs.copy() if k in p}
+        return {k: kwargs.pop(k) for k in kwargs.copy() if k in p}
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class DashMixin:
     """
@@ -734,14 +721,15 @@ class DashMixin:
       for archival or reporting. Triggered when `setup.save` is
       active and no verbosity is requested.
     """
-    
+
     _dashboard: DashInterface = None
-        
-    def _create_dashboard(self, 
-        DashClass: DashInterface, 
+
+    def _create_dashboard(
+        self,
+        DashClass: DashInterface,
         *args,
         build_dash_after_init: bool = None,
-        **kwargs
+        **kwargs,
     ) -> DashInterface | None:
         """
         Instantiate and build/save the dashboard.
@@ -751,17 +739,18 @@ class DashMixin:
         triggers the dashboard.
         """
         from ..base import FitterBase
+
         instance: FitterBase = self
-        
-        verbose  = kwargs.get('verbose', instance.verbose)
+
+        verbose = kwargs.get("verbose", instance.verbose)
         is_build = AigParam.di(build_dash_after_init, verbose)
-        setup    = instance.setup
-        is_save  = setup.save
-        is_log   = setup.logging
+        setup = instance.setup
+        is_save = setup.save
+        is_log = setup.logging
 
         if not any([is_build, is_save, is_log]):
             return
-        
+
         dashboard: DashInterface = DashClass(self, *args, **kwargs)
 
         if is_build:
@@ -770,17 +759,18 @@ class DashMixin:
             dashboard.save()
 
         return dashboard
-    
+
     def _callback_dashboard(self, dash: DashInterface) -> None:
         self._dashboard: DashInterface = dash
 
-    def _init_dashboard(self, 
-        DashClass: DashInterface, 
+    def _init_dashboard(
+        self,
+        DashClass: DashInterface,
         *args,
         build_dash_after_init: bool = None,
-        build_at_background:   bool = False,
-        with_background_sync:  threading.Event = None,
-        **kwargs
+        build_at_background: bool = False,
+        with_background_sync: threading.Event = None,
+        **kwargs,
     ) -> None:
         """
         Initialize the dashboard after the primary model step completes.
@@ -827,23 +817,25 @@ class DashMixin:
         dash_params = AigParam.get_definition(DashClass)
         if not dash_params:
             raise AigStop.custom(
-                'AIG auto fitter-dashboard construct is only possible when Dash class '
-                'accepts fitter instance as the first argument.'
+                "AIG auto fitter-dashboard construct is only possible when Dash class "
+                "accepts fitter instance as the first argument."
             )
 
         # Instantiate and build dashboard
         after_init = dict(
-            build_dash_after_init = build_dash_after_init,
+            build_dash_after_init=build_dash_after_init,
         )
         if not build_at_background:
-            self._dashboard = self._create_dashboard(DashClass, *args, **after_init, **kwargs)
-            return 
+            self._dashboard = self._create_dashboard(
+                DashClass, *args, **after_init, **kwargs
+            )
+            return
 
         BackgroundProcess(
-            callback = self._callback_dashboard,
-            new_process = False,
-            daemon = False,
-            waiting_event = with_background_sync
+            callback=self._callback_dashboard,
+            new_process=False,
+            daemon=False,
+            waiting_event=with_background_sync,
         ).run(
             DashMixin._create_dashboard, self, DashClass, *args, **after_init, **kwargs
         )
@@ -873,12 +865,15 @@ class DashMixin:
         """
         if not self._dashboard is None:
             return self._dashboard
-        
+
         raise AigStop.custom(
             "Dashboard not available. Please run the main step (fit/process) first "
             "with Verbosity > 0 or Logging = 1."
         )
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class DashBackground:
     """
@@ -925,7 +920,7 @@ class DashBackground:
     Parameters
     ----------
     (None — this is a mixin/base; no constructor args.)
-    """   
+    """
 
     @staticmethod
     def set_background_sync(fitter: type) -> BackgroundProcess.Event:
@@ -948,8 +943,9 @@ class DashBackground:
             The threading event (set when dashboard construction
             completes). Pass this as `with_background_sync` to
             `_init_dashboard`.
-        """        
+        """
         from ..base import FIT
+
         event = BackgroundProcess.Event()
         setattr(fitter, FIT.SYNC, event)
         return event
@@ -964,27 +960,29 @@ class DashBackground:
         BackgroundProcess.Event | None
             The event if previously set via `set_sync_task`;
             None otherwise.
-        """        
+        """
         from ..base import FIT
+
         return getattr(fitter, FIT.SYNC, None)
-    
+
     @classmethod
-    def run_with_background_sync(cls, 
-        fx: FuncType, 
-        fitter: type, 
-        message : str = 'Report build in progress',
+    def run_with_background_sync(
+        cls,
+        fx: FuncType,
+        fitter: type,
+        message: str = "Report build in progress",
         show_timer: bool = True,
         verbose: bool = True,
         daemon: bool = True,
         args: tuple = (),
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Execute a function with background synchronization on a fitter's event.
 
         Retrieves the `threading.Event` previously attached to the
-        fitter (via `set_sync_task`) and waits for it before executing 
-        `fx`. If no event is attached (sanitized / restored state), 
+        fitter (via `set_sync_task`) and waits for it before executing
+        `fx`. If no event is attached (sanitized / restored state),
         executes `fx` immediately.
 
         Use this for operations that must wait for the background
@@ -1015,7 +1013,7 @@ class DashBackground:
             If True, the thread is killed when the main thread exits.
             If False, the interpreter waits for the thread to complete
             before shutting down. Use False for threads doing final
-            saves or critical cleanup.            
+            saves or critical cleanup.
         args : tuple = ()
             Arguments forwarded to `fx`.
         **kwargs :
@@ -1027,39 +1025,39 @@ class DashBackground:
         (e.g., restored from a project snapshot where the
         dashboard is pre-built), the function executes
         immediately without waiting.
-        """        
+        """
         sync = cls.get_background_sync(fitter)
 
         # sync=None (sanitized) → show stored report | is_set → ready
-        if sync is None or sync.is_set(): 
+        if sync is None or sync.is_set():
             fx((args, kwargs))
             return
-        
+
         BackgroundProcess(
-            fx, 
-            waiting_event = sync,
-            daemon        = daemon,
-            message       = message,
-            show_timer    = show_timer,
-            verbose       = verbose,
-        ).run(sync, *args, **kwargs)        
+            fx,
+            waiting_event=sync,
+            daemon=daemon,
+            message=message,
+            show_timer=show_timer,
+            verbose=verbose,
+        ).run(sync, *args, **kwargs)
 
     def set_sync_wait(self) -> None:
         """
         1. wait for .init  to finish: dash hard data gen → consumed by .build
         2. wait for .build to finish: dash view creation → consumed by ._update_vars_out_user
-        """     
+        """
         self._background_sync1 = BackgroundProcess()
-        self._background_sync2 = BackgroundProcess()        
+        self._background_sync2 = BackgroundProcess()
 
     def get_sync_to_snap(self):
         """Sanitize state to save dash state for reporting."""
         new = self.__class__()
         new._background_sync1 = True
-        new._background_sync2 = True        
+        new._background_sync2 = True
         return new
-    
-    def get_sync_wait(self, back_sync:int) -> BackgroundProcess | bool:
+
+    def get_sync_wait(self, back_sync: int) -> BackgroundProcess | bool:
         """
         Retrieve the synchronization barrier for a specific stage.
 
@@ -1074,12 +1072,12 @@ class DashBackground:
         BackgroundProcess | bool
             The live barrier (for waiting) or `True` (if
             sanitized from a snapshot).
-        """        
-        if back_sync==1: 
+        """
+        if back_sync == 1:
             return self._background_sync1
         return self._background_sync2
 
-    def is_sync_ready(self, back_sync:int) -> bool:
+    def is_sync_ready(self, back_sync: int) -> bool:
         """
         Check whether a synchronization stage has completed.
 
@@ -1095,15 +1093,15 @@ class DashBackground:
             True if the stage is ready (immediate execution
             possible). False if the background thread is still
             working (must wait).
-        """        
+        """
         sync = self.get_sync_wait(back_sync)
-        if isinstance(sync, bool): 
-            return True # → snap saved dash → bool "True"
+        if isinstance(sync, bool):
+            return True  # → snap saved dash → bool "True"
         if sync.is_set():
-            return True # → current run event True
-        return False    # → thread.Event → dash async creation
-    
-    def set_sync_ready(self, back_sync:int) -> None:
+            return True  # → current run event True
+        return False  # → thread.Event → dash async creation
+
+    def set_sync_ready(self, back_sync: int) -> None:
         """
         Mark a synchronization stage as complete.
 
@@ -1117,13 +1115,13 @@ class DashBackground:
         back_sync : int
             - **1**: Mark data generation as complete.
             - **2**: Mark view creation as complete.
-        """        
+        """
         if self.is_sync_ready(back_sync):
             return
         sync = self.get_sync_wait(back_sync)
         sync.set_created()
-    
-    def run_with_sync(self, fx: FuncType, back_sync:int, *args, **kwargs) -> None:
+
+    def run_with_sync(self, fx: FuncType, back_sync: int, *args, **kwargs) -> None:
         """
         Execute a function with synchronization guarantee.
 
@@ -1145,17 +1143,20 @@ class DashBackground:
             - **2**: Wait for view creation.
         *args, **kwargs :
             Arguments forwarded to `fx`.
-        """           
+        """
         if self.is_sync_ready(back_sync):
-            fx((args, kwargs)) # → (a,k): output design of ProcessBackground.waiting_helper
+            fx(
+                (args, kwargs)
+            )  # → (a,k): output design of ProcessBackground.waiting_helper
             return
-        
-        wait_until_created = self.get_sync_wait(back_sync).wait_event       
+
+        wait_until_created = self.get_sync_wait(back_sync).wait_event
         BackgroundProcess(
-            fx, waiting_event = wait_until_created,
+            fx,
+            waiting_event=wait_until_created,
         ).run(wait_until_created, *args, **kwargs)
 
-    def run_with_result(self, fx: FuncType, back_sync:int, *args, **kwargs) -> Any:
+    def run_with_result(self, fx: FuncType, back_sync: int, *args, **kwargs) -> Any:
         """
         Execute a function with synchronization and return its result.
 
@@ -1191,7 +1192,7 @@ class DashBackground:
         """
         if self.is_sync_ready(back_sync):
             return fx((args, kwargs))
-                            
+
         wait_until_created = self.get_sync_wait(back_sync).wait_event
         fut = Future()
 
@@ -1205,7 +1206,10 @@ class DashBackground:
 
         BackgroundProcess().run(wrap, *args, **kwargs)
         return fut.result()
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class DashPlotlyLink:
     """
@@ -1278,37 +1282,39 @@ class DashPlotlyLink:
     set_fig_not_dash : bool, default=False
         If True, the output is the raw Figure. If False, the
         figure is exported to HTML and the output is a link
-        or clickable table.        
+        or clickable table.
     show : int | bool, default=True
         If truthy, immediately displays the output to the
         active cell upon construction.
     """
 
-    def __init__(self, *,
+    def __init__(
+        self,
+        *,
         figure_path: go.Figure | Path,
-        report_path:        str  = None,
-        signature:Parameters|str = None,
-        link_name:          str  = None,
-        dash_name:          str  = 'Dashboard',
-        tab_name:           str  = 'Link',
-        make_clickable:     bool = True,
-        hide_columns:       bool = False,
-        set_fig_not_dash:   bool = False,
-        show:           int|bool = True,
+        report_path: str = None,
+        signature: Parameters | str = None,
+        link_name: str = None,
+        dash_name: str = "Dashboard",
+        tab_name: str = "Link",
+        make_clickable: bool = True,
+        hide_columns: bool = False,
+        set_fig_not_dash: bool = False,
+        show: int | bool = True,
     ):
-        self.report_path      = report_path
-        self.signature        = signature
-        self.link_name        = link_name
-        self.dash_name        = dash_name
-        self.tab_name         = tab_name
-        self.make_clickable   = make_clickable
-        self.hide_columns     = hide_columns
+        self.report_path = report_path
+        self.signature = signature
+        self.link_name = link_name
+        self.dash_name = dash_name
+        self.tab_name = tab_name
+        self.make_clickable = make_clickable
+        self.hide_columns = hide_columns
         self.set_fig_not_dash = set_fig_not_dash
-        self.verbose          = show
+        self.verbose = show
 
         self.save(figure_path)
 
-    def save(self, fig: go.Figure | Path) -> None: 
+    def save(self, fig: go.Figure | Path) -> None:
         """
         Serialize the Plotly figure and produce the output object.
 
@@ -1329,17 +1335,17 @@ class DashPlotlyLink:
         ------
         AigStop.custom
             If `fig` is None.
-        """      
+        """
         if fig is None:
             AigStop.custom(
                 "AIG SAFETY → DashPlotlyLink → Figure is None. Nothing to save or display."
             )
 
-        if self.set_fig_not_dash: 
+        if self.set_fig_not_dash:
             self._set_show_output(fig)
             return
-        
-        path  = self._make_fig_path(fig)
+
+        path = self._make_fig_path(fig)
         links = {self.tab_name: path}
 
         if self.link_name is not None:
@@ -1351,7 +1357,7 @@ class DashPlotlyLink:
                 [links], self.tab_name, hide_columns=self.hide_columns, show=False
             )
         self._set_show_output(dash)
-    
+
     def get_output(self) -> dict | pd_Styler | go.Figure:
         """
         Retrieve the processed output object.
@@ -1371,21 +1377,23 @@ class DashPlotlyLink:
 
     def _set_show_output(self, fig_dash) -> None:
         self.output = fig_dash
-        if self.verbose: 
+        if self.verbose:
             display(fig_dash)
-        
+
     def _make_fig_path(self, fig: go.Figure | Path) -> Path:
         if isinstance(fig, Path):
-            return FileUtils.ensure_extension(fig, 'html')
+            return FileUtils.ensure_extension(fig, "html")
         return Export.plt_as_html(fig, self._route())
-    
+
     def _route(self) -> Path:
         if self.report_path:
             return self.report_path
-        
-        kw = dict(prefix = 'Dash', file_type = 'html')
+
+        kw = dict(prefix="Dash", file_type="html")
         if isinstance(self.signature, Parameters):
             return Temp(self.signature).get_path(**kw)
-        
+
         return Temp.gen_path(**kw, project_signature=self.signature)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────

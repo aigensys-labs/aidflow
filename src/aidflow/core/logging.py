@@ -20,31 +20,22 @@ from ..deps.common import (
     logging,
     Logger as _Logger,
     threading,
-    sys, 
+    sys,
     time,
     re,
     json,
     wraps,
-    contextmanager
+    contextmanager,
 )
-from ..deps.types import (
-    Any,
-    Literal,
-    Callable
-)
-from .factory import (
-    DictClass,
-    DictDataclass
-)
-from ..utils.builtins import (
-    Misc
-)
+from ..deps.types import Any, Literal, Callable
+from .factory import DictClass, DictDataclass
+from ..utils.builtins import Misc
 
 PACKAGE = __name__.split(".")[0]
 
 
 class LOG(DictClass):
-    R = 'logging_logger'
+    R = "logging_logger"
 
 
 class LogSignature:
@@ -82,7 +73,7 @@ class LogSignature:
     """
 
     @staticmethod
-    def get(name: str=None) -> str:
+    def get(name: str = None) -> str:
         """
         Generate a unique log run signature.
 
@@ -125,25 +116,28 @@ class LogSignature:
 
         >>> LogSignature.get('obs_stabilizer')
         'obs_stabilizer_20261007_194523_128473_a1b2c3d4'
-        """        
-        ts  = Misc.timestamp("%Y%m%d_%H%M%S_%f")
+        """
+        ts = Misc.timestamp("%Y%m%d_%H%M%S_%f")
         uid = Misc.uuid(8)
-        sig = f'{ts}_{uid}'
+        sig = f"{ts}_{uid}"
         if name:
-            return f'{name}_{sig}'
+            return f"{name}_{sig}"
         return sig
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class JsonFormatter(logging.Formatter):
     """
     Structured JSON log formatter.
 
     Converts each `LogRecord` into a single-line JSON object
-    with standard fields (`ts`, `level`, `logger`, `msg`) 
+    with standard fields (`ts`, `level`, `logger`, `msg`)
     plus any custom `extra` fields and exception traces.
 
     Suitable for machine ingestion (ELK, CloudWatch, Datadog,
     or any JSON-line parser).
-    """    
+    """
+
     _SKIP = frozenset(vars(logging.LogRecord("", 0, "", 0, "", (), None)))
 
     def format(self, record: logging.LogRecord) -> str:
@@ -159,7 +153,10 @@ class JsonFormatter(logging.Formatter):
         if record.exc_info:
             entry["exc"] = self.formatException(record.exc_info)
         return json.dumps(entry, default=str)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Logger:
     """
@@ -178,7 +175,8 @@ class Logger:
     name : str | type
         A string name or model instance / class (used for the logger namespace).
     """
-    PACKAGE = '_root_package'
+
+    PACKAGE = "_root_package"
 
     def __init__(self, name: str | type):
         self.name = name
@@ -210,19 +208,21 @@ class Logger:
 
     @staticmethod
     def _format(msg: str) -> str:
-        DASH = re.compile(r'^\s*─{2,}\s*$', re.MULTILINE)
-        ANSI = re.compile(r'\x1b\[[0-9;]*m')
-        msg  = DASH.sub('', str(msg)).replace('\n', '').strip()
-        return ANSI.sub('', msg)
+        DASH = re.compile(r"^\s*─{2,}\s*$", re.MULTILINE)
+        ANSI = re.compile(r"\x1b\[[0-9;]*m")
+        msg = DASH.sub("", str(msg)).replace("\n", "").strip()
+        return ANSI.sub("", msg)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @classmethod
-    def setup(cls,
+    def setup(
+        cls,
         level: int | str = logging.INFO,
         file: str = None,
         stream: bool = True,
         fmt: Literal["text", "json"] = "text",
-        owner = 'user'
+        owner="user",
     ) -> None:
         """
         One-call logging configuration.
@@ -248,15 +248,21 @@ class Logger:
               line) for machine ingestion.
         """
         root = logging.getLogger(PACKAGE)
-        root.setLevel(level if isinstance(level, int) else getattr(logging, str(level).upper()))        
+        root.setLevel(
+            level if isinstance(level, int) else getattr(logging, str(level).upper())
+        )
 
         for h in root.handlers[:]:
             if getattr(h, "_owner", None) == owner:
-                root.removeHandler(h)   
+                root.removeHandler(h)
 
-        formatter = JsonFormatter() if fmt == "json" else logging.Formatter(
-            "%(asctime)s │ %(levelname)-7s │ %(name)s │ %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+        formatter = (
+            JsonFormatter()
+            if fmt == "json"
+            else logging.Formatter(
+                "%(asctime)s │ %(levelname)-7s │ %(name)s │ %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
         )
 
         if stream:
@@ -272,10 +278,11 @@ class Logger:
             root.addHandler(h)
 
             if owner == cls.PACKAGE:
-                h.stream.write(100*'═' + '\nAIDFLOW CONTEXT SET\n' + 100*'═' + '\n')
+                h.stream.write(100 * "═" + "\nAIDFLOW CONTEXT SET\n" + 100 * "═" + "\n")
                 h.stream.flush()
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-        
+
     @classmethod
     def get_logger(cls, name: str | type) -> logging.Logger:
         """
@@ -309,20 +316,20 @@ class Logger:
             return name.__module__
         if not isinstance(name, str):
             return type(name).__module__
-        return name        
+        return name
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
     def background_logger(sync: threading.Event, func: Callable) -> None:
         """Logging function func runs after `sync` event is ready."""
-        from .execution import BackgroundProcess        
+        from .execution import BackgroundProcess
+
         BackgroundProcess(func, waiting_event=sync, daemon=False).run(sync)
 
     @contextmanager
-    def model_logger(self, 
-        fx_choice = None, 
-        args: tuple | DictDataclass = None, 
-        kwargs: dict = None
+    def model_logger(
+        self, fx_choice=None, args: tuple | DictDataclass = None, kwargs: dict = None
     ):
         """
         Context manager for action-scoped logging with timing.
@@ -352,9 +359,9 @@ class Logger:
         --------
         >>> with Logger.model_logger(MyAgent, fx_choice, args, kwargs):
         ...     agent.fit(data)
-        """        
+        """
         logger = self.get_logger(self.name)
-        t0     = _ModelUtils.get_timing()
+        t0 = _ModelUtils.get_timing()
         a, prm = _ModelUtils.get_action_details(fx_choice, args, kwargs)
         try:
             logger.info(f"{a} started | {prm}")
@@ -364,24 +371,27 @@ class Logger:
         except:
             logger.exception(f"{a} failed ({_ModelUtils.get_timing(t0)})")
             raise
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class _ModelUtils:
     """Model Processor logging info extensions."""
 
     @staticmethod
-    def get_timing(t0:float=None) -> float | str:
+    def get_timing(t0: float = None) -> float | str:
         """
         Capture the current performance timestamp or compute elapsed duration.
         """
         t = time.perf_counter()
         if t0 is None:
             return t
-        return f'{round(t - t0, 3)}s'
+        return f"{round(t - t0, 3)}s"
 
     @classmethod
-    def get_action_details(cls,
-        fx_choice, args: tuple | DictDataclass = None, kwargs: dict = None
+    def get_action_details(
+        cls, fx_choice, args: tuple | DictDataclass = None, kwargs: dict = None
     ) -> tuple[str, str]:
         """
         Resolve the action label and logging extra fields
@@ -404,31 +414,30 @@ class _ModelUtils:
         from .registry import RegGet
 
         if fx_choice is None:
-            return (
-                'update', 
-                f'args = {args}, kwargs = {kwargs}'
-            )
-        
+            return ("update", f"args = {args}, kwargs = {kwargs}")
+
         fx_choice: RegGet.Choice = fx_choice
         fx_params = cls._get_params(args, kwargs)
 
         return (
-            'fit', 
-            f'fx_choice = {fx_choice.name}, {fx_params}, fx_config = {fx_choice.config}'
+            "fit",
+            f"fx_choice = {fx_choice.name}, {fx_params}, fx_config = {fx_choice.config}",
         )
 
     @classmethod
     def _get_params(cls, inputs: DictDataclass, params: DictDataclass) -> str:
-        """Model inputs and params formatting."""        
+        """Model inputs and params formatting."""
         d, p = {}, {}
         cls._add_dataclass(d, inputs)
         cls._add_dataclass(p, params, d)
-        return f'inputs = {d}, fx_params = {p}'
+        return f"inputs = {d}, fx_params = {p}"
 
     @classmethod
-    def _add_dataclass(cls, d: dict, params: DictDataclass, inputs: dict = None) -> None:        
+    def _add_dataclass(
+        cls, d: dict, params: DictDataclass, inputs: dict = None
+    ) -> None:
         inputs = inputs or {}
-        for k,v in params.items():
+        for k, v in params.items():
             val = cls._get_value(v)
             if k in inputs or val in inputs.values():
                 continue
@@ -442,9 +451,11 @@ class _ModelUtils:
             return int(param)
         if isinstance(param, str):
             return str(param)
-        if hasattr(param, 'shape'):
+        if hasattr(param, "shape"):
             return param.shape
-        if hasattr(param, '__len__'):
+        if hasattr(param, "__len__"):
             return len(param)
         return type(param).__name__
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

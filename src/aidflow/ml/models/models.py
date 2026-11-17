@@ -1,66 +1,54 @@
 """
 Model Adaptation Layer providing a standardized API across diverse ML libraries.
 
-This module implements a unified wrapper system that homogenizes various external 
-estimators—including Scikit-Learn, StatsModels, XGBoost, and LightGBM—into a 
-consistent AIDflow interface. By inheriting from `ModelBase`, disparate library 
-implementations are brought under a single API contract, ensuring that fitting, 
-prediction, and attribute access remain identical regardless of the underlying 
+This module implements a unified wrapper system that homogenizes various external
+estimators—including Scikit-Learn, StatsModels, XGBoost, and LightGBM—into a
+consistent AIDflow interface. By inheriting from `ModelBase`, disparate library
+implementations are brought under a single API contract, ensuring that fitting,
+prediction, and attribute access remain identical regardless of the underlying
 computational engine.
 
-The primary objective is to decouple the framework's orchestration logic from 
-the specific idiosyncrasies of external ML packages. This abstraction allows for 
-seamless switching between solvers, simplifies hyperparameter management through a 
-unified setup mechanism, and ensures full compatibility with Scikit-Learn's 
+The primary objective is to decouple the framework's orchestration logic from
+the specific idiosyncrasies of external ML packages. This abstraction allows for
+seamless switching between solvers, simplifies hyperparameter management through a
+unified setup mechanism, and ensures full compatibility with Scikit-Learn's
 ecosystem while providing deep access to original estimator instances when required.
 """
 
-from ...deps.common     import  inspect, io
-from ...deps.data       import  np, pd, pDF, pSe
-from ...deps.plots      import  plt
-from ...deps.display    import  (
-                                display, 
-                                SVG, 
-                                HTML
-                                )
-from ...deps.ml.base    import  (
-                                BaseEstimator, 
-                                ClassifierMixin,                                
-                                )
-from ...deps.ml.glm     import  (
-                                LogitSM,
-                                LassoCV,
-                                ElasticNetCV,
-                                LogisticRegressionCV,
-                                LogisticRegression,
-                                )
-from ...deps.ml.gbm     import  (
-                                LGBMClassifier,
-                                XGBClassifier
-                                )
-from ...deps.ml.diag    import  (
-                                summary_plot,
-                                TreeExplainer,
-                                LinearExplainer,
-                                )
-from ...deps.ml.stats   import  (
-                                log_loss, 
-                                roc_auc_score,
-                                mean_squared_error, 
-                                r2_score
-                                )
-from ...deps.ml.dim     import  OrdinalEncoder
+from ...deps.common import inspect, io
+from ...deps.data import np, pd, pDF, pSe
+from ...deps.plots import plt
+from ...deps.display import display, SVG, HTML
+from ...deps.ml.base import (
+    BaseEstimator,
+    ClassifierMixin,
+)
+from ...deps.ml.glm import (
+    LogitSM,
+    LassoCV,
+    ElasticNetCV,
+    LogisticRegressionCV,
+    LogisticRegression,
+)
+from ...deps.ml.gbm import LGBMClassifier, XGBClassifier
+from ...deps.ml.diag import (
+    summary_plot,
+    TreeExplainer,
+    LinearExplainer,
+)
+from ...deps.ml.stats import log_loss, roc_auc_score, mean_squared_error, r2_score
+from ...deps.ml.dim import OrdinalEncoder
 
-from ...deps.types      import  (
-                                Any,
-                                Literal, 
-                                NDArray, 
-                                ArrayLike,                                
-                                )
-from ...core.interop    import  Pd, Arrow
-from ...utils.builtins  import  Misc
+from ...deps.types import (
+    Any,
+    Literal,
+    NDArray,
+    ArrayLike,
+)
+from ...core.interop import Pd, Arrow
+from ...utils.builtins import Misc
 
-from .callbacks         import  ReduceLROnPlateau
+from .callbacks import ReduceLROnPlateau
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -68,139 +56,143 @@ from .callbacks         import  ReduceLROnPlateau
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class ModelBase(ClassifierMixin, BaseEstimator):
     """Models Base Class to provide full API compatibility with scikit API."""
-        
+
     implemented_estimators: dict
     _model: BaseEstimator = None
     _features: list = None
 
-    def __getattr__(self, name:str):
+    def __getattr__(self, name: str):
         return getattr(self._model, name)
-    
+
     def __sklearn_is_fitted__(self) -> bool:
-        return getattr(self, '_model') is not None
-    
-    def _set_req_params(self, local_vars:dict) -> None:
+        return getattr(self, "_model") is not None
+
+    def _set_req_params(self, local_vars: dict) -> None:
         for k, v in local_vars.items():
             if k != "self":
                 setattr(self, k, v)
 
-    def _set_req_props(self, X:pDF|NDArray, y:pSe) -> None:        
+    def _set_req_props(self, X: pDF | NDArray, y: pSe) -> None:
         self.classes_ = np.unique(y)
-        self.n_features_in_ = X.shape[1]        
+        self.n_features_in_ = X.shape[1]
         self.feature_names_in_ = self._features
 
-    def _set_features(self, X:pDF|NDArray) -> None:
+    def _set_features(self, X: pDF | NDArray) -> None:
         if isinstance(X, np.ndarray):
             fes = list(range(X.shape[1]))
-        else: 
+        else:
             fes = X.columns.to_list()
         self._features = fes
 
-    def _get_solver(self, solver:str) -> Any:
+    def _get_solver(self, solver: str) -> Any:
         return self.implemented_estimators[solver]
 
-    def _set_setup(self, solver:str, setup:dict) -> None:
+    def _set_setup(self, solver: str, setup: dict) -> None:
         self._solver = solver
-        self.setup = {'estimator': self._get_solver(solver), 'setup': setup}
+        self.setup = {"estimator": self._get_solver(solver), "setup": setup}
 
     def get_estimator(self) -> Any:
-        return self.setup['estimator']
-    
+        return self.setup["estimator"]
+
     def get_setup(self) -> dict:
-        return self.setup['setup']
+        return self.setup["setup"]
 
     def get_estimator_instance(self, **kwargs) -> Any:
         e = self.get_estimator()
         s = self.get_setup() | kwargs
         return e(**s)
-    
+
     def get_model(self) -> Any:
         return self._model
 
     @property
-    def features(self) -> list|None:
+    def features(self) -> list | None:
         """Model Exogenous Features."""
-        return self._features    
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return self._features
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # CLASSIFIERS VIEW SYNC
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class ModelView:
-    
+
     @staticmethod
     def _plot_format(fig: plt.Figure, ax: plt.Axes) -> SVG:
         """Summary SHAP beeswarm plot graphic enhancement."""
 
         # plt.title("SHAP Summary (Impact on Log-Odds)")
-        ax.tick_params(labelsize=9.5)   # Feature names font size
+        ax.tick_params(labelsize=9.5)  # Feature names font size
         ax.set_xlabel("SHAP value: impact on model output (Log-Odds)", fontsize=10)
-                
-        cb_ax = fig.axes[1]             # Colorbar> right-side 
-        cb_ax.tick_params(labelsize=10) # High-Low
-        cb_ax.set_ylabel("Feature value", fontsize=10) 
+
+        cb_ax = fig.axes[1]  # Colorbar> right-side
+        cb_ax.tick_params(labelsize=10)  # High-Low
+        cb_ax.set_ylabel("Feature value", fontsize=10)
 
         # Dots size
-        for collection in ax.collections: 
-            collection.set_sizes([10])  
+        for collection in ax.collections:
+            collection.set_sizes([10])
 
         # Highlight fes grid
         for line in ax.get_lines():
-            if line.get_ydata()[0] == line.get_ydata()[1]:             
-                line.set_linewidth(1.0) 
+            if line.get_ydata()[0] == line.get_ydata()[1]:
+                line.set_linewidth(1.0)
 
         # Make it readable
-        buf = io.BytesIO()                  
-        plt.savefig(buf, format='svg', bbox_inches='tight')
+        buf = io.BytesIO()
+        plt.savefig(buf, format="svg", bbox_inches="tight")
         plt.close(fig)
 
         return SVG(buf.getvalue())
 
     @staticmethod
     def _n_samples(X: pDF, n_max_samples: int) -> NDArray:
-        n = X.shape[0]    
+        n = X.shape[0]
         s = min(n, n_max_samples)
         return np.random.default_rng(42).choice(n, size=s, replace=False)
-    
+
     @classmethod
-    def shap_plot(cls,
-        X:              pDF, 
-        shap_vals:      NDArray, 
-        feature_names:  list = None, 
-        max_display:    int  = 20, 
-        max_samples:    int  = 5000,
-        sort:           bool = True,
-        show:           bool = True,
-        **kwargs
+    def shap_plot(
+        cls,
+        X: pDF,
+        shap_vals: NDArray,
+        feature_names: list = None,
+        max_display: int = 20,
+        max_samples: int = 5000,
+        sort: bool = True,
+        show: bool = True,
+        **kwargs,
     ) -> None | SVG:
         """Summary SHAP beeswarm plot, colored by feature values."""
         if feature_names is None and isinstance(X, pDF):
             feature_names = X.columns
-        
+
         fig, ax = plt.subplots(dpi=100)
         dynamic_height = max(2.5, min(shap_vals.shape[1], max_display) * 0.33)
 
         idx = cls._n_samples(X, max_samples)
 
         summary_plot(
-            shap_vals[idx], X.iloc[idx], 
-            feature_names = feature_names,
-            max_display   = max_display,             
-            plot_size     = (12.5, dynamic_height),
-            sort          = sort,
-            show          = False,
-            **kwargs
-        )        
+            shap_vals[idx],
+            X.iloc[idx],
+            feature_names=feature_names,
+            max_display=max_display,
+            plot_size=(12.5, dynamic_height),
+            sort=sort,
+            show=False,
+            **kwargs,
+        )
 
         fig = cls._plot_format(fig, ax)
 
         if not show:
             return fig
         display(fig)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -209,14 +201,14 @@ class ModelView:
 class PredictBaseLR:
 
     _model: LogitSM | LassoCV | ElasticNetCV | LogisticRegressionCV = None
-    
-    def _predict_base(self, X:pDF|NDArray, **kwargs) -> ArrayLike:
+
+    def _predict_base(self, X: pDF | NDArray, **kwargs) -> ArrayLike:
         return self._model.predict(X, **kwargs)
-                
-    def predict_proba(self, X:pDF|NDArray, **kwargs) -> NDArray:
+
+    def predict_proba(self, X: pDF | NDArray, **kwargs) -> NDArray:
         """
         Predict response variable of a model given exogenous variables.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -227,12 +219,12 @@ class PredictBaseLR:
             NDArray([1-p, p]).
         """
         p = np.clip(self._predict_base(X, **kwargs), 0, 1)
-        return np.column_stack([1-p, p])
-    
-    def predict(self, X:pDF|NDArray, **kwargs) -> ArrayLike:
+        return np.column_stack([1 - p, p])
+
+    def predict(self, X: pDF | NDArray, **kwargs) -> ArrayLike:
         """
         Predict response variable of a model given exogenous variables.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -241,108 +233,114 @@ class PredictBaseLR:
         -------
         array
             Fitted values at exog.
-        """    
+        """
         return (self._predict_base(X, **kwargs) >= 0.5).astype(int)
 
-    def shap_values(self, X:pDF|NDArray, **kwargs) -> NDArray:
+    def shap_values(self, X: pDF | NDArray, **kwargs) -> NDArray:
         """Model shap values by LinearExplainer."""
         explainer = LinearExplainer(self, X, **kwargs)
         return explainer.shap_values(X)
-    
-    def shap_plot(self, X:pDF|NDArray, **kwargs) -> None:
+
+    def shap_plot(self, X: pDF | NDArray, **kwargs) -> None:
         """Model visualization by SHAP beeswarm plot, colored by feature values."""
         ModelView.shap_plot(X, self.shap_values(X), **kwargs)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ModelBaseSM(PredictBaseLR, ModelBase):
 
-    implemented_estimators = {
-        'logit': LogitSM
-    }    
-    CONST = 'intercept_const_'
+    implemented_estimators = {"logit": LogitSM}
+    CONST = "intercept_const_"
 
-    def __init__(self, solver:Literal['logit'], setup:dict):
+    def __init__(self, solver: Literal["logit"], setup: dict):
         self._set_setup(solver, setup)
-                
-    def _is_intercept(self) -> bool:
-        return self.get_setup().get('fit_intercept', False)
 
-    def _set_props_api(self, prm:pSe|ArrayLike) -> None:
-        prm = np.asarray(prm)                
+    def _is_intercept(self) -> bool:
+        return self.get_setup().get("fit_intercept", False)
+
+    def _set_props_api(self, prm: pSe | ArrayLike) -> None:
+        prm = np.asarray(prm)
         # (b) constant was part of train data → data has prior col 'const'
         if not self._is_intercept():
             self.intercept_ = 0
             self.coef_ = prm
             return
         # (a) const was added during _fit → data does not have 'const'
-        self.coef_      = prm[1:]
-        self.intercept_ = prm[0]           
+        self.coef_ = prm[1:]
+        self.intercept_ = prm[0]
 
-    def _set_props(self, X:pDF|NDArray, y:pSe) -> None:
+    def _set_props(self, X: pDF | NDArray, y: pSe) -> None:
         self._set_req_props(X, y)
-        self.params_    = self._model.params
-        self.llf_       = self._model.llf        
+        self.params_ = self._model.params
+        self.llf_ = self._model.llf
         self._set_props_api(self.params_)
 
     def _set_summary(self) -> None:
-        self._summary = SummaryGLM(self._model).summary()   
+        self._summary = SummaryGLM(self._model).summary()
 
     @classmethod
-    def _add_constant(cls, X:pDF|NDArray) -> pDF|NDArray:
+    def _add_constant(cls, X: pDF | NDArray) -> pDF | NDArray:
         c = np.full(len(X), 1.0)
         if isinstance(X, np.ndarray):
-            return np.column_stack([c , X])
+            return np.column_stack([c, X])
         return Pd.concat([pSe(c, name=cls.CONST, index=X.index), X], axis=1)
-    
-    def _add_intercept(self, X:pDF|NDArray) -> pDF|NDArray:
+
+    def _add_intercept(self, X: pDF | NDArray) -> pDF | NDArray:
         if self._is_intercept():
             return self._add_constant(X)
-        return X     
+        return X
 
     def _get_aligned_setup(self) -> dict:
         s = {**self.get_setup()}
-        s['method'] = s.pop('solver')        
+        s["method"] = s.pop("solver")
         return s
-    
+
     def _get_setup(self) -> dict:
         e = self.get_estimator()
         s = self._get_aligned_setup()
         p = list(inspect.signature(e.fit).parameters)
-        return {k:v for k,v in s.items() if k in p}
-    
-    def _fit_model(self, X:pDF|NDArray, y:pSe) -> LogitSM:
+        return {k: v for k, v in s.items() if k in p}
+
+    def _fit_model(self, X: pDF | NDArray, y: pSe) -> LogitSM:
         e = self.get_estimator()
         s = self._get_setup()
         X = self._add_intercept(X)
         f = lambda s: e(y, X).fit(**s)
-        h = lambda s: f(s | dict(skip_hessian = True))
-        try: # mimicking sklearn ridge-fallback ops
+        h = lambda s: f(s | dict(skip_hessian=True))
+        try:  # mimicking sklearn ridge-fallback ops
             return f(s)
         except np.linalg.LinAlgError:
-            if s['method'] != 'newton':
+            if s["method"] != "newton":
                 return h(s)
-            s = s | dict(method = 'lbfgs')
+            s = s | dict(method="lbfgs")
             try:
                 return f(s)
             except np.linalg.LinAlgError:
                 return h(s)
-            
-    def _fit(self, X:pDF|NDArray, y:pSe) -> None:
+
+    def _fit(self, X: pDF | NDArray, y: pSe) -> None:
         self._model = self._fit_model(X, y)
         self._set_features(X)
         self._set_props(X, y)
-        self._set_summary()        
+        self._set_summary()
         self._model.remove_data()
 
-    def _predict_base(self, X:pDF|NDArray, **kwargs) -> ArrayLike:
-        if self._is_intercept():    # (a) const was added during _fit → data does not have 'const'
+    def _predict_base(self, X: pDF | NDArray, **kwargs) -> ArrayLike:
+        if (
+            self._is_intercept()
+        ):  # (a) const was added during _fit → data does not have 'const'
             lin = np.dot(X, self.coef_) + self.intercept_
-        else:                       # (b) constant was part of train data → data has 'const'
+        else:  # (b) constant was part of train data → data has 'const'
             lin = np.dot(X, self.params_)
         lin = np.asarray(lin)
         return 1 / (1 + np.exp(-lin))
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-    
+
+
 class Logit(ModelBaseSM):
     """
     Wrap of statsmodels Logit to follow standard ML API.
@@ -355,7 +353,7 @@ class Logit(ModelBaseSM):
         The default is an array of zeros.
 
     solver : str, optional
-        The `solver` (default 'lbfgs') determines which solver from `scipy.optimize`         
+        The `solver` (default 'lbfgs') determines which solver from `scipy.optimize`
         is used, and it can be chosen from among the following strings:
 
         - 'newton' or 'newton-cg' for Newton-Raphson, 'nm' for Nelder-Mead
@@ -403,33 +401,37 @@ class Logit(ModelBaseSM):
             warn_convergence : bool, optional
                 If True, checks the model for the converged flag. If the
                 converged flag is False, a ConvergenceWarning is issued.
-    """      
+    """
 
-    def __init__(self, 
-        solver:         str = 'newton-cg', 
+    def __init__(
+        self,
+        solver: str = "newton-cg",
         fit_intercept: bool = True,
-        max_iter:       int = 1000, 
-        verbose:       bool = False, 
-        **kwargs
+        max_iter: int = 1000,
+        verbose: bool = False,
+        **kwargs,
     ):
-        setup = dict(            
-            solver          = self._align_method(solver),
-            maxiter         = max_iter,
-            fit_intercept   = fit_intercept,
-            disp            = verbose
-        ) | kwargs
-        
+        setup = (
+            dict(
+                solver=self._align_method(solver),
+                maxiter=max_iter,
+                fit_intercept=fit_intercept,
+                disp=verbose,
+            )
+            | kwargs
+        )
+
         self._set_req_params(locals())
-        super().__init__('logit', setup)
+        super().__init__("logit", setup)
 
     @staticmethod
-    def _align_method(solver:str):
+    def _align_method(solver: str):
         """SM method for fast convergence when reasonable n-p."""
-        if solver == 'newton-cg':
-            return 'newton'
+        if solver == "newton-cg":
+            return "newton"
         return solver
-    
-    def fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+
+    def fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         """
         Fit the model using maximum likelihood.
 
@@ -444,39 +446,45 @@ class Logit(ModelBaseSM):
         Returns
         -------
         self : object
-            Returns an instance of fitted model.        
+            Returns an instance of fitted model.
         """
         self._fit(X, y)
         return self
-        
-    def summary(self, show:bool = True) -> pDF|None:
+
+    def summary(self, show: bool = True) -> pDF | None:
         """Econometrical summary of fitted model."""
         if not show:
             return self._summary
         display(self._summary)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ModelBaseLR(PredictBaseLR, ModelBase):
 
     implemented_estimators = {
-        'lasso':   LassoCV,
-        'elastic': ElasticNetCV,
-        'logreg':  LogisticRegressionCV
-    }    
+        "lasso": LassoCV,
+        "elastic": ElasticNetCV,
+        "logreg": LogisticRegressionCV,
+    }
 
-    def __init__(self, solver:Literal['lasso','elastic','logreg'], setup:dict):
-        self._set_setup(solver, setup)                
+    def __init__(self, solver: Literal["lasso", "elastic", "logreg"], setup: dict):
+        self._set_setup(solver, setup)
 
-    def _fit_model(self, X:pDF|NDArray, y:pSe, **kwargs) -> Any:
+    def _fit_model(self, X: pDF | NDArray, y: pSe, **kwargs) -> Any:
         model = self.get_estimator_instance()
         return model.fit(X, y, **kwargs)
-    
-    def _fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+
+    def _fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         self._model = self._fit_model(X, y, **kwargs)
         self._set_features(X)
         self._set_req_props(X, y)
         return self._model
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Lasso(ModelBaseLR):
     """
@@ -556,34 +564,38 @@ class Lasso(ModelBaseLR):
         especially when tol is higher than 1e-4.
     """
 
-    def __init__(self, 
-        eps:         float = 1e-3,
-        tol:         float = 1e-4,
-        alphas:   list|int = 100,
-        fit_intercept:bool = True,
-        max_iter:      int = 1000, 
-        cv:            int = 5,
-        random_state:  int = 42,
-        n_jobs:        int = -1,
-        verbose:       int = 0,
-        **kwargs
+    def __init__(
+        self,
+        eps: float = 1e-3,
+        tol: float = 1e-4,
+        alphas: list | int = 100,
+        fit_intercept: bool = True,
+        max_iter: int = 1000,
+        cv: int = 5,
+        random_state: int = 42,
+        n_jobs: int = -1,
+        verbose: int = 0,
+        **kwargs,
     ):
-        setup = dict(            
-            eps           = eps,
-            tol           = tol,
-            alphas        = alphas,
-            max_iter      = max_iter,
-            cv            = cv,
-            fit_intercept = fit_intercept,
-            random_state  = random_state,
-            n_jobs        = n_jobs,
-            verbose       = verbose        
-        ) | kwargs
+        setup = (
+            dict(
+                eps=eps,
+                tol=tol,
+                alphas=alphas,
+                max_iter=max_iter,
+                cv=cv,
+                fit_intercept=fit_intercept,
+                random_state=random_state,
+                n_jobs=n_jobs,
+                verbose=verbose,
+            )
+            | kwargs
+        )
 
         self._set_req_params(locals())
-        super().__init__('lasso', setup)
+        super().__init__("lasso", setup)
 
-    def fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+    def fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         """
         Lasso linear model with iterative fitting along a regularization path.
 
@@ -603,9 +615,12 @@ class Lasso(ModelBaseLR):
         self : object
             Returns an instance of fitted model.
         """
-        self._model:LassoCV = self._fit(X, y, **kwargs)
+        self._model: LassoCV = self._fit(X, y, **kwargs)
         return self
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ElasticNet(ModelBaseLR):
     """
@@ -691,39 +706,43 @@ class ElasticNet(ModelBaseLR):
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.            
+        especially when tol is higher than 1e-4.
     """
 
-    def __init__(self, 
-        l1_ratio:    float = 0.5, 
-        eps:         float = 1e-3,
-        tol:         float = 1e-4,
-        alphas:   list|int = 100,
-        fit_intercept:bool = True,
-        max_iter:      int = 1000, 
-        cv:            int = 5,
-        random_state:  int = 42,
-        n_jobs:        int = -1, 
-        verbose:       int = 0,
-        **kwargs
+    def __init__(
+        self,
+        l1_ratio: float = 0.5,
+        eps: float = 1e-3,
+        tol: float = 1e-4,
+        alphas: list | int = 100,
+        fit_intercept: bool = True,
+        max_iter: int = 1000,
+        cv: int = 5,
+        random_state: int = 42,
+        n_jobs: int = -1,
+        verbose: int = 0,
+        **kwargs,
     ):
-        setup = dict(            
-            l1_ratio      = l1_ratio, 
-            eps           = eps,
-            tol           = tol,
-            alphas        = alphas,
-            fit_intercept = fit_intercept,
-            max_iter      = max_iter,
-            cv            = cv,
-            random_state  = random_state,
-            n_jobs        = n_jobs,
-            verbose       = verbose  
-        ) | kwargs        
+        setup = (
+            dict(
+                l1_ratio=l1_ratio,
+                eps=eps,
+                tol=tol,
+                alphas=alphas,
+                fit_intercept=fit_intercept,
+                max_iter=max_iter,
+                cv=cv,
+                random_state=random_state,
+                n_jobs=n_jobs,
+                verbose=verbose,
+            )
+            | kwargs
+        )
 
         self._set_req_params(locals())
-        super().__init__('elastic', setup)
+        super().__init__("elastic", setup)
 
-    def fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+    def fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         """
         Elastic Net model with iterative fitting along a regularization path.
 
@@ -743,9 +762,12 @@ class ElasticNet(ModelBaseLR):
         self : object
             Returns an instance of fitted model.
         """
-        self._model:ElasticNetCV = self._fit(X, y, **kwargs)
+        self._model: ElasticNetCV = self._fit(X, y, **kwargs)
         return self
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class LogReg(ModelBaseLR):
     """
@@ -773,7 +795,7 @@ class LogReg(ModelBaseLR):
 
     max_iter : int, default=100
         Maximum number of iterations of the optimization algorithm.
-        
+
     cv : int or cross-validation generator, default=5
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, it specifies the number of folds, `n_folds`, used.
@@ -796,38 +818,44 @@ class LogReg(ModelBaseLR):
         generator. See :term:`Glossary <random_state>` for details.
     """
 
-    def __init__(self, 
-        Cs:            int = 10,
-        tol:         float = 1e-4,
-        fit_intercept:bool = True,
-        solver:        str = 'newton-cg',
-        max_iter:      int = 100, 
-        cv:            int = 5,
-        random_state:  int = 42,
-        n_jobs:        int = -1,
-        verbose:       int = 0,
-        **kwargs
+    def __init__(
+        self,
+        Cs: int = 10,
+        tol: float = 1e-4,
+        fit_intercept: bool = True,
+        solver: str = "newton-cg",
+        max_iter: int = 100,
+        cv: int = 5,
+        random_state: int = 42,
+        n_jobs: int = -1,
+        verbose: int = 0,
+        **kwargs,
     ):
-        setup = dict(
-            Cs            = Cs,
-            tol           = tol,
-            fit_intercept = fit_intercept,
-            solver        = solver,
-            max_iter      = max_iter,
-            cv            = cv,
-            random_state  = random_state,
-            n_jobs        = n_jobs,
-            verbose       = verbose,
-            l1_ratios     = (0,), # l1=0 → L2 penalty → Ridge is better for high dim. data
-            scoring       = 'neg_log_loss',
-            use_legacy_attributes = False,
-        ) | kwargs
+        setup = (
+            dict(
+                Cs=Cs,
+                tol=tol,
+                fit_intercept=fit_intercept,
+                solver=solver,
+                max_iter=max_iter,
+                cv=cv,
+                random_state=random_state,
+                n_jobs=n_jobs,
+                verbose=verbose,
+                l1_ratios=(
+                    0,
+                ),  # l1=0 → L2 penalty → Ridge is better for high dim. data
+                scoring="neg_log_loss",
+                use_legacy_attributes=False,
+            )
+            | kwargs
+        )
 
         self._set_req_params(locals())
-        [setup.pop(x, None) for x in ('eps', 'alphas')] # Lasso-Elastic only
-        super().__init__('logreg', setup)
+        [setup.pop(x, None) for x in ("eps", "alphas")]  # Lasso-Elastic only
+        super().__init__("logreg", setup)
 
-    def fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+    def fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         """
         Logistic Regression CV (aka logit, MaxEnt) classifier.
 
@@ -847,13 +875,13 @@ class LogReg(ModelBaseLR):
         self : object
             Returns an instance of fitted model.
         """
-        self._model:LogisticRegressionCV = self._fit(X, y, **kwargs)
+        self._model: LogisticRegressionCV = self._fit(X, y, **kwargs)
         return self
-    
-    def predict_proba(self, X:pDF|NDArray) -> NDArray:
+
+    def predict_proba(self, X: pDF | NDArray) -> NDArray:
         """
         Predict response variable of a model given exogenous variables.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -862,13 +890,13 @@ class LogReg(ModelBaseLR):
         -------
         array
             NDArray([1-p, p]).
-        """       
+        """
         return self._model.predict_proba(X)
-    
-    def predict(self, X:pDF|NDArray) -> ArrayLike:
+
+    def predict(self, X: pDF | NDArray) -> ArrayLike:
         """
         Predict response variable of a model given exogenous variables.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -877,10 +905,11 @@ class LogReg(ModelBaseLR):
         -------
         array
             Fitted values at exog.
-        """        
+        """
         return self._model.predict(X)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -889,24 +918,24 @@ class LogReg(ModelBaseLR):
 class PredictBaseGB:
 
     _model: XGBClassifier | LGBMClassifier = None
-    _enc:   OrdinalEncoder = None
-    _cat:   list = None
-        
-    @Arrow.transition(contract = Arrow.Contract(safe_conversion=True))
-    def _align_X_transform_cat(self, X:pDF|NDArray) -> pDF:
+    _enc: OrdinalEncoder = None
+    _cat: list = None
+
+    @Arrow.transition(contract=Arrow.Contract(safe_conversion=True))
+    def _align_X_transform_cat(self, X: pDF | NDArray) -> pDF:
         if self._enc is None:
             return X
         X = X.copy()
-        if isinstance(X, np.ndarray):              
+        if isinstance(X, np.ndarray):
             X[:, self._cat] = self._enc.transform(X[:, self._cat])
-        else: 
+        else:
             X[self._cat] = self._enc.transform(X[self._cat])
         return X
 
-    def predict_proba(self, X:pDF|NDArray, **kwargs) -> NDArray:
+    def predict_proba(self, X: pDF | NDArray, **kwargs) -> NDArray:
         """
         Predict response variable of a model given exogenous variables.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -915,13 +944,13 @@ class PredictBaseGB:
         -------
         array
             NDArray([1-p, p]).
-        """       
+        """
         return self._model.predict_proba(self._align_X_transform_cat(X), **kwargs)
-    
-    def predict(self, X:pDF|NDArray, **kwargs) -> ArrayLike:
+
+    def predict(self, X: pDF | NDArray, **kwargs) -> ArrayLike:
         """
         Predict response variable of a model given exogenous variables.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -930,125 +959,138 @@ class PredictBaseGB:
         -------
         array
             Fitted values at exog.
-        """        
+        """
         return self._model.predict(self._align_X_transform_cat(X), **kwargs)
 
-    def shap_values(self, X:pDF|NDArray, **kwargs) -> NDArray:
+    def shap_values(self, X: pDF | NDArray, **kwargs) -> NDArray:
         """Model shap values by TreeExplainer."""
         explainer = TreeExplainer(self._model, **kwargs)
-        return explainer.shap_values(self._align_X_transform_cat(X)) 
+        return explainer.shap_values(self._align_X_transform_cat(X))
 
-    def shap_plot(self, X:pDF|NDArray, **kwargs) -> None:
+    def shap_plot(self, X: pDF | NDArray, **kwargs) -> None:
         """Model visualization by SHAP beeswarm plot, colored by feature values."""
-        ModelView.shap_plot(X, self.shap_values(X), **kwargs)    
+        ModelView.shap_plot(X, self.shap_values(X), **kwargs)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ModelBaseGB(PredictBaseGB, ModelBase):
 
     implemented_estimators = {
-        'xgb': XGBClassifier,
-        'lgb': LGBMClassifier,
+        "xgb": XGBClassifier,
+        "lgb": LGBMClassifier,
     }
 
-    def __init__(self, solver:Literal['xgb','lgb'], setup:dict):
+    def __init__(self, solver: Literal["xgb", "lgb"], setup: dict):
         self._set_setup(solver, setup)
         self._set_private_setup(setup)
 
     def _get_fit_specs(self):
-        if self._solver == 'xgb': return ['verbose']
-        if self._solver == 'lgb': return ['categorical_feature']
+        if self._solver == "xgb":
+            return ["verbose"]
+        if self._solver == "lgb":
+            return ["categorical_feature"]
 
     def _from_fit_specs(self):
-        if self._solver == 'xgb': return ['callbacks']
-        if self._solver == 'lgb': return []
+        if self._solver == "xgb":
+            return ["callbacks"]
+        if self._solver == "lgb":
+            return []
 
     def _get_private_specs(self):
-        if self._solver == 'xgb': return ['categorical_feature']
-        if self._solver == 'lgb': return []
+        if self._solver == "xgb":
+            return ["categorical_feature"]
+        if self._solver == "lgb":
+            return []
 
-    def _clean_setup_specs(self, setup:dict) -> dict:
+    def _clean_setup_specs(self, setup: dict) -> dict:
         specs = self._get_fit_specs() + self._get_private_specs()
-        return {k:v for k,v in setup.items() if k not in specs}
+        return {k: v for k, v in setup.items() if k not in specs}
 
-    def _set_cat_fe(self, setup:dict) -> None:
-        cat = setup.get('categorical_feature', None)
-        self._cat = [cat] if ( cat and isinstance(cat, str) ) else cat
+    def _set_cat_fe(self, setup: dict) -> None:
+        cat = setup.get("categorical_feature", None)
+        self._cat = [cat] if (cat and isinstance(cat, str)) else cat
 
-    def _set_fit_api_specs(self, setup:dict):
+    def _set_fit_api_specs(self, setup: dict):
         self._fit_api_specs = {}
         for s in self._get_fit_specs():
             v = setup.get(s, None)
             if v is not None:
                 self._fit_api_specs[s] = v
 
-    def _set_private_setup(self, setup:dict) -> None:
+    def _set_private_setup(self, setup: dict) -> None:
         self._set_cat_fe(setup)
         self._set_fit_api_specs(setup)
         self._setup = self._clean_setup_specs(setup)
 
     def _align_callback(self, callback):
-        if self._solver == 'lgb':
+        if self._solver == "lgb":
+
             def lgb_callback(env):
                 return callback(env)
+
             return lgb_callback
         return callback
-    
-    def _set_callbacks(self, kwargs:dict) -> None:
-        setup = self._setup
-        call  = setup.pop('default_callback')
-        if kwargs.get('callbacks') or not call:
-            return
-        kwargs['callbacks'] = [self._align_callback(
-            ReduceLROnPlateau(
-                patience    = 5,
-                factor      = 0.5,
-                min_lr      = 1e-4,
-                initial_lr  = setup['learning_rate'],
-        ))]
 
-    def _get_aligned_setup_specs(self, setup:dict) -> dict:
-        if self._solver == 'xgb': 
-            d = {
-                'early_stopping_round': 'early_stopping_rounds'
-            }
-            for k,n in d.items():
+    def _set_callbacks(self, kwargs: dict) -> None:
+        setup = self._setup
+        call = setup.pop("default_callback")
+        if kwargs.get("callbacks") or not call:
+            return
+        kwargs["callbacks"] = [
+            self._align_callback(
+                ReduceLROnPlateau(
+                    patience=5,
+                    factor=0.5,
+                    min_lr=1e-4,
+                    initial_lr=setup["learning_rate"],
+                )
+            )
+        ]
+
+    def _get_aligned_setup_specs(self, setup: dict) -> dict:
+        if self._solver == "xgb":
+            d = {"early_stopping_round": "early_stopping_rounds"}
+            for k, n in d.items():
                 if k in setup:
                     setup[n] = setup.pop(k)
         return setup
 
     def _align_depended_specs(self, kwargs: dict) -> dict:
         setup = {**self._setup}
-        if 'eval_set' not in kwargs:
-            setup.pop('early_stopping_round')
-            kwargs.pop('callbacks', None)        
+        if "eval_set" not in kwargs:
+            setup.pop("early_stopping_round")
+            kwargs.pop("callbacks", None)
         return self._get_aligned_setup_specs(setup)
-    
-    def _get_aligned_setup(self, kwargs:dict) -> dict:
+
+    def _get_aligned_setup(self, kwargs: dict) -> dict:
         self._set_callbacks(kwargs)
         setup = self._align_depended_specs(kwargs)
-        specs = {k:kwargs.pop(k) for k in self._from_fit_specs() if k in kwargs}
-        return setup | specs           
+        specs = {k: kwargs.pop(k) for k in self._from_fit_specs() if k in kwargs}
+        return setup | specs
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _fit_cat_enc(self, X:pDF|NDArray) -> None:
+    def _fit_cat_enc(self, X: pDF | NDArray) -> None:
         if not self._cat:
             return
         if isinstance(X, np.ndarray):
             X_ = X[:, self._cat]
-        else: 
+        else:
             X_ = X[self._cat]
         return OrdinalEncoder(
-            handle_unknown          = 'use_encoded_value', 
-            unknown_value           = -1, 
-            encoded_missing_value   = -1, 
-            dtype                   = np.int32
+            handle_unknown="use_encoded_value",
+            unknown_value=-1,
+            encoded_missing_value=-1,
+            dtype=np.int32,
         ).fit(X_)
-    
-    def _align_eval_set(self, kwargs:dict) -> tuple[dict, list]:
-        es = 'eval_set'
+
+    def _align_eval_set(self, kwargs: dict) -> tuple[dict, list]:
+        es = "eval_set"
         eval_set = kwargs.pop(es, None)
         if eval_set is None:
-            return kwargs, [None]*2
+            return kwargs, [None] * 2
         kwargs[es] = [(self._align_X_transform_cat(Xy[0]), Xy[1]) for Xy in eval_set]
         # if self._solver == 'xgb':
         #     kwargs[es] = [(self._transform_cat(Xy[0]), Xy[1]) for Xy in eval_set]
@@ -1056,43 +1098,46 @@ class ModelBaseGB(PredictBaseGB, ModelBase):
         #     kwargs['eval_X'] = [self._transform_cat(Xy[0]) for Xy in eval_set]
         #     kwargs['eval_y'] = [Xy[1] for Xy in eval_set]
         return kwargs, eval_set[0]
-    
-    def _set_summary(self, Xy:list) -> None:
+
+    def _set_summary(self, Xy: list) -> None:
         s = SummaryGBM(self)
-        try:    s = s.summary(*Xy)
-        except: s = s.summary()
+        try:
+            s = s.summary(*Xy)
+        except:
+            s = s.summary()
         self._summary = s
 
-    def _fit_model(self, X:pDF|NDArray, y:pSe, kwargs:dict) -> LGBMClassifier|XGBClassifier:
-        e = self.get_estimator()        
+    def _fit_model(
+        self, X: pDF | NDArray, y: pSe, kwargs: dict
+    ) -> LGBMClassifier | XGBClassifier:
+        e = self.get_estimator()
         return e(**self._get_aligned_setup(kwargs)).fit(
-            self._align_X_transform_cat(X), y, 
-            **self._fit_api_specs, 
-            **kwargs
+            self._align_X_transform_cat(X), y, **self._fit_api_specs, **kwargs
         )
-        
-    def _fit(self, X:pDF|NDArray, y:pSe, **kwargs):
-        self._enc   = self._fit_cat_enc(X)
+
+    def _fit(self, X: pDF | NDArray, y: pSe, **kwargs):
+        self._enc = self._fit_cat_enc(X)
         kwargs_, Xy = self._align_eval_set(kwargs)
         self._model = self._fit_model(X, y, kwargs_)
         self._set_features(X)
         self._set_summary(Xy)
         return self._model
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def get_categorical_feature(self) -> list|None:
+
+    def get_categorical_feature(self) -> list | None:
         return self._cat
 
     def get_booster(self):
         return self.booster_
-    
+
     def dump_model(self, *args, **kwargs):
         return self.booster_.dump_model(*args, **kwargs)
-    
+
     def trees_to_dataframe(self):
         return self.booster_.trees_to_dataframe()
-    
-    def summary(self, show:bool=True) -> str|None:
+
+    def summary(self, show: bool = True) -> str | None:
         """Econometrical summary of fitted model."""
         if not show:
             return self._summary
@@ -1105,7 +1150,10 @@ class ModelBaseGB(PredictBaseGB, ModelBase):
     @property
     def booster_view(self):
         return self.trees_to_dataframe()
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class LGB(ModelBaseGB):
     """
@@ -1117,13 +1165,13 @@ class LGB(ModelBaseGB):
     max_leaves : int, optional (default=31)
         Maximum tree leaves for base learners.
         Decrease num_leaves to reduce training time.
-    
+
     max_depth : int, optional (default=-1)
-        This parameter is an integer that controls the maximum distance between the root node 
-        of each tree and a leaf node. 
-        LightGBM adds nodes to trees based on the gain from adding that node, regardless of depth. 
-        Because of this growth strategy, it isn’t straightforward to use max_depth alone to limit 
-        the complexity of trees. The num_leaves parameter sets the maximum number of nodes per tree. 
+        This parameter is an integer that controls the maximum distance between the root node
+        of each tree and a leaf node.
+        LightGBM adds nodes to trees based on the gain from adding that node, regardless of depth.
+        Because of this growth strategy, it isn’t straightforward to use max_depth alone to limit
+        the complexity of trees. The num_leaves parameter sets the maximum number of nodes per tree.
 
     learning_rate : float, optional (default=0.1)
         Boosting learning rate.
@@ -1156,16 +1204,16 @@ class LGB(ModelBaseGB):
         L2 regularization term on weights.
 
     early_stopping_round : int, `(default=50)`
-        If early stopping is set to int value, after each boosting round the model’s training accuracy is 
-        evaluated against a validation set that contains data not available to the training process. 
-        That accuracy is then compared to the accuracy as of the previous boosting round. If the model’s 
+        If early stopping is set to int value, after each boosting round the model’s training accuracy is
+        evaluated against a validation set that contains data not available to the training process.
+        That accuracy is then compared to the accuracy as of the previous boosting round. If the model’s
         accuracy fails to improve for some number of consecutive rounds, xBM stops the training process.
-    
+
     categorical_feature : str, list (default=None)
-        Categorical features specification. 
-        list / str → feature names in X. 
+        Categorical features specification.
+        list / str → feature names in X.
         All values in categorical features will be cast to int32.
-    
+
     default_callback : bool, (default=False)
         When no callbacks are specified, default_callback = True activates `ReduceLROnPlateau`,
         with following params: patience=10, factor=0.5, min_lr=1e-4.
@@ -1179,60 +1227,63 @@ class LGB(ModelBaseGB):
     n_jobs : int or None, optional (default=None)
         Number of parallel threads to use for training (can be changed at prediction time by
         passing it as an extra keyword argument).
-    
+
     verbose : int, default=-1
-        Level of verbosity, where -1: off, 0: warnings only, 1: warning+info...        
+        Level of verbosity, where -1: off, 0: warnings only, 1: warning+info...
     """
-    METRIC_MAP = {
-        'logloss': 'binary_logloss'
-    }
 
-    def __init__(self,
-        max_leaves:               int = 31,
-        max_depth:                int = -1,
-        learning_rate:          float = 0.1,
-        n_estimators:             int = 100,
-        min_child_weight:       float = 0.1,
-        subsample:              float = 0.7,
-        colsample_bytree:       float = 0.7, 
-        reg_alpha:              float = 0.0,
-        reg_lambda:             float = 0.0,
-        early_stopping_round:     int = 50,
-        categorical_feature: str|list = None,
-        default_callback:        bool = False,
-        random_state:             int = 42,
-        n_jobs:                   int = -1,
-        verbose:                  int = -1,
-        metric:                   str = 'logloss',
-        **kwargs
+    METRIC_MAP = {"logloss": "binary_logloss"}
+
+    def __init__(
+        self,
+        max_leaves: int = 31,
+        max_depth: int = -1,
+        learning_rate: float = 0.1,
+        n_estimators: int = 100,
+        min_child_weight: float = 0.1,
+        subsample: float = 0.7,
+        colsample_bytree: float = 0.7,
+        reg_alpha: float = 0.0,
+        reg_lambda: float = 0.0,
+        early_stopping_round: int = 50,
+        categorical_feature: str | list = None,
+        default_callback: bool = False,
+        random_state: int = 42,
+        n_jobs: int = -1,
+        verbose: int = -1,
+        metric: str = "logloss",
+        **kwargs,
     ):
-        setup = dict(            
-            num_leaves              = max_leaves,
-            learning_rate           = learning_rate,
-            n_estimators            = n_estimators, 
-            min_child_weight        = min_child_weight,
-            subsample               = subsample,
-            colsample_bytree        = colsample_bytree,
-            reg_alpha               = reg_alpha,
-            reg_lambda              = reg_lambda,
-            early_stopping_round    = early_stopping_round,
-            categorical_feature     = categorical_feature,
-            default_callback        = default_callback,
-            random_state            = random_state,
-            n_jobs                  = n_jobs,
-            verbose                 = verbose,
-            max_depth               = max_depth,
-            metric                  = self.METRIC_MAP.get(metric) or metric,
-            objective               = 'binary',
-            boosting_type           = 'gbdt',
-            importance_type         = 'gain',
-            subsample_freq          = 1,
-        ) | kwargs        
-        
-        self._set_req_params(locals())
-        super().__init__('lgb', setup)
+        setup = (
+            dict(
+                num_leaves=max_leaves,
+                learning_rate=learning_rate,
+                n_estimators=n_estimators,
+                min_child_weight=min_child_weight,
+                subsample=subsample,
+                colsample_bytree=colsample_bytree,
+                reg_alpha=reg_alpha,
+                reg_lambda=reg_lambda,
+                early_stopping_round=early_stopping_round,
+                categorical_feature=categorical_feature,
+                default_callback=default_callback,
+                random_state=random_state,
+                n_jobs=n_jobs,
+                verbose=verbose,
+                max_depth=max_depth,
+                metric=self.METRIC_MAP.get(metric) or metric,
+                objective="binary",
+                boosting_type="gbdt",
+                importance_type="gain",
+                subsample_freq=1,
+            )
+            | kwargs
+        )
 
-    def fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+        self._set_req_params(locals())
+        super().__init__("lgb", setup)
+
+    def fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         """
         LGBMClassifier model fitting with standardized API.
 
@@ -1257,9 +1308,12 @@ class LGB(ModelBaseGB):
         self : object
             Returns an instance of fitted model.
         """
-        self._model:LGBMClassifier = self._fit(X, y, **kwargs)
+        self._model: LGBMClassifier = self._fit(X, y, **kwargs)
         return self
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class XGB(ModelBaseGB):
     """
@@ -1272,8 +1326,8 @@ class XGB(ModelBaseGB):
         Maximum tree leaves for base learners.
 
     max_depth : int, optional (default=0)
-        Maximum depth of a tree. Increasing this value will make the model more complex and 
-        more likely to overfit. 0 indicates no limit on depth. Beware that XGBoost aggressively 
+        Maximum depth of a tree. Increasing this value will make the model more complex and
+        more likely to overfit. 0 indicates no limit on depth. Beware that XGBoost aggressively
         consumes memory when training a deep tree. "exact" tree method requires non-zero value.
 
     learning_rate : float, optional (default=0.1)
@@ -1305,16 +1359,16 @@ class XGB(ModelBaseGB):
 
     reg_lambda : float, optional (default=0.)
         L2 regularization term on weights.
-    
+
     early_stopping_round : int, `(default=50)`
-        If early stopping is set to int value, after each boosting round the model’s training accuracy is 
-        evaluated against a validation set that contains data not available to the training process. 
-        That accuracy is then compared to the accuracy as of the previous boosting round. If the model’s 
+        If early stopping is set to int value, after each boosting round the model’s training accuracy is
+        evaluated against a validation set that contains data not available to the training process.
+        That accuracy is then compared to the accuracy as of the previous boosting round. If the model’s
         accuracy fails to improve for some number of consecutive rounds, xBM stops the training process.
-    
+
     categorical_feature : str, list (default=None)
-        Categorical features specification. 
-        list / str → feature names in X. 
+        Categorical features specification.
+        list / str → feature names in X.
         All values in categorical features will be cast to int32.
 
     default_callback : bool, (default=False)
@@ -1333,57 +1387,62 @@ class XGB(ModelBaseGB):
 
     verbose : int, default=-1
         Level of verbosity, where -1/0: off, 1: warning+info...
-    """    
+    """
+
     METRIC_MAP = {}
 
-    def __init__(self,
-        max_leaves:               int = 31,
-        max_depth:                int = 0,
-        learning_rate:          float = 0.1,
-        n_estimators:             int = 100, 
-        min_child_weight:       float = 0.1,
-        subsample:              float = 0.7,
-        colsample_bytree:       float = 0.7, 
-        reg_alpha:              float = 0.0,
-        reg_lambda:             float = 0.0,
-        early_stopping_round:     int = 50,
-        categorical_feature: str|list = None,
-        default_callback:        bool = False,
-        random_state:             int = 42,
-        n_jobs:                   int = -1,
-        verbose:                  int = -1,
-        metric:                   str = 'logloss',
-        **kwargs
+    def __init__(
+        self,
+        max_leaves: int = 31,
+        max_depth: int = 0,
+        learning_rate: float = 0.1,
+        n_estimators: int = 100,
+        min_child_weight: float = 0.1,
+        subsample: float = 0.7,
+        colsample_bytree: float = 0.7,
+        reg_alpha: float = 0.0,
+        reg_lambda: float = 0.0,
+        early_stopping_round: int = 50,
+        categorical_feature: str | list = None,
+        default_callback: bool = False,
+        random_state: int = 42,
+        n_jobs: int = -1,
+        verbose: int = -1,
+        metric: str = "logloss",
+        **kwargs,
     ):
-        setup = dict(            
-            max_leaves              = max_leaves,
-            learning_rate           = learning_rate,
-            n_estimators            = n_estimators, 
-            min_child_weight        = min_child_weight,
-            subsample               = subsample,
-            colsample_bytree        = colsample_bytree,
-            reg_alpha               = reg_alpha,
-            reg_lambda              = reg_lambda,
-            early_stopping_round    = early_stopping_round,
-            categorical_feature     = categorical_feature,
-            default_callback        = default_callback,
-            random_state            = random_state,
-            n_jobs                  = n_jobs,
-            verbose                 = max(0, verbose),
-            enable_categorical      = True,
-            max_depth               = max(0, max_depth),
-            eval_metric             = self.METRIC_MAP.get(metric) or metric,
-            tree_method             = 'hist',
-            grow_policy             = 'lossguide',
-            objective               = 'binary:logistic',
-            booster                 = 'gbtree',
-            importance_type         = 'total_gain',
-        ) | kwargs        
-        
-        self._set_req_params(locals())
-        super().__init__('xgb', setup)
+        setup = (
+            dict(
+                max_leaves=max_leaves,
+                learning_rate=learning_rate,
+                n_estimators=n_estimators,
+                min_child_weight=min_child_weight,
+                subsample=subsample,
+                colsample_bytree=colsample_bytree,
+                reg_alpha=reg_alpha,
+                reg_lambda=reg_lambda,
+                early_stopping_round=early_stopping_round,
+                categorical_feature=categorical_feature,
+                default_callback=default_callback,
+                random_state=random_state,
+                n_jobs=n_jobs,
+                verbose=max(0, verbose),
+                enable_categorical=True,
+                max_depth=max(0, max_depth),
+                eval_metric=self.METRIC_MAP.get(metric) or metric,
+                tree_method="hist",
+                grow_policy="lossguide",
+                objective="binary:logistic",
+                booster="gbtree",
+                importance_type="total_gain",
+            )
+            | kwargs
+        )
 
-    def fit(self, X:pDF|NDArray, y:pSe, **kwargs):
+        self._set_req_params(locals())
+        super().__init__("xgb", setup)
+
+    def fit(self, X: pDF | NDArray, y: pSe, **kwargs):
         """
         XGBClassifier model fitting with standardized API.
 
@@ -1407,11 +1466,12 @@ class XGB(ModelBaseGB):
         -------
         self : object
             Returns an instance of fitted model.
-        """            
-        self._model:XGBClassifier = self._fit(X, y, **kwargs)
+        """
+        self._model: XGBClassifier = self._fit(X, y, **kwargs)
         return self
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -1421,69 +1481,73 @@ class ModelUtils:
 
     @staticmethod
     def is_tree(model) -> bool:
-        """Checks model instance of AIG GBs - LGBM - XGB."""            
-        return isinstance(model, (
-            PredictBaseGB, LGBMClassifier, XGBClassifier
-        ))
-    
+        """Checks model instance of AIG GBs - LGBM - XGB."""
+        return isinstance(model, (PredictBaseGB, LGBMClassifier, XGBClassifier))
+
     @staticmethod
     def is_lr(model) -> bool:
-        """Checks model instance of AIG Logit - LogisticRegression."""            
-        return isinstance(model, (
-            PredictBaseLR, LogisticRegression
-        ))
-    
+        """Checks model instance of AIG Logit - LogisticRegression."""
+        return isinstance(model, (PredictBaseLR, LogisticRegression))
+
     @staticmethod
     def is_n_jobs(model) -> bool:
-        """Checks model instance of active n_jobs param → True if (n_jobs != 1)."""            
-        if hasattr(model, 'n_jobs'):
+        """Checks model instance of active n_jobs param → True if (n_jobs != 1)."""
+        if hasattr(model, "n_jobs"):
             return model.n_jobs != 1
         return False
 
     @staticmethod
-    def update_n_jobs(model, n_jobs:int) -> None:
-        if hasattr(model, 'n_jobs'):
+    def update_n_jobs(model, n_jobs: int) -> None:
+        if hasattr(model, "n_jobs"):
             model.n_jobs = n_jobs
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # MODEL SUMMARY
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-class SummaryGBM:    
+class SummaryGBM:
     """Helper to provide GLM-like econometrical HTML summary for Tree Models."""
 
-    def __init__(self, model:LGB|XGB, is_classification:bool = True, feature_names:list = None):
+    def __init__(
+        self,
+        model: LGB | XGB,
+        is_classification: bool = True,
+        feature_names: list = None,
+    ):
         self.model = model
         self.is_classification = is_classification
         self.feature_names = feature_names
-        self.is_xgb = 'XGB' in self.model.__class__.__name__
-        
+        self.is_xgb = "XGB" in self.model.__class__.__name__
+
     def _get_meta(self):
         """Extracts unified meta-parameters across LGBM and XGB."""
         params = self.model.get_params()
-        
+
         if self.is_xgb:
-            num_features = getattr(self.model, 'n_features_in_', None)
-            actual_trees = getattr(self.model, 'best_iteration', self.model.n_estimators)
-            objective    = params.get('objective', 'binary:logistic')
+            num_features = getattr(self.model, "n_features_in_", None)
+            actual_trees = getattr(
+                self.model, "best_iteration", self.model.n_estimators
+            )
+            objective = params.get("objective", "binary:logistic")
         else:
-            booster      = self.model.booster_
-            num_features = getattr(self.model, 'n_features_in_', booster.num_feature())
+            booster = self.model.booster_
+            num_features = getattr(self.model, "n_features_in_", booster.num_feature())
             actual_trees = booster.current_iteration()
-            objective    = params.get('objective', 'default')
-            
-        leaves = params.get('num_leaves', 31)
-        lr     = params.get('learning_rate', 0.1)
-            
+            objective = params.get("objective", "default")
+
+        leaves = params.get("num_leaves", 31)
+        lr = params.get("learning_rate", 0.1)
+
         return num_features, actual_trees, objective, leaves, lr
 
     def _header(self) -> str:
         """Constructs the Meta Parameters HTML table."""
         model_type = self.model.__class__.__name__
         num_features, actual_trees, objective, leaves, lr = self._get_meta()
-        now = Misc.timestamp('human')
+        now = Misc.timestamp("human")
 
         html = f"""
         <table style="width: 100%; border-collapse: collapse; border-top: 2px solid black; border-bottom: 2px solid black; font-family: monospace; text-align: left; margin-bottom: 20px;">
@@ -1516,19 +1580,30 @@ class SummaryGBM:
         """Constructs the Fit Statistics HTML table."""
         if X is None or y is None:
             return ""
-            
+
         n_obs = len(y)
-        
-        if self.is_classification: 
+
+        if self.is_classification:
             probs = self.model.predict_proba(X)[:, 1]
-            metric_1_name, metric_1_val = "Log Loss (Deviance):", f"{log_loss(y, probs):.4f}"
-            try:    metric_2_val = f"{roc_auc_score(y, probs):.4f}"
-            except: metric_2_val = "NaN"
+            metric_1_name, metric_1_val = (
+                "Log Loss (Deviance):",
+                f"{log_loss(y, probs):.4f}",
+            )
+            try:
+                metric_2_val = f"{roc_auc_score(y, probs):.4f}"
+            except:
+                metric_2_val = "NaN"
             metric_2_name = "Area Under ROC (AUC):"
         else:
             pred = self.model.predict(X)
-            metric_1_name, metric_1_val = "Mean Squared Error:", f"{mean_squared_error(y, pred):.4f}"
-            metric_2_name, metric_2_val = "R-squared (Pseudo):", f"{r2_score(y, pred):.4f}"
+            metric_1_name, metric_1_val = (
+                "Mean Squared Error:",
+                f"{mean_squared_error(y, pred):.4f}",
+            )
+            metric_2_name, metric_2_val = (
+                "R-squared (Pseudo):",
+                f"{r2_score(y, pred):.4f}",
+            )
 
         html = f"""
         <table style="width: 100%; border-collapse: collapse; border-top: 2px solid black; border-bottom: 2px solid black; font-family: monospace; text-align: left; margin-bottom: 20px;">
@@ -1544,41 +1619,55 @@ class SummaryGBM:
         """
         return html
 
-    def _importance(self, X, num_features) -> str:       
+    def _importance(self, X, num_features) -> str:
         """Constructs the Feature Importance HTML table."""
         if self.feature_names is not None:
             feats = self.feature_names
-        elif hasattr(X, 'columns'):
+        elif hasattr(X, "columns"):
             feats = list(X.columns)
         else:
             feats = [f"Feature_{i}" for i in range(num_features)]
 
         try:
             if self.is_xgb:
-                booster     = self.model.get_booster()
-                gain_dict   = booster.get_score(importance_type='total_gain')
-                split_dict  = booster.get_score(importance_type='weight')
-                
+                booster = self.model.get_booster()
+                gain_dict = booster.get_score(importance_type="total_gain")
+                split_dict = booster.get_score(importance_type="weight")
+
                 # XGBoost returns dicts mapping 'f0', 'f1' (or names) to scores
                 # We align them based on the feature array order
-                b_feats   = booster.feature_names if booster.feature_names else [f"f{i}" for i in range(len(feats))]
-                gain_imp  = np.array([gain_dict.get(f, 0.0) for f in b_feats])
+                b_feats = (
+                    booster.feature_names
+                    if booster.feature_names
+                    else [f"f{i}" for i in range(len(feats))]
+                )
+                gain_imp = np.array([gain_dict.get(f, 0.0) for f in b_feats])
                 split_imp = np.array([split_dict.get(f, 0.0) for f in b_feats])
             else:
-                gain_imp  = self.model.booster_.feature_importance(importance_type='gain')
-                split_imp = self.model.booster_.feature_importance(importance_type='split')
+                gain_imp = self.model.booster_.feature_importance(
+                    importance_type="gain"
+                )
+                split_imp = self.model.booster_.feature_importance(
+                    importance_type="split"
+                )
 
-            total_gain  = np.sum(gain_imp) if np.sum(gain_imp) > 0 else 1
+            total_gain = np.sum(gain_imp) if np.sum(gain_imp) > 0 else 1
             total_split = np.sum(split_imp) if np.sum(split_imp) > 0 else 1
-            
-            imp_df = pDF({
-                'Feature':      feats,
-                'Gain_Raw':     gain_imp,
-                'Gain_Pct':     (gain_imp / total_gain) * 100,
-                'Splits_Raw':   split_imp,
-                'Split_Pct':    (split_imp / total_split) * 100
-            }).sort_values(by='Gain_Raw', ascending=False).reset_index(drop=True)
-            
+
+            imp_df = (
+                pDF(
+                    {
+                        "Feature": feats,
+                        "Gain_Raw": gain_imp,
+                        "Gain_Pct": (gain_imp / total_gain) * 100,
+                        "Splits_Raw": split_imp,
+                        "Split_Pct": (split_imp / total_split) * 100,
+                    }
+                )
+                .sort_values(by="Gain_Raw", ascending=False)
+                .reset_index(drop=True)
+            )
+
             # Build statsmodels-like coefficient table
             rows = ""
             for _, row in imp_df.iterrows():
@@ -1591,7 +1680,7 @@ class SummaryGBM:
                     <td>{row['Split_Pct']:.1f}%</td>
                 </tr>
                 """
-                
+
             html = f"""
             <table style="width: 100%; border-collapse: collapse; border-top: 2px solid black; border-bottom: 2px solid black; font-family: monospace; text-align: right;">
                 <thead style="border-bottom: 1px solid black;">
@@ -1610,23 +1699,30 @@ class SummaryGBM:
             """
             return html
         except Exception as e:
-            return f"<p style='color:red;'>Feature Importance Table failed: {str(e)}</p>"
+            return (
+                f"<p style='color:red;'>Feature Importance Table failed: {str(e)}</p>"
+            )
 
-    @Arrow.transition(contract = Arrow.Contract(safe_conversion=True))
+    @Arrow.transition(contract=Arrow.Contract(safe_conversion=True))
     def summary(self, X=None, y=None):
-        """Returns the fully rendered HTML string."""        
+        """Returns the fully rendered HTML string."""
         num_features = self._get_meta()[0]
-        header       = self._header()
-        fit_stats    = self._performance(X, y)
-        fe_table     = self._importance(X, num_features)
-        
-        final_html = f"<div style='max-width: 800px;'>{header}{fit_stats}{fe_table}</div>"
+        header = self._header()
+        fit_stats = self._performance(X, y)
+        fe_table = self._importance(X, num_features)
+
+        final_html = (
+            f"<div style='max-width: 800px;'>{header}{fit_stats}{fe_table}</div>"
+        )
         return HTML(final_html)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class SummaryGLM:
     """
-    Helper to provide unified econometrical HTML summary for GLM / Logit 
+    Helper to provide unified econometrical HTML summary for GLM / Logit
     Models matching SummaryGB style.
 
     Accepts either a fitted statsmodels results object or a summary2 object.
@@ -1646,16 +1742,8 @@ class SummaryGLM:
         for _, row in meta_df.iterrows():
             k1 = str(row[0]).strip() if pd.notna(row[0]) else ""
             v1 = str(row[1]).strip() if pd.notna(row[1]) else ""
-            k2 = (
-                str(row[2]).strip()
-                if len(row) > 2 and pd.notna(row[2])
-                else ""
-            )
-            v2 = (
-                str(row[3]).strip()
-                if len(row) > 3 and pd.notna(row[3])
-                else ""
-            )
+            k2 = str(row[2]).strip() if len(row) > 2 and pd.notna(row[2]) else ""
+            v2 = str(row[3]).strip() if len(row) > 3 and pd.notna(row[3]) else ""
 
             k1_str = f"<strong>{k1}</strong>" if k1 else ""
             k2_str = f"<strong>{k2}</strong>" if k2 else ""
@@ -1682,21 +1770,25 @@ class SummaryGLM:
         # Calculate max string length across all feature names and header
         feat_names = [str(idx) for idx in coef_df.index]
         max_len = max([len(name) for name in feat_names] + [len("Feature Name")])
-        
+
         # Convert character count directly to CSS `ch` units (exact character width in monospace)
         feat_width = f"{max_len}ch"
 
         # Headers
         headers_html = f'<th style="text-align: left; width: {feat_width}; min-width: {feat_width}; white-space: nowrap; padding-right: 15px;">Feature Name</th>'
         for col in coef_df.columns:
-            headers_html += f'<th style="white-space: nowrap; padding-left: 10px;">{col}</th>'
+            headers_html += (
+                f'<th style="white-space: nowrap; padding-left: 10px;">{col}</th>'
+            )
 
         # Rows
         rows_html = ""
         for idx, row in coef_df.iterrows():
             vals_html = ""
             for val in row:
-                val_str = f"{val:.4f}" if isinstance(val, (float, np.floating)) else str(val)
+                val_str = (
+                    f"{val:.4f}" if isinstance(val, (float, np.floating)) else str(val)
+                )
                 vals_html += f'<td style="white-space: nowrap; padding-left: 10px;">{val_str}</td>'
 
             rows_html += f"""
@@ -1727,4 +1819,6 @@ class SummaryGLM:
 
         final_html = f"<div style='max-width: 800px;'>{header}{coef_table}</div>"
         return HTML(final_html)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

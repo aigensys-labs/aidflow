@@ -35,56 +35,30 @@ model instance, its feature list, and its statistics in a single
 call — ensuring no partial state is ever left on disk.
 """
 
-from ...deps.common         import  (
-                                    Path, 
-                                    shutil
-                                    )
-from ...deps.data           import  pa, pDF, pSe
-from ...deps.plots          import  go
-from ...deps.types          import  Any, Callable
+from ...deps.common import Path, shutil
+from ...deps.data import pa, pDF, pSe
+from ...deps.plots import go
+from ...deps.types import Any, Callable
 
-from ...storage.file        import  (
-                                    BaseIO, 
-                                    MgzipIO, 
-                                    FileIO,
-                                    ArrowIO,
-                                    FileUtils
-                                    )
-from ...storage.folder      import  Folder
-from ...utils.builtins      import  Str
+from ...storage.file import BaseIO, MgzipIO, FileIO, ArrowIO, FileUtils
+from ...storage.folder import Folder
+from ...utils.builtins import Str
 
-from ..structure            import  (
-                                    SID,
-                                    STRUCTURE,
-                                    ProjectStructure,
-                                    ProjectPaths as PP
-                                    )
-from ..parameters           import  (
-                                    PRM,
-                                    Parameters,
-                                    AIGFLOW
-                                    )
-from ..foundation           import  (
-                                    AigParam, 
-                                    AigModel,
-                                    AigStop
-                                    )
-from ..factory              import  (
-                                    Dataclass,
-                                    DictDataclass
-                                    )
-from ..interop              import  (
-                                    Dict,
-                                    TypeStandard
-                                    )
-from .temp                  import  Temp
+from ..structure import SID, STRUCTURE, ProjectStructure, ProjectPaths as PP
+from ..parameters import PRM, Parameters, AIGFLOW
+from ..foundation import AigParam, AigModel, AigStop
+from ..factory import Dataclass, DictDataclass
+from ..interop import Dict, TypeStandard
+from .temp import Temp
 
+IO = "gzip"
 
-IO = 'gzip'
 
 class FITTED(DictDataclass):
     """Internal attribute key for fitted data identity tracking."""
-    ID = 'id'
+
+    ID = "id"
+
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # PROJECT I/O ORCHESTRATORS
@@ -97,10 +71,14 @@ class DefaultPaths:
     have `project_paths` set (i.e., the flow was not properly
     initialized with a project name and path).
     """
+
     def __init__(self, setup: Parameters):
-        for d in ['project_paths']:
+        for d in ["project_paths"]:
             AigStop.is_flow_init(setup, d)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ProjectPaths:
     """
@@ -150,28 +128,30 @@ class ProjectPaths:
         - `root` : Path to the project root folder.
         - `setup`: Path to the project configuration file.
         - `log`: Path to the project log file, if set to 1.
-    """   
+    """
+
     project_paths: PP = None
 
-    def __init__(self, 
-        project: str, 
-        path: Path|str = None, 
+    def __init__(
+        self,
+        project: str,
+        path: Path | str = None,
         is_raise: bool = True,
         err: str = (
-            'AIG WARNING ► "project" and opt. "path" ' 
-            'has to be provided to obtain structure paths'
-        )
-    ):           
+            'AIG WARNING ► "project" and opt. "path" '
+            "has to be provided to obtain structure paths"
+        ),
+    ):
         self.is_raise = is_raise
         pp = ProjectStructure(project, predict=True, path=path).project_paths
-        
-        if Path( MgzipIO.suffix(pp.setup) ).exists():
+
+        if Path(MgzipIO.suffix(pp.setup)).exists():
             self.project_paths = pp
             return
-        
-        if is_raise:                 
+
+        if is_raise:
             raise ValueError(err)
-    
+
     def get_setup(self) -> Parameters | None:
         """
         Load and return the project's `Parameters` instance.
@@ -189,13 +169,14 @@ class ProjectPaths:
         ------
         Exception
             If `is_raise=True` and the setup file cannot be loaded.
-        """ 
+        """
         if self.project_paths is not None:
-            try: 
+            try:
                 return BaseIO.load(self.project_paths.setup, verbose=self.is_raise)
             except Exception as e:
-                if self.is_raise: raise e
-    
+                if self.is_raise:
+                    raise e
+
     def get_setup_as_dict(self) -> dict | None:
         """
         Load the project setup as a lightweight dictionary.
@@ -210,13 +191,17 @@ class ProjectPaths:
             The setup as a flat dictionary, or None.
         """
         if self.project_paths is not None:
-            try: 
+            try:
                 return FileIO.load_csv_as_dict(
-                FileUtils.ensure_extension(self.project_paths.setup, 'csv')
-            )
+                    FileUtils.ensure_extension(self.project_paths.setup, "csv")
+                )
             except Exception as e:
-                if self.is_raise: raise e
+                if self.is_raise:
+                    raise e
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class DataIO(DefaultPaths):
     """
@@ -237,7 +222,8 @@ class DataIO(DefaultPaths):
     Respects the global `save` flag in the project setup.
     When `save=False` (dry-run mode), no files are written —
     enabling pipeline testing without disk I/O.
-    """  
+    """
+
     DEFAULT_PATH = STRUCTURE[SID.D]
 
     def __init__(self, setup: Parameters):
@@ -245,24 +231,25 @@ class DataIO(DefaultPaths):
         self.setup = setup
 
     @classmethod
-    def _get_path(cls, path: str|Path) -> Path:
+    def _get_path(cls, path: str | Path) -> Path:
         if Path(path).exists():
             return path
         path_, file = Folder.path_file(path)
-        if not path_: 
+        if not path_:
             path_ = cls.DEFAULT_PATH
-        return Folder.standard( f'{path_}/{file}' )
+        return Folder.standard(f"{path_}/{file}")
 
     def is_save(self) -> bool:
         "True when project's global save flag was set to 1/True."
         return getattr(self.setup, PRM.OUTPUT.save.param, False)
 
-    def save(self, 
-        data: Any, 
-        path: str|Path, 
-        format: str = None, 
-        async_io: bool = False, 
-        verbose: bool = False
+    def save(
+        self,
+        data: Any,
+        path: str | Path,
+        format: str = None,
+        async_io: bool = False,
+        verbose: bool = False,
     ):
         """
         Persist data to disk using the project's standard I/O logic.
@@ -287,13 +274,15 @@ class DataIO(DefaultPaths):
             BaseIO.save(data, path_, async_io=async_io, verbose=verbose)
         else:
             ArrowIO.save(data, path_, format=format)
-    
-    @classmethod  
-    def load(cls,
-        path: str|Path, 
-        format: str = None, 
-        async_io: bool = False, 
-        verbose: bool = False):
+
+    @classmethod
+    def load(
+        cls,
+        path: str | Path,
+        format: str = None,
+        async_io: bool = False,
+        verbose: bool = False,
+    ):
         """
         Load data from disk into its original object form.
 
@@ -317,13 +306,16 @@ class DataIO(DefaultPaths):
         if format == IO:
             return BaseIO.load(path_, async_io=async_io, verbose=verbose)
         return ArrowIO.load(path_, format=format)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class _ModelStandard:
     """
     Internal base for model-scoped I/O operations.
 
-    Provides path resolution, save (with sanitization), and load 
+    Provides path resolution, save (with sanitization), and load
     logic shared by `ModelIO`, `MetaIO`, and `ReportIO`.
 
     Sanitization Protocol
@@ -334,34 +326,40 @@ class _ModelStandard:
     are restored — ensuring the in-memory object remains
     functional.
     """
+
     def __init__(self, setup: Parameters):
         self.d_io = DataIO(setup)
-        self.path = setup.project_paths.models # ref only → actual paths in a child class
+        self.path = (
+            setup.project_paths.models
+        )  # ref only → actual paths in a child class
 
     def _path(self, model, file_name, custom_path):
-        if custom_path is not None: 
+        if custom_path is not None:
             return custom_path
         if self.path.get(model) is None:
             return None
         if file_name is None:
             file_name = model
         return self.path[model] / file_name
-    
+
     def _sanitize_save(self, instance, attr_to_sanitize, path, async_io, verbose):
-        recon = AigModel.sanitize(instance, attr_to_sanitize) 
-        try: 
-            self.d_io.save(instance, path, format=IO, async_io=async_io, verbose=verbose)
-        finally: 
+        recon = AigModel.sanitize(instance, attr_to_sanitize)
+        try:
+            self.d_io.save(
+                instance, path, format=IO, async_io=async_io, verbose=verbose
+            )
+        finally:
             AigModel.reconstruct(recon)
 
-    def _save_model(self, 
-        model: str, 
-        instance: object, 
-        file_name: str, 
-        custom_path: str|Path, 
-        attr_to_sanitize: str|list = None,
+    def _save_model(
+        self,
+        model: str,
+        instance: object,
+        file_name: str,
+        custom_path: str | Path,
+        attr_to_sanitize: str | list = None,
         async_io: bool = False,
-        verbose: bool = True,        
+        verbose: bool = True,
     ):
         """
         Execute the full save: resolve path → verify → sanitize → write.
@@ -382,16 +380,13 @@ class _ModelStandard:
             Async I/O flag.
         verbose : bool, default=True
             Verbose flag.
-        """        
-        path = self._path(model, file_name, custom_path)       
+        """
+        path = self._path(model, file_name, custom_path)
         AigStop.verify_model_path(model, path)
         self._sanitize_save(instance, attr_to_sanitize, path, async_io, verbose)
 
-    def _load_model(self, 
-        model: str, 
-        file_name: str, 
-        custom_path: str|Path, 
-        verbose: bool = True
+    def _load_model(
+        self, model: str, file_name: str, custom_path: str | Path, verbose: bool = True
     ):
         """
         Load a model artifact from its standard storage location.
@@ -411,11 +406,13 @@ class _ModelStandard:
         -------
         object
             The loaded instance.
-        """        
+        """
         path = self._path(model, file_name, custom_path)
         return self.d_io.load(path, format=IO, verbose=verbose)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-#     
+#
 class ModelIO(_ModelStandard):
     """
     Model Artifact I/O — Coordinated Save/Load of Training Outputs.
@@ -434,25 +431,26 @@ class ModelIO(_ModelStandard):
 
     Load Contract
     -------------
-    `load()` reconstructs only the model instance. Use `MetaIO.load()` 
+    `load()` reconstructs only the model instance. Use `MetaIO.load()`
     for statistics and `FeatureIO.load()` for features independently.
-    """  
+    """
 
     def __init__(self, setup: Parameters):
         super().__init__(setup)
         self.meta_io = MetaIO(setup)
-        self.fe_io   = FeatureIO(setup)
-        self.path    = setup.project_paths.models
-            
-    def save(self, 
-        model: str,             
+        self.fe_io = FeatureIO(setup)
+        self.path = setup.project_paths.models
+
+    def save(
+        self,
+        model: str,
         fit_instance: object,
-        features: list = None, 
+        features: list = None,
         init_fe: bool = False,
         file_name: str = None,
-        custom_path: Path|str = None,
-        attr_to_sanitize: str|list = None,   # attr to sanitize across Workers
-        async_io: bool = False
+        custom_path: Path | str = None,
+        attr_to_sanitize: str | list = None,  # attr to sanitize across Workers
+        async_io: bool = False,
     ) -> None:
         """
         Execute a coordinated save of model + features + stats.
@@ -478,19 +476,21 @@ class ModelIO(_ModelStandard):
         async_io : bool, default=False
             Enable async I/O.
         """
-        self._save_model(model, fit_instance, file_name, custom_path, attr_to_sanitize, async_io)            
-        
+        self._save_model(
+            model, fit_instance, file_name, custom_path, attr_to_sanitize, async_io
+        )
+
         if features is not None:
             self.fe_io.save({model: features}, init_fe)
 
-        stats = getattr(fit_instance, 'stats', None)
+        stats = getattr(fit_instance, "stats", None)
         if stats is not None:
-            self.meta_io.save(model, stats, file_name, custom_path, attr_to_sanitize, True)
-    
-    def load(self, 
-        model: str, 
-        file_name: str = None,
-        custom_path: Path|str=None
+            self.meta_io.save(
+                model, stats, file_name, custom_path, attr_to_sanitize, True
+            )
+
+    def load(
+        self, model: str, file_name: str = None, custom_path: Path | str = None
     ) -> object:
         """
         Reconstruct a fitted model instance from disk.
@@ -508,29 +508,34 @@ class ModelIO(_ModelStandard):
         -------
         object
             The loaded fitted model instance.
-        """ 
+        """
         return self._load_model(model, file_name, custom_path)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ReportIO(_ModelStandard):
     """
     Report Artifact I/O — Dashboard & Visualization Persistence.
 
-    Handles save/load of dashboard instances (pickled). Reports 
-    are regenerable from models — they are saved for archival 
+    Handles save/load of dashboard instances (pickled). Reports
+    are regenerable from models — they are saved for archival
     and audit convenience, not as the primary source of truth.
     """
+
     def __init__(self, setup: Parameters):
         super().__init__(setup)
         self.path = setup.project_paths.reports
-            
-    def save(self, 
-        model: str,    
+
+    def save(
+        self,
+        model: str,
         dash_instance: object,
         file_name: str = None,
-        custom_path: Path|str = None,
-        attr_to_sanitize: str|list = None,
-        async_io: bool = False
+        custom_path: Path | str = None,
+        attr_to_sanitize: str | list = None,
+        async_io: bool = False,
     ) -> None:
         """
         Persist a dashboard instance to the reports directory.
@@ -550,12 +555,12 @@ class ReportIO(_ModelStandard):
         async_io : bool, default=False
             Enable async I/O.
         """
-        self._save_model(model, dash_instance, file_name, custom_path, attr_to_sanitize, async_io)            
-    
-    def load(self, 
-        model: str, 
-        file_name: str = None,
-        custom_path: Path|str = None
+        self._save_model(
+            model, dash_instance, file_name, custom_path, attr_to_sanitize, async_io
+        )
+
+    def load(
+        self, model: str, file_name: str = None, custom_path: Path | str = None
     ) -> object:
         """
         Load a previously saved report for viewing or auditing.
@@ -573,31 +578,35 @@ class ReportIO(_ModelStandard):
         -------
         object
             The loaded dashboard instance.
-        """ 
+        """
         return self._load_model(model, file_name, custom_path)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class MetaIO(_ModelStandard):
     """
     Metadata I/O — Statistical & Diagnostic Persistence.
 
     Handles save/load of lightweight statistical objects
-    (diagnostics, scores, optimization paths). Optimized 
-    for fast loading — these objects are small and 
+    (diagnostics, scores, optimization paths). Optimized
+    for fast loading — these objects are small and
     frequently accessed during comparison and reporting.
     """
 
     def __init__(self, setup: Parameters):
         super().__init__(setup)
         self.path = setup.project_paths.metas
-            
-    def save(self, 
-        model: str,    
+
+    def save(
+        self,
+        model: str,
         stats: object,
         file_name: str = None,
-        custom_path: Path|str = None,
-        attr_to_sanitize: str|list = None,
-        async_io: bool = True
+        custom_path: Path | str = None,
+        attr_to_sanitize: str | list = None,
+        async_io: bool = True,
     ) -> None:
         """
         Persist statistical metadata to the metas directory.
@@ -618,13 +627,13 @@ class MetaIO(_ModelStandard):
             Async I/O (default True — stats saves are
             non-critical and benefit from non-blocking).
         """
-        self._save_model(model, stats, file_name, custom_path, attr_to_sanitize, async_io)            
-    
-    def load(self, 
-        model: str, 
-        file_name: str = None,
-        custom_path: Path|str=None
-    )-> object:
+        self._save_model(
+            model, stats, file_name, custom_path, attr_to_sanitize, async_io
+        )
+
+    def load(
+        self, model: str, file_name: str = None, custom_path: Path | str = None
+    ) -> object:
         """
         Load statistical metadata for a model.
 
@@ -641,9 +650,12 @@ class MetaIO(_ModelStandard):
         -------
         object
             The loaded statistical object.
-        """    
+        """
         return self._load_model(model, file_name, custom_path, False)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureIO:
     """
@@ -667,10 +679,10 @@ class FeatureIO:
 
     def __init__(self, setup: Parameters):
         self.d_io = DataIO(setup)
-        features  = AIGFLOW.Schema.features
+        features = AIGFLOW.Schema.features
         self.path = setup.project_paths.models[features] / features
 
-    def save(self, model_features:dict, i:bool=False) -> None:
+    def save(self, model_features: dict, i: bool = False) -> None:
         """
         Update the global feature map with new findings.
 
@@ -688,8 +700,8 @@ class FeatureIO:
         mfes = self.load(i)
         mfes.update(model_features)
         self.d_io.save(mfes, self.path, format=IO)
-    
-    def load(self, i:bool=False) -> dict:
+
+    def load(self, i: bool = False) -> dict:
         """
         Retrieve the current feature map.
 
@@ -704,17 +716,22 @@ class FeatureIO:
         dict
             The current feature map (model → features).
         """
-        if i:  mfes = {}  # safety → i (initial) of a PROJECT - saved features deletion  
-        else:  mfes = self.d_io.load(self.path, format=IO)
+        if i:
+            mfes = {}  # safety → i (initial) of a PROJECT - saved features deletion
+        else:
+            mfes = self.d_io.load(self.path, format=IO)
         return mfes
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class _DashSignature:
     """
     Dashboard Content Signature — Element Validity Verification.
 
     Stores a content signature (hash/identifier) alongside the
-    saved dashboard key attributes. Used to verify that previously 
+    saved dashboard key attributes. Used to verify that previously
     saved elements still match the current dashboard state —
     preventing stale element display when the dashboard code
     or configuration has changed.
@@ -726,33 +743,35 @@ class _DashSignature:
     2. **is_valid_signature()**: Called before attempting to
        load saved elements. Returns True only if the stored
        signature matches the current dashboard's signature.
-    
+
     Parameters
     ----------
     dash_instance: DashInterface
         The dashboard instance to verify.
     """
-    SIGNATURE = 'report_signature'
+
+    SIGNATURE = "report_signature"
 
     def __init__(self, dash_instance: type):
         self.set_signature_attrs(dash_instance)
-    
+
     @property
     def MODEL(self) -> str:
         return self.dash.MODEL
-    
+
     @property
     def setup(self) -> Parameters:
         return self.dash.setup
 
     @property
     def signature(self) -> str:
-        return self.dash.dashboard_signature 
+        return self.dash.dashboard_signature
 
     def set_signature_attrs(self, dash_instance: type) -> None:
         """Extract the content signature from the dashboard instance."""
         from ..display import DashInterface
-        self.dash: DashInterface = dash_instance        
+
+        self.dash: DashInterface = dash_instance
         self.elements = self.dash._get_elements()
         self.set_signature_path()
 
@@ -763,12 +782,12 @@ class _DashSignature:
     def get_report_path(self) -> Path:
         """Returns model report path under active project."""
         return self._get_report_path(self.setup, self.MODEL)
-    
+
     @staticmethod
     def _get_report_path(setup: Parameters, model: str) -> Path:
         """Returns model report path under active project."""
         return setup.project_paths.reports[model]
-        
+
     def load(self) -> str | None:
         """
         Load the stored signature from disk.
@@ -788,12 +807,12 @@ class _DashSignature:
         """Persist the current signature to disk."""
         BaseIO.save(self.signature, self.sig_path)
 
-    def is_save(self, save:bool|None) -> bool:
+    def is_save(self, save: bool | None) -> bool:
         """
         Returns True if either directly provided save or global setup.save is True.
-        """        
+        """
         return self.dash._is_save(save)
-    
+
     def is_valid_signature(self) -> bool:
         """
         Verify that the stored signature matches the current dashboard.
@@ -805,9 +824,10 @@ class _DashSignature:
             dashboard signature (elements are valid for
             loading). False if they differ or no signature
             was stored.
-        """        
+        """
         sig = self.load()
         return sig == self.signature
+
 
 class _DashPaths:
     """
@@ -839,19 +859,21 @@ class _DashPaths:
     sign : _DashSignature
         An instance of _DashSignature.
     file_type : str | None, default='html'
-        File type extension.        
+        File type extension.
     """
-    IS_LOAD   = '_is_active_load'
 
-    def __init__(self, sign: _DashSignature, file_type: str | None = 'html'):
+    IS_LOAD = "_is_active_load"
+
+    def __init__(self, sign: _DashSignature, file_type: str | None = "html"):
         self.sign = sign
         self.file_type = file_type
 
     @classmethod
-    def create_paths(cls,
-        path_fx:  Callable[[str], Path],
+    def create_paths(
+        cls,
+        path_fx: Callable[[str], Path],
         elements: dict[str, str | dict[str, str]],
-        _paths:   dict | None = None
+        _paths: dict | None = None,
     ) -> dict[str, Path | dict[str, Path]]:
         """
         Recursively build a paths dict from a path factory and element structure.
@@ -883,14 +905,14 @@ class _DashPaths:
         if _paths is None:
             _paths = {}
 
-        for k,v in elements.items():
+        for k, v in elements.items():
             if isinstance(v, dict):
                 _paths[k] = {}
                 cls.create_paths(path_fx, v, _paths[k])
             else:
                 _paths[k] = path_fx(v)
         return _paths
-        
+
     def _is_load(self, paths: dict[str, Path | dict[str, Path]]) -> bool:
         """
         Verify whether all elements (including nested) are valid and loadable.
@@ -899,9 +921,7 @@ class _DashPaths:
             return False
         if not self.sign.is_valid_signature():
             return False
-        p = lambda x: all(
-            Path(p).exists() for p in Dict.get_flattened_values(x)
-        )
+        p = lambda x: all(Path(p).exists() for p in Dict.get_flattened_values(x))
         return all(p(paths[e]) for e in self.sign.elements)
 
     def _get_tmp_paths(self) -> dict[str, Path | dict[str, Path]]:
@@ -910,10 +930,11 @@ class _DashPaths:
         """
         tp = Temp(self.sign.setup)
         px = self.path_standard()
-        fx = lambda k: px( tp.get_path(prefix = k) )
+        fx = lambda k: px(tp.get_path(prefix=k))
         return self.create_paths(fx, self.sign.elements)
 
-    def get_view_paths(self, save_paths: dict[str, Path | dict[str, Path]]
+    def get_view_paths(
+        self, save_paths: dict[str, Path | dict[str, Path]]
     ) -> dict[str, Path]:
         """
         Resolve element paths — load mode or temp mode.
@@ -936,10 +957,8 @@ class _DashPaths:
         """
         # A) Load saved elements under dash signature
         if self._is_load(save_paths):
-            return {self.IS_LOAD: True} | {
-                k: save_paths[k] for k in self.sign.elements
-            }
-        
+            return {self.IS_LOAD: True} | {k: save_paths[k] for k in self.sign.elements}
+
         # B) Elements don`t exist - create temp path
         return self._get_tmp_paths()
 
@@ -952,12 +971,12 @@ class _DashPaths:
         Callable[[str], Path]
             A function: `str → Path`, ready to be used as
             `path_fx` in `create_paths`.
-        """        
+        """
         if not self.file_type:
             return lambda x: Path(x)
-        return lambda x: Path( FileUtils.ensure_extension(x, self.file_type) )        
-    
-    def file_suffix(self, file_suffix: str|None) -> Callable[[str], Path]:
+        return lambda x: Path(FileUtils.ensure_extension(x, self.file_type))
+
+    def file_suffix(self, file_suffix: str | None) -> Callable[[str], Path]:
         """
         Create a path transformation function with type + suffix.
 
@@ -979,16 +998,17 @@ class _DashPaths:
         path_fx = self.path_standard()
         if file_suffix is None:
             return path_fx
-        return lambda x: path_fx( str(x) + Str.add_prefix(file_suffix) )
+        return lambda x: path_fx(str(x) + Str.add_prefix(file_suffix))
 
-    def _get_path(self, custom_path:str=None) -> Path:
+    def _get_path(self, custom_path: str = None) -> Path:
         path = self.sign.get_report_path()
         path = AigParam.di(custom_path, path)
         AigStop.verify_model_path(self.sign.MODEL, path)
         return Path(path)
-        
-    def get_save_paths(self,               
-        custom_path: str | None = None, 
+
+    def get_save_paths(
+        self,
+        custom_path: str | None = None,
         file_suffix: str | None = None,
     ) -> dict[str, Path | dict[str, Path]]:
         """
@@ -999,7 +1019,7 @@ class _DashPaths:
         path : str | None, default=None
             Override base path.
         file_type : str | None, default='html'
-            File type extension.            
+            File type extension.
         file_suffix : str | None, default=None
             Additional suffix appended to all element paths.
 
@@ -1010,9 +1030,10 @@ class _DashPaths:
         """
         path = self._get_path(custom_path)
         sx = self.file_suffix(file_suffix)
-        fx = lambda v: sx(path / v)        
-        return self.create_paths(fx, self.sign.elements)    
-    
+        fx = lambda v: sx(path / v)
+        return self.create_paths(fx, self.sign.elements)
+
+
 class DashIO:
     """
     Dashboard I/O — Multi-Element Visualization Export & Validation.
@@ -1054,31 +1075,32 @@ class DashIO:
       paths (fresh mode).
     """
 
-    def __init__(self, setup: Parameters):                
+    def __init__(self, setup: Parameters):
         self.setup = setup
         self.io = ReportIO(setup)
-        
-    def get_report_path(self, model:str) -> Path:
+
+    def get_report_path(self, model: str) -> Path:
         """Returns model report path under active project."""
         return _DashSignature._get_report_path(self.setup, model)
 
-    def get_custom_selection_path(self, model:str) -> Path:
+    def get_custom_selection_path(self, model: str) -> Path:
         """
         Returns model report path of `user custom selection` io ops
         under active project.
         """
-        return self.get_report_path(model) / 'custom_selection'
-    
-    def save(self, 
-        dash_instance: type, 
-        save: bool = None, 
+        return self.get_report_path(model) / "custom_selection"
+
+    def save(
+        self,
+        dash_instance: type,
+        save: bool = None,
         custom_path: Path | str = None,
         report_name: str = None,
-        file_type: str | None = 'html',
+        file_type: str | None = "html",
         file_suffix: str = None,
         attr_to_sanitize: list | str = None,
         async_io: bool = False,
-        save_signature : bool = False
+        save_signature: bool = False,
     ) -> dict[str, Path | dict[str, Path]]:
         """
         Save the dashboard and resolve element paths with validity check.
@@ -1123,39 +1145,37 @@ class DashIO:
             Element name → resolved path (or temp path if save=False).
             Structure follows `dash_elements structure`.
         """
-        sign  = _DashSignature(dash_instance)
+        sign = _DashSignature(dash_instance)
         paths = _DashPaths(sign, file_type)
 
         save_paths = paths.get_save_paths(custom_path, file_suffix)
 
         if not sign.is_save(save):
             return paths.get_view_paths(save_paths)
-                
+
         self.io.save(
-            sign.MODEL, dash_instance, 
-            custom_path = custom_path, file_name = report_name, 
-            attr_to_sanitize = attr_to_sanitize, async_io = async_io
+            sign.MODEL,
+            dash_instance,
+            custom_path=custom_path,
+            file_name=report_name,
+            attr_to_sanitize=attr_to_sanitize,
+            async_io=async_io,
         )
         if save_signature:
             sign.save()
-        
+
         return save_paths
-    
-    def save_file(self,
-        obj: Any, 
-        path: Path | str, 
-        async_io: bool = True, 
-        verbose: bool = True
+
+    def save_file(
+        self, obj: Any, path: Path | str, async_io: bool = True, verbose: bool = True
     ) -> None:
         """Dashboard `BaseIO save` utility for extra files."""
         DataIO(self.setup).save(
             obj, path=path, format=IO, async_io=async_io, verbose=verbose
         )
 
-    def load(self, 
-        model: str = None, 
-        file_name: str = None, 
-        custom_path: Path|str = None
+    def load(
+        self, model: str = None, file_name: str = None, custom_path: Path | str = None
     ) -> Any | None:
         """
         Load a previously saved dashboard artifact.
@@ -1179,7 +1199,7 @@ class DashIO:
             return
         path = FileUtils.ensure_extension(custom_path, MgzipIO.EXT)
         if not Path(path).exists():
-            return 
+            return
         return self.io.load(model, file_name=file_name, custom_path=path)
 
     @staticmethod
@@ -1201,17 +1221,18 @@ class DashIO:
         return _DashPaths.IS_LOAD in paths
 
     @classmethod
-    def resolve_fig_path(cls, 
-        fig_fx: Callable[[], go.Figure], 
-        paths: dict[str, Path | dict[str, Path]], 
-        element: str
+    def resolve_fig_path(
+        cls,
+        fig_fx: Callable[[], go.Figure],
+        paths: dict[str, Path | dict[str, Path]],
+        element: str,
     ) -> tuple[go.Figure | Path | dict[str, Path], Path | dict[str, Path]]:
         """
         Resolve the figure object and its save path for a dashboard element.
 
         Dual-mode resolution based on the paths dict state:
 
-        - **Load mode** (elements previously saved + signature valid): 
+        - **Load mode** (elements previously saved + signature valid):
           Returns the saved HTML path for both returned objects.
         - **Save / Temp mode** (elements not yet saved): Returns the
           live Plotly Figure (produced by `fig_fx()`) and the path
@@ -1234,31 +1255,30 @@ class DashIO:
         tuple[go.Figure | (Path | dict[str, Path]), Path | dict[str, Path]]
             - In load mode: `(report_path, report_path)` —
               the saved HTML file serves as both the figure and the path.
-            - In save mode: `(fig, report_path)` — the fig_fx() output, 
+            - In save mode: `(fig, report_path)` — the fig_fx() output,
               and the path for persistence.
 
         Raises
         ------
         ValueError
             If `element` is not present in `paths`.
-        """        
+        """
         report_path = cls._resolve_element(element, paths)
         if cls.is_load(paths):
             return report_path, report_path
         return fig_fx(), report_path
 
     @classmethod
-    def resolve_path(cls, 
-        paths: dict[str, Path | dict[str, Path]], 
-        element: str
+    def resolve_path(
+        cls, paths: dict[str, Path | dict[str, Path]], element: str
     ) -> tuple[bool, Path | dict[str, Path]]:
         """
-        Resolve dash state `LOAD / SAVE` and the load / save path for 
+        Resolve dash state `LOAD / SAVE` and the load / save path for
         a dashboard element.
 
         Dual-mode resolution based on the paths dict state:
 
-        - **Load mode** (elements previously saved + signature valid): 
+        - **Load mode** (elements previously saved + signature valid):
           Returns the `(True, report_path)` - can be safely loaded.
         - **Save / Temp mode** (elements not yet saved): Returns the
           `(False, report_path)` - path where it will be persisted.
@@ -1281,27 +1301,28 @@ class DashIO:
         ------
         ValueError
             If `element` is not present in `paths`.
-        """        
+        """
         report_path = cls._resolve_element(element, paths)
         if cls.is_load(paths):
             return True, report_path
         return False, report_path
-        
+
     def _resolve_element(element: str, paths: dict[str, Path | dict]) -> Path | dict:
         if element in paths:
             return paths[element]
-        raise ValueError(
-            'AIG SAFETY ► Dash element is not present in paths.'
-        )        
+        raise ValueError("AIG SAFETY ► Dash element is not present in paths.")
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FittedIO:
     """
     Worker Output Disk Offload — Pipeline Memory Management.
 
-    Manages the disk offload/rehydration of intermediate worker 
-    outputs (DataFrames) to prevent memory pressure during long 
-    pipeline executions. Each instance is scoped to a specific 
+    Manages the disk offload/rehydration of intermediate worker
+    outputs (DataFrames) to prevent memory pressure during long
+    pipeline executions. Each instance is scoped to a specific
     project and stores data under `project_root/_offload/`.
 
     Use Case
@@ -1315,16 +1336,16 @@ class FittedIO:
     Data Format
     -----------
     - **Serialization**: Apache Arrow (feather v2).
-    - **Compression**: zstd (default) — fast with good ratio for tabular 
+    - **Compression**: zstd (default) — fast with good ratio for tabular
       data. Configurable per save.
-    - **Categorical handling**: Category codes are flattened to integers 
-      on save and restored on load (preserving the original category mapping 
+    - **Categorical handling**: Category codes are flattened to integers
+      on save and restored on load (preserving the original category mapping
       via an internal schema cache).
 
     File Naming
     -----------
-    Files are named `{model_id}_{index}.arrow` under `_offload/`. 
-    The index increments for multi-field Dataclass saves 
+    Files are named `{model_id}_{index}.arrow` under `_offload/`.
+    The index increments for multi-field Dataclass saves
     (each DataFrame field gets its own file).
 
     Lifecycle
@@ -1339,60 +1360,61 @@ class FittedIO:
     setup : Parameters
         The project parameter context (provides the root path).
     """
-    FOLDER = '_offload'
 
-    def __init__(self, setup:Parameters):
-        self._path  = self._get_tmp_path(setup)
+    FOLDER = "_offload"
+
+    def __init__(self, setup: Parameters):
+        self._path = self._get_tmp_path(setup)
         self._saved_path: dict[str, str] = {}
-        self._schema: dict[str|None, dict[str, dict]] = {None: {}}        
+        self._schema: dict[str | None, dict[str, dict]] = {None: {}}
 
-    def _get_tmp_path(self, setup:Parameters) -> Path:
+    def _get_tmp_path(self, setup: Parameters) -> Path:
         return setup.project_paths.root / self.FOLDER
-    
+
     @staticmethod
     def _suffix(path) -> str:
-        return FileUtils.ensure_extension(path, 'arrow')
-    
-    def _get_path(self, model:str, is_save:bool=False) -> str:
+        return FileUtils.ensure_extension(path, "arrow")
+
+    def _get_path(self, model: str, is_save: bool = False) -> str:
         """Generate the next available file path for a model."""
         i = len(self._saved_path)
-        p = lambda i:self._suffix(self._path / f'{model}_{i}')
+        p = lambda i: self._suffix(self._path / f"{model}_{i}")
         if not is_save:
             return p(i)
         while Path(p(i)).exists():
-            i+=1
+            i += 1
         return p(i)
 
-    def _standardize(self, data:pDF, id_:int, is_save:bool=False) -> pDF:
+    def _standardize(self, data: pDF, id_: int, is_save: bool = False) -> pDF:
         """
         Handle categorical dtype serialization/deserialization.
 
         On save: Flattens category codes to integers and caches
         the mapping in `self._schema`.
 
-        On load: Restores category codes from the cached mapping.        
+        On load: Restores category codes from the cached mapping.
         """
         if not is_save:
             if id_ not in self._schema:
                 return data
-            
+
             for x, s in self._schema[id_].items():
                 dc: pSe = TypeStandard.any_to_cat(data[x])
-                data[x] = dc.cat.rename_categories({i:c for c,i in s.items()})
+                data[x] = dc.cat.rename_categories({i: c for c, i in s.items()})
             return data
-        
+
         cat = TypeStandard.get_dtypes_cat(data).index.to_list()
-        
+
         if not cat:
             return data
-        
+
         self._schema[id_] = {}
         s = self._schema[id_]
 
         d = {}
         for x in cat:
             dc: pSe = data[x]
-            s[x] = {c:i for i,c in enumerate(dc.cat.categories)}        
+            s[x] = {c: i for i, c in enumerate(dc.cat.categories)}
             d[x] = dc.cat.rename_categories(s[x])
 
         d = pDF(d)
@@ -1402,21 +1424,22 @@ class FittedIO:
         d[res] = data[res]
 
         return d[col]
-    
+
     def _save(self, data: pDF | pa.Table, path: str, compression: str):
         id_ = id(data)
         if isinstance(data, pDF):
-            id_  = id_ if (FITTED.ID not in data.attrs) else data.attrs[FITTED.ID]
+            id_ = id_ if (FITTED.ID not in data.attrs) else data.attrs[FITTED.ID]
             data = self._standardize(data, id_, True)
-            data = pa.Table.from_pandas(data, preserve_index = True)
-        ArrowIO.to_feather(data, path, compression = compression, compression_level = 3)
+            data = pa.Table.from_pandas(data, preserve_index=True)
+        ArrowIO.to_feather(data, path, compression=compression, compression_level=3)
         self._saved_path[id_] = path
 
-    def save(self, 
+    def save(
+        self,
         model: str,
-        data:  DictDataclass | pDF | pa.Table,
+        data: DictDataclass | pDF | pa.Table,
         offload_type: type = pDF,
-        compression:  str  = "zstd"
+        compression: str = "zstd",
     ) -> None:
         """
         Offload intermediate worker output to disk.
@@ -1445,11 +1468,9 @@ class FittedIO:
         - Resets the internal path registry (fresh save).
         """
         self._saved_path = {}
-        
-        save = lambda d: self._save(
-            d, self._get_path(model, True), compression
-        )
-        if not Dataclass.is_dataclass(data):            
+
+        save = lambda d: self._save(d, self._get_path(model, True), compression)
+        if not Dataclass.is_dataclass(data):
             save(data)
             return
 
@@ -1463,11 +1484,11 @@ class FittedIO:
         if not Path(path).exists():
             return
         table = ArrowIO.read_feather(path)
-        data  = table.to_pandas()
-        if id_:        
+        data = table.to_pandas()
+        if id_:
             data.attrs[FITTED.ID] = id_
         return self._standardize(data, id_)
-    
+
     def load(self, model: str) -> pDF | list[pDF] | None:
         """
         Rehydrate worker output from disk.
@@ -1490,12 +1511,12 @@ class FittedIO:
             return self._load(path)
 
         res = []
-        for i,p in self._saved_path.items():
-            res.append( self._load(p, i) )
+        for i, p in self._saved_path.items():
+            res.append(self._load(p, i))
 
         if all(x is None for x in res):
             return
-        
+
         return res
 
     def clear_model(self, model: str) -> None:
@@ -1527,5 +1548,7 @@ class FittedIO:
         - Recursively deletes `_offload/` and all contents.
         - Silently ignores errors (directory already removed).
         """
-        shutil.rmtree(self._path, ignore_errors=True)    
+        shutil.rmtree(self._path, ignore_errors=True)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

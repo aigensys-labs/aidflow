@@ -61,60 +61,46 @@ Requires the following pipeline stages to be completed:
 - WOE Encoder (feature encoding for GLM agents)
 """
 
-from ....deps.common                import  wraps
-from ....deps.data                  import  pDF
-from ....deps.types                 import  NDArray
+from ....deps.common import wraps
+from ....deps.data import pDF
+from ....deps.types import NDArray
 
-from ....core.parameters            import  AIGFLOW
-from ....core.registry              import  (
-                                            FitRegister, 
-                                            FitRegOpt,   
-                                            DashRegister,  
-                                            RegGet
-                                            )
-from ....core.base                  import  (
-                                            FitterBase,
-                                            TransformerBase,
-                                            ModelProcessorBase,
-                                            ModelInput,
-                                            ModelResult,
-                                            ModelBase,
-                                            ModelBaseDual,
-                                            ModelUIBase
-                                            )
-from ....core.display               import  DashBackground
-from ....core.factory               import  (
-                                            Dataclass,
-                                            DictClass
-                                            )
-from ....core.foundation            import  AigParam
-from ....core.io                    import  ModelIO
+from ....core.parameters import AIGFLOW
+from ....core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ....core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    ModelBaseDual,
+    ModelUIBase,
+)
+from ....core.display import DashBackground
+from ....core.factory import Dataclass, DictClass
+from ....core.foundation import AigParam
+from ....core.io import ModelIO
 
-from ....learner.agents.utils_fes   import  RawFeatures
+from ....learner.agents.utils_fes import RawFeatures
 
-from ...predict.adapter             import  PredictorAdapter
+from ...predict.adapter import PredictorAdapter
 
-from .fitter                        import  (
-                                            PredictorFitter,
-                                            FitParamsBase,
-                                            FitParamsCfg,
-                                            FitResult,
-                                            FitStats
-                                            )
+from .fitter import PredictorFitter, FitParamsBase, FitParamsCfg, FitResult, FitStats
 
 MODEL = AIGFLOW.Selection.champion_agent
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG SELECTION STAGE ► PRODUCTION AGENT PREDICTOR ► FINAL CHOSEN AGENT FOR PRODUCTION USE'
-DEP1  = (
-        AIGFLOW.Training.agent1,
-        AIGFLOW.Training.agent2,
-        AIGFLOW.Training.agent3,
-        AIGFLOW.Training.agent4,
-        )
-DEP2  = AIGFLOW.Data.fe_cleaner
-DEP3  = AIGFLOW.Encoding.woe_encoder
-DEPS  = DEP1 + (DEP2, DEP3)
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG SELECTION STAGE ► PRODUCTION AGENT PREDICTOR ► FINAL CHOSEN AGENT FOR PRODUCTION USE"
+DEP1 = (
+    AIGFLOW.Training.agent1,
+    AIGFLOW.Training.agent2,
+    AIGFLOW.Training.agent3,
+    AIGFLOW.Training.agent4,
+)
+DEP2 = AIGFLOW.Data.fe_cleaner
+DEP3 = AIGFLOW.Encoding.woe_encoder
+DEPS = DEP1 + (DEP2, DEP3)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -122,9 +108,11 @@ DEPS  = DEP1 + (DEP2, DEP3)
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'ProductionAgentPredictor'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    AIG = "ProductionAgentPredictor"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -133,58 +121,67 @@ class REG(DictClass):
 @Dataclass.mapping
 class PredictorParamslDefault:
     """Direct assignment → no global flow params."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = dict(params)
+    setup = dict(params)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """       
-    
+    """
+
     @FREG.register(REG.AIG)
     class AgentPredictorFitter(FitParamsBase):
-        
-        config: dict|FitParamsCfg = FitParamsCfg(
-            predictors = None,
-            target     = None,
+
+        config: dict | FitParamsCfg = FitParamsCfg(
+            predictors=None,
+            target=None,
         )
 
-        def _build(self, params:FitParamsBase, config:dict) -> PredictorFitter:            
-            setup  = dict(params) | config
-            return PredictorFitter(**setup) 
+        def _build(self, params: FitParamsBase, config: dict) -> PredictorFitter:
+            setup = dict(params) | config
+            return PredictorFitter(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
     """Fitter params input design."""
+
     features: list
+
 
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """       
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
 
     def _init_dash(self, train_set: pDF, test_set: pDF) -> None:
         sync = DashBackground.set_background_sync(self)
         super()._init_dash(
-            train_set   = train_set, 
-            test_set    = test_set,
-            verbose     = False, 
-            build_dash_after_init = True,
-            build_at_background   = True,
-            with_background_sync  = sync
+            train_set=train_set,
+            test_set=test_set,
+            verbose=False,
+            build_dash_after_init=True,
+            build_at_background=True,
+            with_background_sync=sync,
         )
 
-    def fit(self, train_set:pDF, test_set:pDF): 
+    def fit(self, train_set: pDF, test_set: pDF):
         """
         Execute the champion agent fit.
 
@@ -202,13 +199,13 @@ class Fitter(FitterBase[FitParams]):
         -------
         self
         """
-        self.model.fit(train_set, features = self.params.features)
+        self.model.fit(train_set, features=self.params.features)
         self.result: FitResult = self.model.get_result()
-        self.stats:  FitStats  = self.model.get_stats()
+        self.stats: FitStats = self.model.get_stats()
         self._init_dash(train_set, test_set)
         return self
-            
-    def predict_proba(self, data:pDF) -> NDArray:
+
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities using the champion model.
 
@@ -221,10 +218,11 @@ class Fitter(FitterBase[FitParams]):
         -------
         NDArray
             2-D array of shape (n_samples, 2): [P(class=0), P(class=1)].
-        """           
-        return self.model.predict_proba(data)   
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬        
+        """
+        return self.model.predict_proba(data)
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -233,47 +231,50 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    features:   list
-    selected:   list
-    dropped:    list
-    raw:        list
+
+    features: list
+    selected: list
+    dropped: list
+    raw: list
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
-    
+
     ModelFitter = Fitter
 
-    def _fit_data(self, inputs:"AgentPredictorInput"): 
+    def _fit_data(self, inputs: "AgentPredictorInput"):
         return inputs.train_set, inputs.test_set
 
     def _set_cols(self):
-        res = self.fitter.result        
+        res = self.fitter.result
         return TransResCols(
-            features = [self.setup.target],
-            selected = res.features_selected,
-            dropped  = res.features_dropped,
-            raw      = RawFeatures(self.setup).get(res.features_selected)
+            features=[self.setup.target],
+            selected=res.features_selected,
+            dropped=res.features_dropped,
+            raw=RawFeatures(self.setup).get(res.features_selected),
         )
 
-    def transform(self, data:pDF) -> TransResData: 
+    def transform(self, data: pDF) -> TransResData:
         """Model meta-transform."""
         d = self.fitter.predict_proba(data[self.cols.selected])[:, 1]
-        return TransResData(
-            data = pDF(d, columns = self.cols.features, index = data.index)
-        )  
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return TransResData(data=pDF(d, columns=self.cols.features, index=data.index))
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -282,46 +283,49 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
+
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
     Transformer - Fitter before execution begins.
     """
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = FitParamsCfg
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = PredictorParamslDefault
 
-    ModelTransformer  = Transformer
+    ModelTransformer = Transformer
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"AgentPredictorInput"):
+    def get_choice(self, fx_choice: str, inputs: "AgentPredictorInput"):
         agents = self.get_model_dependecy(DEP1, is_req=False)
 
         defaults = self.Config(
-            predictors  = PredictorAdapter(agents),
-            target      = AigParam.di(inputs.target, self.setup.target)
-        )  
+            predictors=PredictorAdapter(agents),
+            target=AigParam.di(inputs.target, self.setup.target),
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)   
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-        
+        return RegGet.choice(fx_choice, fx_config)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def get_params(self, fx_choice: str, inputs: "AgentPredictorInput", features: list):
         schema = Dataclass.schema(FitParamsBase)
         choice = {schema.agent_choice: inputs.agent_choice}
         params: FitParamsBase = self.get_fit_params(fx_choice, inputs.fx_params, choice)
-        params_ = FitParams(features = features, **params)
+        params_ = FitParams(features=features, **params)
         return params_, self.setup
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def get_encoders(self) -> tuple[ModelBase, ModelBase]:
         cleaner = self.get_model_dependecy(DEP2)
         encoder = self.get_model_dependecy(DEP3, is_req=False)
         return cleaner, encoder
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -365,10 +369,12 @@ class AgentPredictorInput(ModelInput):
     starting from raw data). GBM agents accept raw features
     directly.
     """
+
     train_set: pDF
-    test_set:  pDF
-    features:  list = None
-    agent_choice: int|str = 1
+    test_set: pDF
+    features: list = None
+    agent_choice: int | str = 1
+
 
 @Dataclass.base
 class AgentPredictorResult(ModelResult):
@@ -408,11 +414,13 @@ class AgentPredictorResult(ModelResult):
     Together, they answer: "Why does this model use these
     features, and what did we decide to exclude?"
     """
-    data:         pDF
-    features:     list
-    selected:     list
-    dropped:      list
+
+    data: pDF
+    features: list
+    selected: list
+    dropped: list
     raw_features: list
+
 
 @Dataclass.base
 class AgentPredictorResultDual(AgentPredictorResult):
@@ -427,7 +435,7 @@ class AgentPredictorResultDual(AgentPredictorResult):
     ----------
     data : pDF
         Prediction data — a single-column DataFrame of
-        P(class=1) probabilities, indexed identically to the    
+        P(class=1) probabilities, indexed identically to the
         input data.
     test_data : pDF
         Prediction data for the test/OOT set (same structure
@@ -442,7 +450,7 @@ class AgentPredictorResultDual(AgentPredictorResult):
     raw_features : list
         Original (pre-WOE) feature names — the business-facing
         identifiers. Use this for reporting and documentation.
-        
+
     Use Case
     --------
     Before deploying to production, run `transform_dual`
@@ -453,10 +461,14 @@ class AgentPredictorResultDual(AgentPredictorResult):
     3. The feature mappings and encoder states produce
        consistent results across both data sources.
     """
+
     test_data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class AgentPredictor(Processor, ModelBaseDual):   
+
+class AgentPredictor(Processor, ModelBaseDual):
     """
     Champion Agent — The Production Deployment Artifact.
 
@@ -533,38 +545,40 @@ class AgentPredictor(Processor, ModelBaseDual):
     >>> result.selected      # ['tenure_WOE', 'revenue_WOE']
     >>> result.raw_features  # ['tenure', 'revenue']
     """
+
     _encoders = None
 
     def _save(self, save_path) -> None:
-        features = {
-            'features': self.cols.features,
-            'selected': self.cols.selected
-        }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)
+        features = {"features": self.cols.features, "selected": self.cols.selected}
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _get_agents_adapter(self):
         agents = self.get_model_dependecy(DEP1, is_req=False)
         return PredictorAdapter(agents)
 
-    def _set_agent_type(self, agent_choice: int|str, encoder: ModelBase|None) -> None:
+    def _set_agent_type(
+        self, agent_choice: int | str, encoder: ModelBase | None
+    ) -> None:
         agents = self._get_agents_adapter()
         self.is_gbm = agents.is_gbm(agent_choice)
 
         if self.is_gbm or encoder is not None:
             return
         raise ValueError(
-            'AIG SAFETY ► GLM Agents are WOE based - WoeEncoder must be fitted prior.'
-        )   
-    
+            "AIG SAFETY ► GLM Agents are WOE based - WoeEncoder must be fitted prior."
+        )
+
     def _get_features(self, inputs: AgentPredictorInput) -> list:
         if inputs.features:
             return inputs.features
         agents = self._get_agents_adapter()
-        agent  = agents.get_agent(inputs.agent_choice)
-        return agent.features.selected       
+        agent = agents.get_agent(inputs.agent_choice)
+        return agent.features.selected
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def fit(self, inputs: AgentPredictorInput, fx_choice: str = REG.AIG):
         """
         Freeze and package the champion agent for production.
@@ -592,27 +606,23 @@ class AgentPredictor(Processor, ModelBaseDual):
             If `train_set` is empty or `features` is empty.
         """
         features = self._get_features(inputs)
-        verify = (
-            len(inputs.train_set) and len(features)
-        )
-        
+        verify = len(inputs.train_set) and len(features)
+
         self._encoders = self.get_encoders()
         self._set_agent_type(inputs.agent_choice, self._encoders[1])
-        
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, features)
 
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-                
-    def transform(self, data:pDF) -> AgentPredictorResult:
+
+    def transform(self, data: pDF) -> AgentPredictorResult:
         """
         Execute production inference: ML-ready data → probabilities.
 
@@ -636,15 +646,16 @@ class AgentPredictor(Processor, ModelBaseDual):
         ValueError
             If any required feature is missing from the input.
         """
-        vars_miss = [x for x in self.cols.selected if (x not in data.columns)]   
-        df = self.processor.transform(data, verify = vars_miss)
+        vars_miss = [x for x in self.cols.selected if (x not in data.columns)]
+        df = self.processor.transform(data, verify=vars_miss)
         return AgentPredictorResult(
-            data         = df.data, 
-            features     = self.cols.features,
-            selected     = self.cols.selected,
-            dropped      = self.cols.dropped,
-            raw_features = self.cols.raw
-        )  
+            data=df.data,
+            features=self.cols.features,
+            selected=self.cols.selected,
+            dropped=self.cols.dropped,
+            raw_features=self.cols.raw,
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def transform_dual(self, inputs: AgentPredictorInput) -> AgentPredictorResultDual:
@@ -672,19 +683,20 @@ class AgentPredictor(Processor, ModelBaseDual):
         df = self.processor.transform(inputs.train_set)
         dt = self.processor.transform(inputs.test_set)
         return AgentPredictorResultDual(
-            data         = df.data, 
-            test_data    = dt.data,
-            features     = self.cols.features,
-            selected     = self.cols.selected,
-            dropped      = self.cols.dropped,
-            raw_features = self.cols.raw            
+            data=df.data,
+            test_data=dt.data,
+            features=self.cols.features,
+            selected=self.cols.selected,
+            dropped=self.cols.dropped,
+            raw_features=self.cols.raw,
         )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def score(self, data: pDF) -> pDF:
         """
         One-call production inference: raw data → P(class=1) scores.
-        
+
         Equals to:
         >>> d = self.preprocess(data)
         ... return self.transform(d).data
@@ -731,12 +743,12 @@ class AgentPredictor(Processor, ModelBaseDual):
             model expects. Ready for `transform`.
         """
         cleaner, woe_encoder = self.encoders
-        data_ = cleaner.transform(data, subset = self.cols.raw).data
+        data_ = cleaner.transform(data, subset=self.cols.raw).data
         if self.is_gbm:
             return data_
         fes = RawFeatures.get_orig_fes(self.cols.selected)
-        return woe_encoder.transform(data_, subset = fes).data
-    
+        return woe_encoder.transform(data_, subset=fes).data
+
     @property
     def encoders(self):
         """
@@ -757,11 +769,12 @@ class AgentPredictor(Processor, ModelBaseDual):
         """
         if self._encoders is None:
             raise ValueError(
-                'AIG SAFETY ► Model must be fitted prior preprocessing / prediction.'
+                "AIG SAFETY ► Model must be fitted prior preprocessing / prediction."
             )
         return self._encoders
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -770,36 +783,39 @@ class AgentPredictor(Processor, ModelBaseDual):
 class AgentPredictorUI(ModelUIBase):
     """
     AIDflow Production Agent: The Deployment Artifact.
-    Model Wrapper to provide UI API for worker auto execution.        
-    
-    This is the final, promoted agent destined for production inference. 
-    Unlike the ensemble agents used during training, this class encapsulates 
-    the entire 'winning' logic—integrating its specific fitting strategy, 
-    associated preprocessing encoders, and feature mappings into a single, 
+    Model Wrapper to provide UI API for worker auto execution.
+
+    This is the final, promoted agent destined for production inference.
+    Unlike the ensemble agents used during training, this class encapsulates
+    the entire 'winning' logic—integrating its specific fitting strategy,
+    associated preprocessing encoders, and feature mappings into a single,
     deployable unit.
 
     Strategic Role:
-    - Inference Encapsulation: Acts as the sole interface for production scoring, 
+    - Inference Encapsulation: Acts as the sole interface for production scoring,
       removing all ensemble complexity to provide a lean, high-performance API.
-    - End-to-End Lineage: Bridges the gap between raw input data and final 
+    - End-to-End Lineage: Bridges the gap between raw input data and final
       probability scores by internalizing the preprocessing pipeline.
-    - Governance & Audit: Maintains an immutable record of selected features 
-      and encoder states, ensuring that production predictions are perfectly 
-      reproducible and compliant with model governance standards. 
+    - Governance & Audit: Maintains an immutable record of selected features
+      and encoder states, ensuring that production predictions are perfectly
+      reproducible and compliant with model governance standards.
     """
 
-    Model  = AgentPredictor
+    Model = AgentPredictor
     Option = False
 
     @wraps(AgentPredictor.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(), **kwargs)  
-    
+        self.model_ui.fit(*args, ui_params=self._get_ui_fit_defaults(), **kwargs)
+
     @wraps(AgentPredictor.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> AgentPredictorResult: return self.model_ui.fitted
+    def fitted(self) -> AgentPredictorResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

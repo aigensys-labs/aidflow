@@ -19,44 +19,32 @@ phase must be completed before the next can execute:
 Execution Modes
 ---------------
 - **Full flow**: `ctx.flow.process('all')` - runs all phases in order.
-- **Single phase**: `ctx.flow.process('training')` - runs one phase 
+- **Single phase**: `ctx.flow.process('training')` - runs one phase
   (verifies all prior phases are complete).
-- **Single worker**: `ctx.flow.training.agent2_predictor()` 
+- **Single worker**: `ctx.flow.training.agent2_predictor()`
   - runs one specific step.
 
 All execution runs within the context scope defined by
 `ProjectContext` (setup parameters, project paths, state).
 """
 
-from ..deps.types           import Literal
-from ..deps.data            import pDF
+from ..deps.types import Literal
+from ..deps.data import pDF
 
-from ..core.structure       import (
-                                   REG, 
-                                   AIGFLOW
-                                   )
-from ..core.factory         import (
-                                   Dataclass, 
-                                   DictClass
-                                   )
-from ..core.foundation      import (
-                                   AigParam, 
-                                   AigStop
-                                   )
-from ..core.base.worker     import WorkerBase
-from ..core.protocol        import ProjectContextProtocol
-from ..core.accessor        import Format
+from ..core.structure import REG, AIGFLOW
+from ..core.factory import Dataclass, DictClass
+from ..core.foundation import AigParam, AigStop
+from ..core.base.worker import WorkerBase
+from ..core.protocol import ProjectContextProtocol
+from ..core.accessor import Format
 
-from ..data.interface       import (
-                                   DataPhase, 
-                                   DataLoaderInput
-                                   )
-from ..data.interface       import EncodingPhase   
-from ..learner.interface    import TrainingPhase
-from ..selector.interface   import SelectionPhase
+from ..data.interface import DataPhase, DataLoaderInput
+from ..data.interface import EncodingPhase
+from ..learner.interface import TrainingPhase
+from ..selector.interface import SelectionPhase
 
-from ..display.rgb          import RgbANSI
-from ..display.verbosity    import Verbosity
+from ..display.rgb import RgbANSI
+from ..display.verbosity import Verbosity
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -175,17 +163,18 @@ class ExecutionContext:
     agent_selector = ctx.flow.selection.agent_selector()
     ```
     """
-        
+
     def __init__(self, ctx: ProjectContextProtocol):
-        self.data       = DataPhase(ctx)
-        self.encoding   = EncodingPhase(ctx)
-        self.training   = TrainingPhase(ctx)
-        self.selection  = SelectionPhase(ctx)
+        self.data = DataPhase(ctx)
+        self.encoding = EncodingPhase(ctx)
+        self.training = TrainingPhase(ctx)
+        self.selection = SelectionPhase(ctx)
 
         self._processor = ExecutionProcessor(self, ctx.setup.verbose)
-    
+
     def __repr__(self):
         return ExecutionRepr.repr()
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def get_worker(self, model: str) -> WorkerBase:
@@ -201,14 +190,16 @@ class ExecutionContext:
         -------
         WorkerBase
             Instance of a Worker under actual context state.
-        """        
+        """
         return self._processor.get_worker(model)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def process(self, 
-        phase: Literal['all', 'data', 'encoding', 'training', 'selection'] = 'all',
+    def process(
+        self,
+        phase: Literal["all", "data", "encoding", "training", "selection"] = "all",
         data: pDF | None = None,
-        verbose: bool | Verbosity | None = None
+        verbose: bool | Verbosity | None = None,
     ) -> None:
         """
         Executes workers for the chosen phase within the defined context scope.
@@ -219,7 +210,7 @@ class ExecutionContext:
             Process workers by the chosen phase or run the whole flow by 'all'.
 
         data: pDF | None = None
-            Applicable only for phase `'all' or 'data'`.            
+            Applicable only for phase `'all' or 'data'`.
             Sideload data already present in memory. When provided,
             the import step (input_source / input_data) is bypassed
             entirely — the data is used as-is for downstream processing.
@@ -233,7 +224,10 @@ class ExecutionContext:
     def help() -> None:
         """Displays help description of the Execution Context."""
         ExecutionRepr.repr()
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ExecutionProcessor:
     """
@@ -244,59 +238,60 @@ class ExecutionProcessor:
     """
 
     MAP: dict[str, DictClass] = {
-        'data'           : AIGFLOW.Data,
-        'encoding'       : AIGFLOW.Encoding,
-        'training'       : AIGFLOW.Training,
-        'selection'      : AIGFLOW.Selection,
+        "data": AIGFLOW.Data,
+        "encoding": AIGFLOW.Encoding,
+        "training": AIGFLOW.Training,
+        "selection": AIGFLOW.Selection,
     }
 
-    def __init__(self, 
-        execution: ExecutionContext, 
-        verbose: bool|int|Verbosity = None
+    def __init__(
+        self, execution: ExecutionContext, verbose: bool | int | Verbosity = None
     ):
         self._set_domain(execution)
         self._verbose = verbose
-        
+
         schema = Dataclass.schema(DataLoaderInput)
         self._direct_data = schema.direct_data
 
     def _set_domain(self, exe: ExecutionContext) -> None:
-        self.domain = {
-            w: exe.data for w in AIGFLOW.Data.values()
-        } | {
-            w: exe.encoding for w in AIGFLOW.Encoding.values()
-        } | {
-            w: exe.training for w in AIGFLOW.Training.values()
-        } | {
-            w: exe.selection for w in AIGFLOW.Selection.values()
-        }
+        self.domain = (
+            {w: exe.data for w in AIGFLOW.Data.values()}
+            | {w: exe.encoding for w in AIGFLOW.Encoding.values()}
+            | {w: exe.training for w in AIGFLOW.Training.values()}
+            | {w: exe.selection for w in AIGFLOW.Selection.values()}
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_worker(self, model:str) -> WorkerBase:
+    def get_worker(self, model: str) -> WorkerBase:
         """Returns instance of a Worker from any phase."""
         domain = self.domain[model]
         return getattr(domain, model, None)
 
-    def process(self, 
-        phase: Literal['all', 'data', 'encoding', 'training', 'selection'] = 'all',
+    def process(
+        self,
+        phase: Literal["all", "data", "encoding", "training", "selection"] = "all",
         data: pDF | None = None,
-        verbose: bool | Verbosity | None = None
+        verbose: bool | Verbosity | None = None,
     ) -> None:
         """Executes workers for the chosen phase within the defined context scope."""
-        if phase != 'all':
+        if phase != "all":
             self._verify(phase)
             self._process(self.MAP[phase], data, verbose)
             return
-        
+
         for workers in self.MAP.values():
             self._process(workers, data, verbose)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
     def _excluded() -> list:
         return [AIGFLOW.Selection.champion_agent]
-    
-    def _process(self, workers: dict, data: pDF | None, verbose: bool | Verbosity) -> None:
+
+    def _process(
+        self, workers: dict, data: pDF | None, verbose: bool | Verbosity
+    ) -> None:
         excluded = self._excluded()
         for w in workers.values():
             if w in excluded:
@@ -304,31 +299,32 @@ class ExecutionProcessor:
             worker = self.get_worker(w)
             verbose = AigParam.di(verbose, self._verbose)
             ExecutionRepr.header(worker, verbose)
-            worker(verbose = verbose, **self._data(w, data))
+            worker(verbose=verbose, **self._data(w, data))
 
-    def _data(self, w: str, data:pDF|None) -> dict:
+    def _data(self, w: str, data: pDF | None) -> dict:
         if data is None or w != AIGFLOW.Data.loader:
             return {}
         return {self._direct_data: data}
 
-    def _get_models(self, phase:str) -> tuple:
+    def _get_models(self, phase: str) -> tuple:
         return self.MAP[phase].values()
-    
+
     def _sum_fitted(self, phase: str) -> int:
         return sum(
-            self.get_worker(model).is_fitted 
-            for model in self._get_models(phase)
+            self.get_worker(model).is_fitted for model in self._get_models(phase)
         )
 
     def _is_valid_training(self, phase: str) -> bool:
-        if phase != 'training':
+        if phase != "training":
             return False
         return self._sum_fitted(phase) > 0
-          
+
     def _verify(self, phase: str) -> None:
         phases = list(self.MAP)
         if phase not in phases:
-            raise self._raise(f'Invalid phase choice, available options ► {', '.join(phases)}')
+            raise self._raise(
+                f"Invalid phase choice, available options ► {', '.join(phases)}"
+            )
         r = phases.index(phase)
         for i in range(r):
             phase = phases[i]
@@ -337,15 +333,20 @@ class ExecutionProcessor:
             if self._sum_fitted(phase) == len(self._get_models(phase)):
                 continue
             raise self._raise(
-                'Pipeline steps are sequence-dependent → e.g., the "encoding" ' 
+                'Pipeline steps are sequence-dependent → e.g., the "encoding" '
                 'phase cannot be executed prior to the "data" phase'
             )
 
     @staticmethod
-    def _raise(msg:str) -> None:
-        AigStop.custom(RgbANSI.bold_red('AIG SAFETY')+f' ► {msg}', bold=False, red=False)                
+    def _raise(msg: str) -> None:
+        AigStop.custom(
+            RgbANSI.bold_red("AIG SAFETY") + f" ► {msg}", bold=False, red=False
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-                
+
+
 class ExecutionRepr:
     """Display formatting for execution context representation."""
 
@@ -360,36 +361,38 @@ class ExecutionRepr:
             if model != AIGFLOW.Data.loader:
                 print()
             Format.title(
-                title = f'{heads[model]} phase'.upper(), 
-                style = Format.StyleTitle(margin_t=0, margin_b=0)
+                title=f"{heads[model]} phase".upper(),
+                style=Format.StyleTitle(margin_t=0, margin_b=0),
             )
 
     @classmethod
     def repr(cls) -> str:
         """Generate the full pipeline execution overview."""
-        flow = ['AIDFlow Pipeline Execution Order:']
+        flow = ["AIDFlow Pipeline Execution Order:"]
         s = 0
         for i, (phase, steps) in enumerate(AIGFLOW.items(), start=1):
             if phase not in REG:
                 continue
-            flow.append( RgbANSI.bold(f'\n{i}. {phase.lower()}') )
-            flow.append('─'*20)
+            flow.append(RgbANSI.bold(f"\n{i}. {phase.lower()}"))
+            flow.append("─" * 20)
             for step in steps.values():
-                flow.append(f'{s}. {step}')
-                s+=1
-        return cls._desc(False) + '\n\n' + '\n'.join(flow)
+                flow.append(f"{s}. {step}")
+                s += 1
+        return cls._desc(False) + "\n\n" + "\n".join(flow)
 
     @classmethod
-    def _desc(cls, show=True) -> str|None:
+    def _desc(cls, show=True) -> str | None:
         h = (
             f'► Automated execution of all pipeline steps or a selected phase via {RgbANSI.bold(".process()")}'
-            '\n► Execution runs under a defined context scope (ctx.setup) → provided by ProjectContext'
-            '\n► Run individual workers via ctx.flow.{phase}.{worker_name} or ctx.workers.{worker_name}'
+            "\n► Execution runs under a defined context scope (ctx.setup) → provided by ProjectContext"
+            "\n► Run individual workers via ctx.flow.{phase}.{worker_name} or ctx.workers.{worker_name}"
             f'\n► Use {RgbANSI.bold("ctx.flow.process(phase='all', verbose=False)")} to run the full pipeline, or run phases in sequence:'
             "\n  1. 'data' → 2. 'encoding' → 3. 'training' → 4. 'selection'"
-            '\n► Pipeline steps are sequence-dependent → e.g., encoding phase cannot be executed prior to data phase'
+            "\n► Pipeline steps are sequence-dependent → e.g., encoding phase cannot be executed prior to data phase"
         )
         if not show:
             return h
-        print(h)    
+        print(h)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

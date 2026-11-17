@@ -1,85 +1,78 @@
 """
 Domain Interface and Phase Orchestration Layer.
 
-This module serves as the primary API surface for end-users, providing a 
-semantic interface to the underlying AIDflow worker ecosystem. It transforms 
-the generic execution capabilities of the `core/worker` layer into domain-specific 
-pipeline phases (e.g., DataPhase, EncodingPhase), allowing users to interact 
-with the ML pipeline using meaningful business logic rather than technical 
+This module serves as the primary API surface for end-users, providing a
+semantic interface to the underlying AIDflow worker ecosystem. It transforms
+the generic execution capabilities of the `core/worker` layer into domain-specific
+pipeline phases (e.g., DataPhase, EncodingPhase), allowing users to interact
+with the ML pipeline using meaningful business logic rather than technical
 configurations.
 
 Key architectural roles provided by this module:
-1. Worker Registration: Acts as the local namespace where specific model implementations 
-are mapped to unique worker identifiers (e.g., `AIGFLOW.Data.data_loader`), enabling 
+1. Worker Registration: Acts as the local namespace where specific model implementations
+are mapped to unique worker identifiers (e.g., `AIGFLOW.Data.data_loader`), enabling
 a pluggable and extensible set of tools for each pipeline phase.
 
-2. State Lineage Management: Explicitly manages the flow of data between workers 
-   by defining how results from one step (e.g., `train.raw`) are linked as inputs 
+2. State Lineage Management: Explicitly manages the flow of data between workers
+   by defining how results from one step (e.g., `train.raw`) are linked as inputs
    to the next (e.g., `train.clean`), ensuring a strict and traceable data lineage.
-   
-3. Input/Output Schema Enforcement: Integrates specific Input and Result dataclasses 
-   for every worker, providing the user with IDE-assisted type hinting and 
+
+3. Input/Output Schema Enforcement: Integrates specific Input and Result dataclasses
+   for every worker, providing the user with IDE-assisted type hinting and
    guaranteeing that every pipeline step adheres to its required data contract.
 """
 
-from ..core.parameters          import  (
-                                        PRM, 
-                                        AIGFLOW
-                                        )
-from ..core.base.worker         import  (
-                                        WorkerConfig,
-                                        WorkerContract,
-                                        DatasetBinding,
-                                        WorkerBase,
-                                        WorkerPhaseBase,
-                                        )
-from ..core.factory             import  Dataclass
-from ..core.protocol            import  ProjectContextProtocol
+from ..core.parameters import PRM, AIGFLOW
+from ..core.base.worker import (
+    WorkerConfig,
+    WorkerContract,
+    DatasetBinding,
+    WorkerBase,
+    WorkerPhaseBase,
+)
+from ..core.factory import Dataclass
+from ..core.protocol import ProjectContextProtocol
 
-from .load                      import  (
-                                        DataLoaderInput, 
-                                        DataLoaderResult,
-                                        DataLoaderUI
-                                        )
-from .screen                    import  (
-                                        FeCleanerInput,
-                                        FeCleanerResultDual,
-                                        FeatureCleanerUI,
-                                        FeStabilizerInput,
-                                        FeStabilizerResult,
-                                        FeatureStabilizerUI,
-                                        ObsStabilizerInput,
-                                        ObsStabilizerResult,
-                                        ObservationStabilizerUI
-                                        )
-from .encode                    import  (
-                                        NumEncoderInput,
-                                        NumEncoderResult,
-                                        NumEncoderUI, 
-                                        CatEncoderInput,
-                                        CatEncoderResult,
-                                        CatEncoderUI,
-                                        IxnEncoderInput,
-                                        IxnEncoderResult,
-                                        IxnEncoderUI,
-                                        WoeEncoderEnvelopeCfg,
-                                        WoeEncoderEnvelope,
-                                        WoeEncoderInput,
-                                        WoeEncoderResult,
-                                        WoeEncoderUI,
-                                        WoeStabilizerEnvelopeCfg,
-                                        WoeStabilizerEnvelope,
-                                        WoeStabilizerInput,
-                                        WoeStabilizerResult,
-                                        WoeStabilizerUI
-                                        )
-from .transform                 import  (
-                                        DataEncoderEnvelopeCfg,
-                                        DataEncoderEnvelope,
-                                        DataEncoderInput, 
-                                        DataEncoderResult,
-                                        DataEncoder
-                                        )
+from .load import DataLoaderInput, DataLoaderResult, DataLoaderUI
+from .screen import (
+    FeCleanerInput,
+    FeCleanerResultDual,
+    FeatureCleanerUI,
+    FeStabilizerInput,
+    FeStabilizerResult,
+    FeatureStabilizerUI,
+    ObsStabilizerInput,
+    ObsStabilizerResult,
+    ObservationStabilizerUI,
+)
+from .encode import (
+    NumEncoderInput,
+    NumEncoderResult,
+    NumEncoderUI,
+    CatEncoderInput,
+    CatEncoderResult,
+    CatEncoderUI,
+    IxnEncoderInput,
+    IxnEncoderResult,
+    IxnEncoderUI,
+    WoeEncoderEnvelopeCfg,
+    WoeEncoderEnvelope,
+    WoeEncoderInput,
+    WoeEncoderResult,
+    WoeEncoderUI,
+    WoeStabilizerEnvelopeCfg,
+    WoeStabilizerEnvelope,
+    WoeStabilizerInput,
+    WoeStabilizerResult,
+    WoeStabilizerUI,
+)
+from .transform import (
+    DataEncoderEnvelopeCfg,
+    DataEncoderEnvelope,
+    DataEncoderInput,
+    DataEncoderResult,
+    DataEncoder,
+)
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -230,26 +223,32 @@ class DataLoaderWorker(WorkerBase[DataLoaderResult]):
     data_loader = ctx.workers.data_loader(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Data.loader,
-        Model   = DataLoaderUI,
-        Input   = DataLoaderInput,
-        Result  = DataLoaderResult,
-        title   = 'DATA LOAD'
+        model=AIGFLOW.Data.loader,
+        Model=DataLoaderUI,
+        Input=DataLoaderInput,
+        Result=DataLoaderResult,
+        title="DATA LOAD",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-            defaults = DataLoaderInput(),
-            datasets = DatasetBinding(fitted = {
-                'input'       : self._result.input_data, 
-                'dtypes.raw'  : self._result.dtypes,     
-                'train.raw'   : self._result.train_data, 
-                'test.raw'    : self._result.test_data, 
-                'stats.raw'   : self._processor.stats
-            })
-        )   
+            defaults=DataLoaderInput(),
+            datasets=DatasetBinding(
+                fitted={
+                    "input": self._result.input_data,
+                    "dtypes.raw": self._result.dtypes,
+                    "train.raw": self._result.train_data,
+                    "test.raw": self._result.test_data,
+                    "stats.raw": self._processor.stats,
+                }
+            ),
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureCleanerWorker(WorkerBase[FeCleanerResultDual]):
     """
@@ -406,40 +405,41 @@ class FeatureCleanerWorker(WorkerBase[FeCleanerResultDual]):
     fe_cleaner = ctx.workers.fe_cleaner(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Data.fe_cleaner,
-        Model   = FeatureCleanerUI,
-        Input   = FeCleanerInput,
-        Result  = FeCleanerResultDual,
-        offload = AIGFLOW.Data.loader,
-        title   = 'DATA QUALITY'        
+        model=AIGFLOW.Data.fe_cleaner,
+        Model=FeatureCleanerUI,
+        Input=FeCleanerInput,
+        Result=FeCleanerResultDual,
+        offload=AIGFLOW.Data.loader,
+        title="DATA QUALITY",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = FeCleanerInput(
-                train_set = self.sets.get('train.raw'),
-                test_set  = self.sets.get('test.raw'),
-                dtypes    = self.sets.get('dtypes.raw'),
+            defaults=FeCleanerInput(
+                train_set=self.sets.get("train.raw"),
+                test_set=self.sets.get("test.raw"),
+                dtypes=self.sets.get("dtypes.raw"),
             ),
-
-            datasets = DatasetBinding(
-                fitted = {
-                    'train.clean'           : self._result.data,
-                    'dtypes.clean'          : self._result.dtypes,
-                    'dtypes.dropped'        : self._result.dropped,
-                    'features.all.clean'    : self._result.features,
-                    'features.num.clean'    : self._result.num_features,
-                    'features.cat.clean'    : self._result.cat_features,
-                    'stats.clean'           : self._processor.stats
+            datasets=DatasetBinding(
+                fitted={
+                    "train.clean": self._result.data,
+                    "dtypes.clean": self._result.dtypes,
+                    "dtypes.dropped": self._result.dropped,
+                    "features.all.clean": self._result.features,
+                    "features.num.clean": self._result.num_features,
+                    "features.cat.clean": self._result.cat_features,
+                    "stats.clean": self._processor.stats,
                 },
-                direct = {'test.clean' : self._processor.model_result.data}
+                direct={"test.clean": self._processor.model_result.data},
             ),
-
-            verify = {'train': 'train.clean', 'test': 'test.clean'}
+            verify={"train": "train.clean", "test": "test.clean"},
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class FeatureStabilizerWorker(WorkerBase[FeStabilizerResult]):
     """
@@ -595,40 +595,51 @@ class FeatureStabilizerWorker(WorkerBase[FeStabilizerResult]):
     fe_stabilizer = ctx.workers.fe_stabilizer(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Data.fe_stabilizer,
-        Model   = FeatureStabilizerUI,
-        Input   = FeStabilizerInput,
-        Result  = FeStabilizerResult,
-        title   = 'TEMPORAL STABILITY'
+        model=AIGFLOW.Data.fe_stabilizer,
+        Model=FeatureStabilizerUI,
+        Input=FeStabilizerInput,
+        Result=FeStabilizerResult,
+        title="TEMPORAL STABILITY",
     )
 
     def _get_contract(self, is_default: bool = True):
         source = Dataclass.schema(FeCleanerResultDual)
         return WorkerContract(
-
-            defaults = FeStabilizerInput(
-                train_set    = self.sets.get('train.clean'),
-                test_set     = self.sets.get('test.clean'),
-                num_features = self.sets.get('features.num.clean'),
-                cat_features = self.sets.get('features.cat.clean'),
+            defaults=FeStabilizerInput(
+                train_set=self.sets.get("train.clean"),
+                test_set=self.sets.get("test.clean"),
+                num_features=self.sets.get("features.num.clean"),
+                cat_features=self.sets.get("features.cat.clean"),
             ),
-
-            datasets = DatasetBinding(
-                fitted = {
-                    'features.all.stable.dist'           : self._result.features,
-                    'features.all.dropped.stable.dist'   : self._result.dropped,
-                    'features.num.stable.dist'           : self._result.num_features,
-                    'features.cat.stable.dist'           : self._result.cat_features,
-                    'stats.stable.features'              : self._processor.stats
+            datasets=DatasetBinding(
+                fitted={
+                    "features.all.stable.dist": self._result.features,
+                    "features.all.dropped.stable.dist": self._result.dropped,
+                    "features.num.stable.dist": self._result.num_features,
+                    "features.cat.stable.dist": self._result.cat_features,
+                    "stats.stable.features": self._processor.stats,
                 },
-                subset = (AIGFLOW.Data.fe_cleaner, {
-                    'features.num.dropped.stable.dist' : [source.num_features, self._result.dropped],
-                    'features.cat.dropped.stable.dist' : [source.cat_features, self._result.dropped],
-                })
-            )
+                subset=(
+                    AIGFLOW.Data.fe_cleaner,
+                    {
+                        "features.num.dropped.stable.dist": [
+                            source.num_features,
+                            self._result.dropped,
+                        ],
+                        "features.cat.dropped.stable.dist": [
+                            source.cat_features,
+                            self._result.dropped,
+                        ],
+                    },
+                ),
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class ObservationStabilizerWorker(WorkerBase[ObsStabilizerResult]):
     """
@@ -785,52 +796,58 @@ class ObservationStabilizerWorker(WorkerBase[ObsStabilizerResult]):
     obs_stabilizer = ctx.workers.obs_stabilizer(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Data.obs_stabilizer,
-        Model   = ObservationStabilizerUI,
-        Input   = ObsStabilizerInput,
-        Result  = ObsStabilizerResult,
-        offload = AIGFLOW.Data.fe_cleaner,
-        title   = 'OBSERVATION STABILITY'
+        model=AIGFLOW.Data.obs_stabilizer,
+        Model=ObservationStabilizerUI,
+        Input=ObsStabilizerInput,
+        Result=ObsStabilizerResult,
+        offload=AIGFLOW.Data.fe_cleaner,
+        title="OBSERVATION STABILITY",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = ObsStabilizerInput(
-                train_set    = self.sets.get('train.clean'),
-                num_features = self.sets.get('features.num.stable.dist'),
-                cat_features = self.sets.get('features.cat.stable.dist'),
+            defaults=ObsStabilizerInput(
+                train_set=self.sets.get("train.clean"),
+                num_features=self.sets.get("features.num.stable.dist"),
+                cat_features=self.sets.get("features.cat.stable.dist"),
             ),
-
-            datasets = DatasetBinding(fitted = {
-                'train.stable'              : self._result.data,
-                'stats.stable.observations' : self._processor.stats
-            }),
-
-            verify = 'train.stable'
+            datasets=DatasetBinding(
+                fitted={
+                    "train.stable": self._result.data,
+                    "stats.stable.observations": self._processor.stats,
+                }
+            ),
+            verify="train.stable",
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-        
+
+
 class DataPhase(WorkerPhaseBase):
     """
     AIG Flow Data Phase Orchestrator.
-    
-    The primary interface for the initial stage of the ML pipeline. It coordinates 
-    the flow from raw data ingestion through cleaning and stability screening, 
+
+    The primary interface for the initial stage of the ML pipeline. It coordinates
+    the flow from raw data ingestion through cleaning and stability screening,
     ensuring a traceable lineage of datasets (raw -> clean -> stable).
     """
 
-    def __init__(self, ctx: ProjectContextProtocol):    
+    def __init__(self, ctx: ProjectContextProtocol):
         super().__init__(ctx)
-        self._register((
-            DataLoaderWorker,
-            FeatureCleanerWorker,
-            FeatureStabilizerWorker,
-            ObservationStabilizerWorker,
-        ))
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        self._register(
+            (
+                DataLoaderWorker,
+                FeatureCleanerWorker,
+                FeatureStabilizerWorker,
+                ObservationStabilizerWorker,
+            )
+        )
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -999,33 +1016,37 @@ class NumEncoderWorker(WorkerBase[NumEncoderResult]):
     num_encoder = ctx.workers.num_encoder(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Encoding.num_encoder,
-        Model   = NumEncoderUI,
-        Input   = NumEncoderInput,
-        Result  = NumEncoderResult,
-        title   = 'NUMERICAL DISCRETIZATION'
+        model=AIGFLOW.Encoding.num_encoder,
+        Model=NumEncoderUI,
+        Input=NumEncoderInput,
+        Result=NumEncoderResult,
+        title="NUMERICAL DISCRETIZATION",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = NumEncoderInput(
-                train_set    = self.sets.get('train.stable'),
-                num_features = self.sets.get('features.num.stable.dist')
+            defaults=NumEncoderInput(
+                train_set=self.sets.get("train.stable"),
+                num_features=self.sets.get("features.num.stable.dist"),
             ),
-
-            datasets = DatasetBinding(fitted = {
-                'train.encoded.num'             : self._result.data,
-                'features.num.encoded'          : self._result.features,
-                'features.num.selected'         : self._result.selected,
-                'features.num.dropped.encoded'  : self._result.dropped,
-                'features.num.mapping'          : self._result.fe_map,
-                'encodings.num'                 : self._result.encoding,
-                'stats.encoded.num'             : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "train.encoded.num": self._result.data,
+                    "features.num.encoded": self._result.features,
+                    "features.num.selected": self._result.selected,
+                    "features.num.dropped.encoded": self._result.dropped,
+                    "features.num.mapping": self._result.fe_map,
+                    "encodings.num": self._result.encoding,
+                    "stats.encoded.num": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class CatEncoderWorker(WorkerBase[CatEncoderResult]):
     """
@@ -1188,33 +1209,37 @@ class CatEncoderWorker(WorkerBase[CatEncoderResult]):
     cat_encoder = ctx.workers.cat_encoder(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Encoding.cat_encoder,
-        Model   = CatEncoderUI,
-        Input   = CatEncoderInput,
-        Result  = CatEncoderResult,
-        title   = 'CATEGORICAL ENCODING'
+        model=AIGFLOW.Encoding.cat_encoder,
+        Model=CatEncoderUI,
+        Input=CatEncoderInput,
+        Result=CatEncoderResult,
+        title="CATEGORICAL ENCODING",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = CatEncoderInput(
-                train_set    = self.sets.get('train.stable'),
-                cat_features = self.sets.get('features.cat.stable.dist')
+            defaults=CatEncoderInput(
+                train_set=self.sets.get("train.stable"),
+                cat_features=self.sets.get("features.cat.stable.dist"),
             ),
-            
-            datasets = DatasetBinding(fitted = {
-                'train.encoded.cat'             : self._result.data,
-                'features.cat.encoded'          : self._result.features,
-                'features.cat.selected'         : self._result.selected,
-                'features.cat.dropped.encoded'  : self._result.dropped,
-                'features.cat.mapping'          : self._result.fe_map,
-                'encodings.cat'                 : self._result.encoding,
-                'stats.encoded.cat'             : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "train.encoded.cat": self._result.data,
+                    "features.cat.encoded": self._result.features,
+                    "features.cat.selected": self._result.selected,
+                    "features.cat.dropped.encoded": self._result.dropped,
+                    "features.cat.mapping": self._result.fe_map,
+                    "encodings.cat": self._result.encoding,
+                    "stats.encoded.cat": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class IxnEncoderWorker(WorkerBase[IxnEncoderResult]):
     """
@@ -1382,36 +1407,40 @@ class IxnEncoderWorker(WorkerBase[IxnEncoderResult]):
     ixn_encoder = ctx.workers.ixn_encoder(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Encoding.ixn_encoder,
-        choice  = PRM.ENCODE.ixn_strategy.param,
-        Model   = IxnEncoderUI,
-        Input   = IxnEncoderInput,
-        Result  = IxnEncoderResult,
-        title   = 'INTERACTIONS ENCODING'
+        model=AIGFLOW.Encoding.ixn_encoder,
+        choice=PRM.ENCODE.ixn_strategy.param,
+        Model=IxnEncoderUI,
+        Input=IxnEncoderInput,
+        Result=IxnEncoderResult,
+        title="INTERACTIONS ENCODING",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = IxnEncoderInput(
-                train_set    = self.sets.get('train.stable'),
-                num_features = self.sets.get('features.num.stable.dist'),
-                cat_features = self.sets.get('features.cat.stable.dist')
+            defaults=IxnEncoderInput(
+                train_set=self.sets.get("train.stable"),
+                num_features=self.sets.get("features.num.stable.dist"),
+                cat_features=self.sets.get("features.cat.stable.dist"),
             ),
-
-            datasets = DatasetBinding(fitted = {
-                'train.encoded.ixn'             : self._result.data,
-                'features.ixn.stable.dist'      : self._result.features,    # keeping access ergonomy
-                'features.ixn.encoded'          : self._result.features,
-                'features.ixn.selected'         : self._result.selected,
-                'features.ixn.dropped.encoded'  : self._result.dropped,
-                'features.ixn.mapping'          : self._result.fe_map,
-                'encodings.ixn'                 : self._result.encoding,
-                'stats.encoded.ixn'             : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "train.encoded.ixn": self._result.data,
+                    "features.ixn.stable.dist": self._result.features,  # keeping access ergonomy
+                    "features.ixn.encoded": self._result.features,
+                    "features.ixn.selected": self._result.selected,
+                    "features.ixn.dropped.encoded": self._result.dropped,
+                    "features.ixn.mapping": self._result.fe_map,
+                    "encodings.ixn": self._result.encoding,
+                    "stats.encoded.ixn": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class WoeEncoderWorker(WorkerBase[WoeEncoderResult]):
     """
@@ -1578,46 +1607,54 @@ class WoeEncoderWorker(WorkerBase[WoeEncoderResult]):
     woe_encoder = ctx.workers.woe_encoder(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Encoding.woe_encoder,
-        choice  = PRM.ENCODE.woe_strategy.param,
-        Model   = WoeEncoderUI,
-        Input   = WoeEncoderInput,
-        Result  = WoeEncoderResult,
-        offload = [
-            AIGFLOW.Encoding.num_encoder, 
-            AIGFLOW.Encoding.cat_encoder, 
-            AIGFLOW.Encoding.ixn_encoder
+        model=AIGFLOW.Encoding.woe_encoder,
+        choice=PRM.ENCODE.woe_strategy.param,
+        Model=WoeEncoderUI,
+        Input=WoeEncoderInput,
+        Result=WoeEncoderResult,
+        offload=[
+            AIGFLOW.Encoding.num_encoder,
+            AIGFLOW.Encoding.cat_encoder,
+            AIGFLOW.Encoding.ixn_encoder,
         ],
-        title   = 'WOE ENCODING'
+        title="WOE ENCODING",
     )
 
     def _get_contract(self, is_default: bool = True):
         return WorkerContract(
-
-            defaults = WoeEncoderEnvelope(
-                inputs = WoeEncoderInput(
-                    train_set    = self.sets.get('train.stable'),
-                    num_features = self.sets.get('features.num.encoded'),
-                    cat_features = self.sets.get('features.cat.encoded')
+            defaults=WoeEncoderEnvelope(
+                inputs=WoeEncoderInput(
+                    train_set=self.sets.get("train.stable"),
+                    num_features=self.sets.get("features.num.encoded"),
+                    cat_features=self.sets.get("features.cat.encoded"),
                 ),
-                config = WoeEncoderEnvelopeCfg(
-                    train_num = self.sets.get('train.encoded.num') if is_default else None,
-                    train_cat = self.sets.get('train.encoded.cat') if is_default else None
-                )
+                config=WoeEncoderEnvelopeCfg(
+                    train_num=(
+                        self.sets.get("train.encoded.num") if is_default else None
+                    ),
+                    train_cat=(
+                        self.sets.get("train.encoded.cat") if is_default else None
+                    ),
+                ),
             ),
-
-            datasets = DatasetBinding(fitted = {
-                'train.encoded.woe'             : self._result.data,
-                'features.woe.encoded'          : self._result.features,
-                'features.woe.selected'         : self._result.selected,
-                'features.woe.dropped.encoded'  : self._result.dropped,
-                'features.woe.mapping'          : self._result.fe_map,
-                'encodings.woe'                 : self._result.encoding,
-                'stats.encoded.woe.encoding'    : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "train.encoded.woe": self._result.data,
+                    "features.woe.encoded": self._result.features,
+                    "features.woe.selected": self._result.selected,
+                    "features.woe.dropped.encoded": self._result.dropped,
+                    "features.woe.mapping": self._result.fe_map,
+                    "encodings.woe": self._result.encoding,
+                    "stats.encoded.woe.encoding": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class WoeStabilizerWorker(WorkerBase[WoeStabilizerResult]):
     """
@@ -1790,54 +1827,88 @@ class WoeStabilizerWorker(WorkerBase[WoeStabilizerResult]):
     woe_stabilizer = ctx.workers.woe_stabilizer(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Encoding.woe_stabilizer,
-        Model   = WoeStabilizerUI,
-        Input   = WoeStabilizerInput,
-        Result  = WoeStabilizerResult,
-        offload = AIGFLOW.Encoding.woe_stabilizer,
-        title   = 'WOE STABILIZE'
+        model=AIGFLOW.Encoding.woe_stabilizer,
+        Model=WoeStabilizerUI,
+        Input=WoeStabilizerInput,
+        Result=WoeStabilizerResult,
+        offload=AIGFLOW.Encoding.woe_stabilizer,
+        title="WOE STABILIZE",
     )
 
     def _get_contract(self, is_default: bool = True):
         source1 = Dataclass.schema(FeStabilizerResult)
-        source2 = Dataclass.schema(IxnEncoderResult)        
+        source2 = Dataclass.schema(IxnEncoderResult)
         return WorkerContract(
-
-            defaults = WoeStabilizerEnvelope(
-                inputs = WoeStabilizerInput(
-                    train_set    = self.sets.get('train.stable'),
-                    test_set     = self.sets.get('test.clean'),
-                    woe_features = self.sets.get('features.woe.encoded')
+            defaults=WoeStabilizerEnvelope(
+                inputs=WoeStabilizerInput(
+                    train_set=self.sets.get("train.stable"),
+                    test_set=self.sets.get("test.clean"),
+                    woe_features=self.sets.get("features.woe.encoded"),
                 ),
-                config = WoeStabilizerEnvelopeCfg(
-                    train_woe = self.sets.get('train.encoded.woe') if is_default else None,
-                )
+                config=WoeStabilizerEnvelopeCfg(
+                    train_woe=(
+                        self.sets.get("train.encoded.woe") if is_default else None
+                    ),
+                ),
             ),
-
-            datasets = DatasetBinding(
-                fitted = {
-                    'features.woe.stable'           : self._result.features.woe,
-                    'features.woe.dropped.stable'   : self._result.dropped.woe,
-                    'stats.encoded.woe.stable'      : self._processor.stats,
+            datasets=DatasetBinding(
+                fitted={
+                    "features.woe.stable": self._result.features.woe,
+                    "features.woe.dropped.stable": self._result.dropped.woe,
+                    "stats.encoded.woe.stable": self._processor.stats,
                 },
-                subset = (
-                    (AIGFLOW.Data.fe_stabilizer, {
-                        'features.all.stable.target'         : [source1.features,     self._result.features.raw],
-                        'features.num.stable.target'         : [source1.num_features, self._result.features.raw],
-                        'features.cat.stable.target'         : [source1.cat_features, self._result.features.raw],
-                        'features.all.dropped.stable.target' : [source1.features,     self._result.dropped.raw],
-                        'features.num.dropped.stable.target' : [source1.num_features, self._result.dropped.raw],
-                        'features.cat.dropped.stable.target' : [source1.cat_features, self._result.dropped.raw],
-                    }),
-                    (AIGFLOW.Encoding.ixn_encoder, {
-                        'features.ixn.stable.target'         : [source2.features, self._result.features.raw],
-                        'features.ixn.dropped.stable.target' : [source2.features, self._result.dropped.raw],
-                    })                    
-                )
-            )
+                subset=(
+                    (
+                        AIGFLOW.Data.fe_stabilizer,
+                        {
+                            "features.all.stable.target": [
+                                source1.features,
+                                self._result.features.raw,
+                            ],
+                            "features.num.stable.target": [
+                                source1.num_features,
+                                self._result.features.raw,
+                            ],
+                            "features.cat.stable.target": [
+                                source1.cat_features,
+                                self._result.features.raw,
+                            ],
+                            "features.all.dropped.stable.target": [
+                                source1.features,
+                                self._result.dropped.raw,
+                            ],
+                            "features.num.dropped.stable.target": [
+                                source1.num_features,
+                                self._result.dropped.raw,
+                            ],
+                            "features.cat.dropped.stable.target": [
+                                source1.cat_features,
+                                self._result.dropped.raw,
+                            ],
+                        },
+                    ),
+                    (
+                        AIGFLOW.Encoding.ixn_encoder,
+                        {
+                            "features.ixn.stable.target": [
+                                source2.features,
+                                self._result.features.raw,
+                            ],
+                            "features.ixn.dropped.stable.target": [
+                                source2.features,
+                                self._result.dropped.raw,
+                            ],
+                        },
+                    ),
+                ),
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class DataEncoderWorker(WorkerBase[DataEncoderResult]):
     """
@@ -2021,62 +2092,76 @@ class DataEncoderWorker(WorkerBase[DataEncoderResult]):
     data_encoder = ctx.workers.data_encoder(fx_config = cfg)
     ```
     """
+
     config = WorkerConfig(
-        model   = AIGFLOW.Encoding.data_encoder,
-        Model   = DataEncoder,
-        Input   = DataEncoderInput,
-        Result  = DataEncoderResult,
-        offload = [
-            AIGFLOW.Data.fe_cleaner, 
+        model=AIGFLOW.Encoding.data_encoder,
+        Model=DataEncoder,
+        Input=DataEncoderInput,
+        Result=DataEncoderResult,
+        offload=[
+            AIGFLOW.Data.fe_cleaner,
             AIGFLOW.Data.obs_stabilizer,
-            AIGFLOW.Encoding.woe_encoder
+            AIGFLOW.Encoding.woe_encoder,
         ],
-        title   = 'DATA ENCODER'
+        title="DATA ENCODER",
     )
 
     def _get_contract(self, is_default: bool = True):
         is_woe = self._processor.is_fitted(AIGFLOW.Encoding.woe_encoder)
         is_wfe = self._processor.is_fitted(AIGFLOW.Encoding.woe_stabilizer)
         return WorkerContract(
-
-            defaults = DataEncoderEnvelope(
-                inputs = DataEncoderInput(
-                    train_set    = self.sets.get('train.stable'),
-                    test_set     = self.sets.get('test.clean'),
-                    woe_features = self.sets.get('features.woe.stable') if is_wfe else None
+            defaults=DataEncoderEnvelope(
+                inputs=DataEncoderInput(
+                    train_set=self.sets.get("train.stable"),
+                    test_set=self.sets.get("test.clean"),
+                    woe_features=(
+                        self.sets.get("features.woe.stable") if is_wfe else None
+                    ),
                 ),
-                config = DataEncoderEnvelopeCfg(
-                    train_woe = self.sets.get('train.encoded.woe') if is_default and is_woe else None
-                )
+                config=DataEncoderEnvelopeCfg(
+                    train_woe=(
+                        self.sets.get("train.encoded.woe")
+                        if is_default and is_woe
+                        else None
+                    )
+                ),
             ),
-
-            datasets = DatasetBinding(fitted = {
-                'train.ml'        : self._result.data,
-                'test.ml'         : self._result.test_set,
-                'dtypes.ml'       : self._result.dtypes,
-                'features.all.ml' : self._result.features,
-                'stats.ml'        : self._processor.stats
-            })
+            datasets=DatasetBinding(
+                fitted={
+                    "train.ml": self._result.data,
+                    "test.ml": self._result.test_set,
+                    "dtypes.ml": self._result.dtypes,
+                    "features.all.ml": self._result.features,
+                    "stats.ml": self._processor.stats,
+                }
+            ),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class EncodingPhase(WorkerPhaseBase):
     """
     AIG Flow Encoding Phase Orchestrator.
-    
-    Coordinates the conversion of stable features into ML-ready encoded variables. 
-    It maintains a strict dependency on the DataPhase output, ensuring that only 
+
+    Coordinates the conversion of stable features into ML-ready encoded variables.
+    It maintains a strict dependency on the DataPhase output, ensuring that only
     stabilized features are transformed.
     """
 
-    def __init__(self, ctx: ProjectContextProtocol):    
+    def __init__(self, ctx: ProjectContextProtocol):
         super().__init__(ctx)
-        self._register((
-            NumEncoderWorker,
-            CatEncoderWorker,
-            IxnEncoderWorker,
-            WoeEncoderWorker,
-            WoeStabilizerWorker,
-            DataEncoderWorker
-        ))
+        self._register(
+            (
+                NumEncoderWorker,
+                CatEncoderWorker,
+                IxnEncoderWorker,
+                WoeEncoderWorker,
+                WoeStabilizerWorker,
+                DataEncoderWorker,
+            )
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

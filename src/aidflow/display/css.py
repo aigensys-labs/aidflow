@@ -1,75 +1,87 @@
 """
 Visual Identity System and Dynamic Theme Engine for the AIDflow User Interface.
 
-This module implements the comprehensive styling engine used to render 
-AIDflow's interactive UI components. It utilizes a decoupled design pattern 
-where structural layout, component geometry, and thematic aesthetics are 
-managed as independent layers, allowing for real-time theme switching without 
+This module implements the comprehensive styling engine used to render
+AIDflow's interactive UI components. It utilizes a decoupled design pattern
+where structural layout, component geometry, and thematic aesthetics are
+managed as independent layers, allowing for real-time theme switching without
 compromising interface stability.
 
 Key visual architecture features:
-1. Dynamic Theme Engine: Supports multiple professional themes (Dark, Light, 
-   Metal, Pro) via a CSS variable system that maps semantic roles (e.g., `--accent`, 
+1. Dynamic Theme Engine: Supports multiple professional themes (Dark, Light,
+   Metal, Pro) via a CSS variable system that maps semantic roles (e.g., `--accent`,
    `--bg-panel`) to specific aesthetic palettes.
 
-2. High-Fidelity Components: Implements premium UI elements including 
-   interactive data tables with zebra-striping, holographic "shine" animations 
+2. High-Fidelity Components: Implements premium UI elements including
+   interactive data tables with zebra-striping, holographic "shine" animations
    on buttons, and neon-glow readouts for AI state monitoring.
 
-3. Responsive Layout Geometry: Enforces a standardized coordinate system 
-   for panels, sliders, and widgets to ensure consistent rendering across different 
+3. Responsive Layout Geometry: Enforces a standardized coordinate system
+   for panels, sliders, and widgets to ensure consistent rendering across different
    Notebook environments (JupyterLab, VS Code, Colab).
 
-4. Semantic Styling: Uses the `STYLE` and `TUNING` registries as a centralized 
-   ID map, ensuring that UI changes can be propagated globally without 
+4. Semantic Styling: Uses the `STYLE` and `TUNING` registries as a centralized
+   ID map, ensuring that UI changes can be propagated globally without
    modifying individual component implementations.
 """
 
-from ..deps.display     import  HTML, display
-from ..deps.data_view   import  CSS_IT
+from ..deps.display import HTML, display
+from ..deps.data_view import CSS_IT
 
-from ..core.factory     import  DictClass
-from ..core.config      import  THEME
+from ..core.factory import DictClass
+from ..core.config import THEME
 
 
 class CSS(DictClass):
     """AIG Flow Global CSS ID Access."""
-    STEP:   str = 'AIG-markdown-step'
-    LINE:   str = 'AIG-invisible-line'
-    PANEL:  str = 'AIG-panel-step'
-    TUNING: str = 'AIG-panel-tuning-choice'
-    BUTTON: str = 'AIG-confirm-button'
-    GRAPH:  str = 'AIG-graph-card'
-    TABLE:  str = CSS_IT
+
+    STEP: str = "AIG-markdown-step"
+    LINE: str = "AIG-invisible-line"
+    PANEL: str = "AIG-panel-step"
+    TUNING: str = "AIG-panel-tuning-choice"
+    BUTTON: str = "AIG-confirm-button"
+    GRAPH: str = "AIG-graph-card"
+    TABLE: str = CSS_IT
+
 
 class TUNING(DictClass):
     """AIG Tuning Choice - Global CSS ID Access."""
-    C = f'{CSS.TUNING}-container'
-    B = f'{CSS.TUNING}-button'
+
+    C = f"{CSS.TUNING}-container"
+    B = f"{CSS.TUNING}-button"
 
 
 class CssStyle:
     """Styling engine used to render AIDflow's interactive UI components."""
+
     ALL = CSS.list()
 
-    def __init__(self, theme:str):
+    def __init__(self, theme: str):
         self.theme = theme
-        self._css_fx = dict(zip(
-            self.ALL, 
-            [self.step, self.line, self.panel, self.tuning, self.button, self.graph, self.table]
-        ))
+        self._css_fx = dict(
+            zip(
+                self.ALL,
+                [
+                    self.step,
+                    self.line,
+                    self.panel,
+                    self.tuning,
+                    self.button,
+                    self.graph,
+                    self.table,
+                ],
+            )
+        )
 
     def ui(self) -> list[str]:
-        fx  = lambda x: self._css_fx[x](x)
+        fx = lambda x: self._css_fx[x](x)
         [fx(x) for x in self.ALL]
         return self.ALL
 
-    def step(self,
-        css_id: str = CSS.STEP,
-        padding:str = '15px',
-        radius: str = '12px'
+    def step(
+        self, css_id: str = CSS.STEP, padding: str = "15px", radius: str = "12px"
     ) -> None:
-        display(HTML(f'''
+        display(HTML(f"""
         <style>
         .{css_id}-logic {{
             background: rgba(186, 195, 204, 0.15); 
@@ -117,38 +129,44 @@ class CssStyle:
             border-radius: {radius};
         }}
         </style>
-        '''))
+        """))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def line(self,
+    def line(
+        self,
         css_id: str = CSS.LINE,
     ) -> None:
-        display(HTML(f'''
+        display(HTML(f"""
         <style>
         .{css_id} {{
             display: none !important;
         }}        
         </style>
-        '''))
+        """))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def panel(self, css_id = CSS.PANEL) -> None:
+    def panel(self, css_id=CSS.PANEL) -> None:
         panel = CssPanel(css_id, self.theme)
         self.panel_id = panel.get_css_id()
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def tuning(self, css_id = CSS.TUNING) -> None:
+    def tuning(self, css_id=CSS.TUNING) -> None:
         self._verify_panel()
-        CssTuningPanel(self.panel_id, css_id) 
+        CssTuningPanel(self.panel_id, css_id)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def button(self,
+    def button(
+        self,
         css_id: str = CSS.BUTTON,
-        cl_bg:  str = '#E1E1E1', 
-        cl_hv:  str = '#D0D0D0', 
-        cl_ac:  str = '#A8A8A8',
+        cl_bg: str = "#E1E1E1",
+        cl_hv: str = "#D0D0D0",
+        cl_ac: str = "#A8A8A8",
     ) -> None:
-        display(HTML(f'''                
+        display(HTML(f"""                
         <style>
         /* 1. Base State: Smooth, slightly rounded, ready for animation */
         .{css_id} {{
@@ -204,13 +222,14 @@ class CssStyle:
             outline: none !important; 
         }}                  
         </style>
-        '''))
+        """))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def graph(self, css_id = CSS.GRAPH) -> None:
+    def graph(self, css_id=CSS.GRAPH) -> None:
         """Graphs aligned with panel css design → prior panel css application dependency."""
         self._verify_panel()
-        display(HTML(f'''
+        display(HTML(f"""
         <style>
         .{self.panel_id}.{css_id} {{
             background: var(--bg-panel);
@@ -224,31 +243,35 @@ class CssStyle:
             transition: transform 0.3s ease;
         }}
         </style>
-        '''))        
+        """))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _verify_panel(self):
-        if not hasattr(self, 'panel_id'):
+        if not hasattr(self, "panel_id"):
             raise TypeError(
-                'AIG SAFETY ► Graph design is dependent on general panel design, '
-                'please define .panel() prior to graphs.'
-            )        
+                "AIG SAFETY ► Graph design is dependent on general panel design, "
+                "please define .panel() prior to graphs."
+            )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def table(self, css_id = CSS.TABLE) -> None:
+    def table(self, css_id=CSS.TABLE) -> None:
         CssData(css_id)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class CssData:
     """INTERACTIVE TABLES (itables / DataTables.net) STYLING."""
 
-    def __init__(self, css_id = CSS.TABLE):
+    def __init__(self, css_id=CSS.TABLE):
         self.css_id = css_id
 
         self.base_style()
 
     def base_style(self):
-        display(HTML(f'''
+        display(HTML(f"""
         <style>
         /* 1. Outer Container Wrap */
         .dt-container {{
@@ -320,11 +343,11 @@ class CssData:
             transition: background-color 0.1s ease-in-out;
         }}
         </style>
-        '''))
-    
+        """))
+
     def ui_controls(self):
         """UI CONTROLS (Search Bar, Page Selectors, Pagination Buttons)"""
-        display(HTML(f'''
+        display(HTML(f"""
         <style>                                
         /* Search boxes and Entries selectors dropdowns */
         .dt-search input, 
@@ -378,7 +401,8 @@ class CssData:
             border-color: #cbd5e1 !important;
         }}
         </style>
-        '''))
+        """))
+
 
 class CssTuningPanel:
     """
@@ -386,11 +410,8 @@ class CssTuningPanel:
     NOTE When consistency of panels requred, panel_id has to be same as CssPanel ID.
     """
 
-    def __init__(self, 
-        panel_id:   str = CSS.PANEL, 
-        css_fes_id: str = CSS.TUNING
-    ):
-        self.panel_id   = panel_id
+    def __init__(self, panel_id: str = CSS.PANEL, css_fes_id: str = CSS.TUNING):
+        self.panel_id = panel_id
         self.css_fes_id = css_fes_id
 
         self.choice_style()
@@ -402,7 +423,7 @@ class CssTuningPanel:
         """Final Tuning Choice Panel Style."""
         c = TUNING.C
         b = TUNING.B
-        display(HTML(f'''
+        display(HTML(f"""
         <style>    
         /* The Container: Aligned with panel width and spacing */
         .{self.panel_id} .{c} {{
@@ -446,37 +467,44 @@ class CssTuningPanel:
             transform: scale(0.98);
         }}
         </style>        
-        '''))        
+        """))
+
 
 class CssPanel:
 
-    def __init__(self, 
-        panel_id: str = CSS.PANEL, 
-        theme:    str = 'dark'
-    ):
+    def __init__(self, panel_id: str = CSS.PANEL, theme: str = "dark"):
         self.panel_id = panel_id
-        
+
         # 1. Inject the structural CSS first (Layout, Z-Index, Jupyter Fixes)
         self.base_style()
-        self.choice_style()        
+        self.choice_style()
 
         # 2. Inject only the colors and shadows for the selected theme
-        if theme == THEME.DARK    : self.dark_theme()
-        if theme == THEME.DARK2   : self.dark_theme()
-        if theme == THEME.LIGHT   : self.light_theme()
-        if theme == THEME.LIGHT2  : self.light_theme()
-        if theme == THEME.LIGHT3  : self.light_theme()
-        if theme == THEME.METAL   : self.metal_theme()
-        if theme == THEME.METAL2  : self.metal_theme()
-        if theme == THEME.PRO     : self.pro_theme()
-        if theme == THEME.PRO2    : self.pro_theme()
+        if theme == THEME.DARK:
+            self.dark_theme()
+        if theme == THEME.DARK2:
+            self.dark_theme()
+        if theme == THEME.LIGHT:
+            self.light_theme()
+        if theme == THEME.LIGHT2:
+            self.light_theme()
+        if theme == THEME.LIGHT3:
+            self.light_theme()
+        if theme == THEME.METAL:
+            self.metal_theme()
+        if theme == THEME.METAL2:
+            self.metal_theme()
+        if theme == THEME.PRO:
+            self.pro_theme()
+        if theme == THEME.PRO2:
+            self.pro_theme()
 
     def get_css_id(self):
         return self.panel_id
-    
+
     def base_style(self) -> None:
         """Contains all structural CSS, Z-index logic, and Jupyter overrides common to ALL themes."""
-        display(HTML(f'''            
+        display(HTML(f"""            
         <style>
         /* Main Panel Container */
         .{self.panel_id} {{
@@ -641,11 +669,11 @@ class CssPanel:
             min-width: 140px !important; 
         }}
         </style>
-        '''))  
+        """))
 
     def choice_style(self) -> None:
         """Checboxes and Radio buttons."""
-        display(HTML(f'''
+        display(HTML(f"""
         <style>                   
         /* 1. Base Reset for both */
         .{self.panel_id} input[type="checkbox"],
@@ -745,11 +773,11 @@ class CssPanel:
             pointer-events: none !important;
         }}        
         </style>        
-        '''))        
+        """))
 
     def light_theme(self) -> None:
         """Elevated Light Theme (Contrast + Depth + Premium Header)"""
-        display(HTML(f'''            
+        display(HTML(f"""            
         <style>
         .{self.panel_id} {{
             --bg-panel: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
@@ -765,11 +793,11 @@ class CssPanel:
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }}
         </style>
-        '''))  
-    
+        """))
+
     def dark_theme(self) -> None:
         """Standard GitHub/Vercel Dark Mode Overrides"""
-        display(HTML(f'''            
+        display(HTML(f"""            
         <style>
         /* Base Variables mapped from Configurator Dark Theme */
         .{self.panel_id} {{
@@ -793,11 +821,11 @@ class CssPanel:
             border: 1px solid rgba(63, 185, 80, 0.2) !important;
         }}
         </style>
-        '''))
+        """))
 
     def metal_theme(self) -> None:
         """Precision Titanium / Brushed Metal Panel"""
-        display(HTML(f'''            
+        display(HTML(f"""            
         <style>
         /* Base Variables mapped from Configurator Metal Theme */
         .{self.panel_id} {{
@@ -850,11 +878,11 @@ class CssPanel:
                         inset 0 1px 0 rgba(255,255,255,0.9) !important;
         }}
         </style>
-        '''))
-            
+        """))
+
     def pro_theme(self) -> None:
         """Neon/Cyber AI 2030 Overrides"""
-        display(HTML(f'''            
+        display(HTML(f"""            
         <style>
         /* Base Variables mapped from Configurator Pro Theme */
         .{self.panel_id} {{
@@ -900,4 +928,4 @@ class CssPanel:
             box-shadow: 0 0 8px var(--accent) !important;
         }}
         </style>
-        '''))
+        """))

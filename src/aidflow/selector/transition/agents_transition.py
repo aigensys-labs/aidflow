@@ -74,52 +74,41 @@ Requires the following pipeline stages to be completed:
 - Agent Training (≥ 2 agents — for at least one pair)
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM, 
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import PRM, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from ..predict.adapter          import  PredictorAdapter
+from ..predict.adapter import PredictorAdapter
 
-from .processor                 import  (
-                                        AGENTS,
-                                        TransitionProcessor,
-                                        TransitionParamsBase,
-                                        TransitionParamsCfg,
-                                        TransitionResult,
-                                        TransitionStats
-                                        )
+from .processor import (
+    AGENTS,
+    TransitionProcessor,
+    TransitionParamsBase,
+    TransitionParamsCfg,
+    TransitionResult,
+    TransitionStats,
+)
 
 MODEL = AIGFLOW.Selection.transition
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG SELECTION STAGE ► AGENTS TRANSITION ► TRANSITION OF TRAINED AGENTS ON OOT TEST SAMPLE'
-DEPS  = (
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG SELECTION STAGE ► AGENTS TRANSITION ► TRANSITION OF TRAINED AGENTS ON OOT TEST SAMPLE"
+DEPS = (
     AIGFLOW.Training.agent1,
     AIGFLOW.Training.agent2,
     AIGFLOW.Training.agent3,
@@ -132,9 +121,11 @@ DEPS  = (
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'AngentsTransition'
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    AIG = "AngentsTransition"
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -143,45 +134,53 @@ class REG(DictClass):
 @Dataclass.mapping
 class TransitionParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(TransitionParamsBase)
-    setup  = {
-        PRM.SELECT.select_bins.param     : (params.proba_bins, 'Probability Discretization' ),
-        PRM.SELECT.select_alpha.param    : (params.alpha,      'Cross-Transition alpha'    ),
-    }  
+    setup = {
+        PRM.SELECT.select_bins.param: (params.proba_bins, "Probability Discretization"),
+        PRM.SELECT.select_alpha.param: (params.alpha, "Cross-Transition alpha"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """        
-    
+    """
+
     @FREG.register(REG.AIG)
     class AgentsTransitionFitter(TransitionParamsBase):
-        
-        config: dict|TransitionParamsCfg = TransitionParamsCfg(
-            predictors = None,
-            target     = None
+
+        config: dict | TransitionParamsCfg = TransitionParamsCfg(
+            predictors=None, target=None
         )
 
-        def _build(self, params:TransitionParamsBase, config:dict) -> TransitionProcessor:            
-            setup  = dict(params) | config
-            return TransitionProcessor(**setup) 
+        def _build(
+            self, params: TransitionParamsBase, config: dict
+        ) -> TransitionProcessor:
+            setup = dict(params) | config
+            return TransitionProcessor(**setup)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterBase[TransitionParamsBase]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """        
-    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
+
     FREG = FREG
     DREG = DREG
-    
-    def fit(self, data:pDF): 
+
+    def fit(self, data: pDF):
         """
         Execute the transition analysis on the provided data.
 
@@ -195,13 +194,13 @@ class Fitter(FitterBase[TransitionParamsBase]):
         -------
         self
             Fitted fitter with `result` and `stats` set.
-        """     
+        """
         self.result: TransitionResult = self.model.process(data)
-        self.stats:  TransitionStats  = self.model.get_stats()
+        self.stats: TransitionStats = self.model.get_stats()
         self._init_dash()
         return self
-    
-    def transfrom(self, data:pDF, agents:tuple=tuple(AGENTS)) -> TransitionResult:
+
+    def transfrom(self, data: pDF, agents: tuple = tuple(AGENTS)) -> TransitionResult:
         """
         Execute the transition analysis on new data (re-evaluation).
 
@@ -217,9 +216,10 @@ class Fitter(FitterBase[TransitionParamsBase]):
         TransitionResult
             Transition vectors and summary scores.
         """
-        return self.model.process(data, agents = agents)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬        
+        return self.model.process(data, agents=agents)
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -228,30 +228,32 @@ class Fitter(FitterBase[TransitionParamsBase]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
+
     pass
+
 
 @Dataclass.base
 class TransResData(TransitionResult):
     """Transfomer data output design."""
 
+
 class Transformer(TransformerBase[Fitter, TransitionStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
-    
-    ModelFitter = Fitter
-           
-    def transform(self, data:pDF, agents:tuple = tuple(AGENTS)) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            **self.fitter.transfrom(data, agents)
-        )   
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    ModelFitter = Fitter
+
+    def transform(self, data: pDF, agents: tuple = tuple(AGENTS)) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(**self.fitter.transfrom(data, agents))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -260,36 +262,40 @@ class Transformer(TransformerBase[Fitter, TransitionStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
-    Transformer - Fitter before execution begins.
-    """ 
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = TransitionParamsCfg
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
+    Transformer - Fitter before execution begins.
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = TransitionParamsCfg
     Mapping = TransitionParamsMapping
 
-    ModelTransformer  = Transformer
+    ModelTransformer = Transformer
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"AgentsTransitionInput"):
-        agents   = self.get_model_dependecy(DEPS, is_req=False)
+    def get_choice(self, fx_choice: str, inputs: "AgentsTransitionInput"):
+        agents = self.get_model_dependecy(DEPS, is_req=False)
         defaults = self.Config(
-            predictors = PredictorAdapter(agents),
-            target     = AigParam.di(inputs.target, self.setup.target)
-        )  
+            predictors=PredictorAdapter(agents),
+            target=AigParam.di(inputs.target, self.setup.target),
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)   
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-        
-    def get_params(self, fx_choice:str, inputs:"AgentsTransitionInput", params:dict):
-        params: TransitionParamsBase = self.get_fit_params(fx_choice, inputs.fx_params, params)  
-        return params, self.setup
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        return RegGet.choice(fx_choice, fx_config)
 
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "AgentsTransitionInput", params: dict):
+        params: TransitionParamsBase = self.get_fit_params(
+            fx_choice, inputs.fx_params, params
+        )
+        return params, self.setup
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -321,7 +327,9 @@ class AgentsTransitionInput(ModelInput):
     bins (default: 10). Both agents in a pair use the same bin
     count for comparability.
     """
-    data: pDF 
+
+    data: pDF
+
 
 @Dataclass.base
 class AgentsTransitionResult(ModelResult):
@@ -358,10 +366,14 @@ class AgentsTransitionResult(ModelResult):
     - *Cell counts*: Low-count cells are unreliable — the
       significance test may flag them but the evidence is weak.
     """
+
     vectors: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class AgentsTransition(Processor, ModelBase):   
+
+class AgentsTransition(Processor, ModelBase):
     """
     Agent Transition — Cross-Agent Agreement & Disagreement Analysis.
 
@@ -422,17 +434,16 @@ class AgentsTransition(Processor, ModelBase):
     >>> pair.vectors    # Significance
     """
 
-
     def _save(self, save_path) -> None:
-        ModelIO(self.setup).save(MODEL, self, custom_path = save_path)
+        ModelIO(self.setup).save(MODEL, self, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _get_result(self, res: TransResData):
-        return AgentsTransitionResult(
-            vectors = res.vectors
-        )
+        return AgentsTransitionResult(vectors=res.vectors)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-            
+
     def fit(self, inputs: AgentsTransitionInput, fx_choice: str = REG.AIG, **params):
         """
         Execute the full cross-agent transition analysis.
@@ -462,24 +473,21 @@ class AgentsTransition(Processor, ModelBase):
         included. Use `transform(data, agents=(1, 3))` to
         restrict to specific pairs.
         """
-        verify  = len(inputs.data)
-        
+        verify = len(inputs.data)
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
-        return self    
+        return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def transform(self, 
-        data:    pDF, 
-        agents:  tuple = tuple(AGENTS) 
+
+    def transform(
+        self, data: pDF, agents: tuple = tuple(AGENTS)
     ) -> AgentsTransitionResult:
         """
         Re-evaluate the transition analysis on a new dataset.
@@ -512,23 +520,25 @@ class AgentsTransition(Processor, ModelBase):
         fitted state. It produces a fresh analysis on the new
         data. The original fit results remain accessible via
         `.result` and `.stats`.
-        """ 
-        res = self.processor.transform(data, agents)    
+        """
+        res = self.processor.transform(data, agents)
         return self._get_result(res)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # SELECTION → TRANSITION → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-class OptionUI(OptionUIBase):    
-    title   = 'Transition Panel'.upper()
-    split   = 1
-    width   = 150
+class OptionUI(OptionUIBase):
+    title = "Transition Panel".upper()
+    split = 1
+    width = 150
     Mapping = TransitionParamsMapping
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -538,28 +548,33 @@ class AgentsTransitionUI(ModelUIBase):
     """
     Agents Transition & Divergence Model.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    The 'Consistency Analyst' of the Selection Phase. This model evaluates 
-    the agreement between different agents by calculating transition matrices. 
-    It identifies where agents converge on a decision and, more importantly, 
-    where they diverge—highlighting samples that are "contentious" across 
-    different mathematical strategies.       
+
+    The 'Consistency Analyst' of the Selection Phase. This model evaluates
+    the agreement between different agents by calculating transition matrices.
+    It identifies where agents converge on a decision and, more importantly,
+    where they diverge—highlighting samples that are "contentious" across
+    different mathematical strategies.
     """
 
-    Model  = AgentsTransition
+    Model = AgentsTransition
     Option = OptionUI
-        
+
     @wraps(AgentsTransition.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(
-            fit_transform_pipeline = False
-        ), **kwargs)  
-    
+        self.model_ui.fit(
+            *args,
+            ui_params=self._get_ui_fit_defaults(fit_transform_pipeline=False),
+            **kwargs,
+        )
+
     @wraps(AgentsTransition.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
 
     @property
-    def fitted(self) -> AgentsTransitionResult: return self.model_ui.fitted
+    def fitted(self) -> AgentsTransitionResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

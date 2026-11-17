@@ -39,14 +39,14 @@ Temporary artifacts live in `_previews`. This ensures that:
 - Cleanup is a single atomic operation (remove the folder).
 """
 
-from ...deps.common     import shutil, Path, threading
-from ...deps.types      import Any
+from ...deps.common import shutil, Path, threading
+from ...deps.types import Any
 
-from ...storage.folder  import Folder
-from ...storage.file    import FileUtils
-from ...utils.builtins  import Str, Misc
+from ...storage.folder import Folder
+from ...storage.file import FileUtils
+from ...utils.builtins import Str, Misc
 
-from ..structure        import SID, STRUCTURE
+from ..structure import SID, STRUCTURE
 
 
 class TempRegistry:
@@ -83,8 +83,9 @@ class TempRegistry:
     >>> # Consumer (display layer):
     >>> path = TempRegistry.get('project_sig', 'report_path')
     """
+
     _storage: dict[str, dict[str, str]] = {}
-    _lock  = threading.Lock()
+    _lock = threading.Lock()
 
     @classmethod
     def register(cls, project_sign: str, obj_id: str, temp_object: Any) -> None:
@@ -100,11 +101,11 @@ class TempRegistry:
             (e.g., `'report_path'`, `'agent_1_overview'`).
         temp_object : Any
             The value to store (typically a path string or reference).
-        """       
+        """
         with cls._lock:
             if project_sign not in cls._storage:
                 cls._storage[project_sign] = {}
-            
+
             cls._storage[project_sign][obj_id] = temp_object
 
     @classmethod
@@ -169,7 +170,10 @@ class TempRegistry:
             project_bucket = cls._storage.get(project_sign)
             if project_bucket:
                 project_bucket.pop(obj_id, None)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Temp:
     """
@@ -210,7 +214,7 @@ class Temp:
         The project's parameter context (provides the root path).
     """
 
-    FOLDER  = '_previews'
+    FOLDER = "_previews"
     DEFAULT = Folder.standard(STRUCTURE[SID.O]) / FOLDER
 
     def __init__(self, setup: type):
@@ -219,9 +223,10 @@ class Temp:
     @classmethod
     def _get_tmp_path(cls, setup: type) -> Path:
         from ..parameters import Parameters
+
         s: Parameters = setup
         return s.project_paths.root / cls.FOLDER
-    
+
     @classmethod
     def _get_gen_path(cls, signature_path: str | Path | None) -> Path | None:
         if isinstance(signature_path, Path):
@@ -229,14 +234,13 @@ class Temp:
         if not signature_path:
             return cls.DEFAULT
         from ..registry import ProjectModelRegistry
+
         setup = ProjectModelRegistry.get_setup(signature_path)
         return cls._get_tmp_path(setup)
-    
+
     @classmethod
-    def gen_unique_path(cls, 
-        prefix: str = None, 
-        suffix: str = None, 
-        file_type: str = None
+    def gen_unique_path(
+        cls, prefix: str = None, suffix: str = None, file_type: str = None
     ) -> str | Path:
         """
         Generate a unique filename (without folder).
@@ -258,19 +262,20 @@ class Temp:
         str
             The unique filename (e.g., `'Agent_1_Overview_1712345678_a1b2c3d4.html'`).
         """
-        name = f'{Misc.timestamp():.0f}_{Misc.uuid(8)}'
-        path = Str.join(prefix or '', name, suffix or '')
-        if file_type: 
+        name = f"{Misc.timestamp():.0f}_{Misc.uuid(8)}"
+        path = Str.join(prefix or "", name, suffix or "")
+        if file_type:
             path = FileUtils.ensure_extension(path, file_type)
         return path
-    
+
     @classmethod
-    def gen_path(cls, 
-        prefix: str = None, 
-        suffix: str = None, 
-        file_type: str = None, 
+    def gen_path(
+        cls,
+        prefix: str = None,
+        suffix: str = None,
+        file_type: str = None,
         folder: str | Path = None,
-        project_signature: str = None
+        project_signature: str = None,
     ) -> Path:
         """
         Generate a unique full path under the project's temp folder.
@@ -299,16 +304,17 @@ class Temp:
         """
         path = cls._get_gen_path(project_signature)
         Folder.create(path)
-        f = cls.gen_unique_path(prefix, suffix, file_type)        
+        f = cls.gen_unique_path(prefix, suffix, file_type)
         if not folder:
             return Folder.standard(path / f)
         return Folder.standard(path / folder / f)
 
-    def get_path(self,
-        prefix: str = None, 
-        suffix: str = None, 
-        file_type: str = None, 
-        folder: str | Path = None
+    def get_path(
+        self,
+        prefix: str = None,
+        suffix: str = None,
+        file_type: str = None,
+        folder: str | Path = None,
     ) -> Path:
         """
         Generate a unique path under this instance's temp folder.
@@ -333,7 +339,7 @@ class Temp:
             The full unique path.
         """
         return self.gen_path(prefix, suffix, file_type, folder, self._path)
-    
+
     def clear(self) -> None:
         """
         Remove this project's temp folder and all its contents.
@@ -350,6 +356,8 @@ class Temp:
 
         Use with caution — this affects all projects sharing
         the default path.
-        """        
+        """
         shutil.rmtree(cls.DEFAULT, ignore_errors=True)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

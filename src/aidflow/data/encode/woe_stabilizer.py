@@ -55,62 +55,45 @@ Requires the WOE Encoder stage to be completed (the stabilizer
 operates on WOE-encoded features).
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        GEN,
-                                        PRM,
-                                        AIG,
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FIT, 
-                                        FitterBase,
-                                        TransformerBase,
-                                        ProcessorBase, 
-                                        ModelProcessorBase,
-                                        ModelEnvelope,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,  
-                                        OptionUIBase,
-                                        ModelUIBase                                                                            
-                                        )
-from ...core.base.adapter       import  ModelAdapterBase
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.interop            import  Pd
-from ...core.foundation         import  AigParam
-from ...core.io                 import  (
-                                        ModelIO, 
-                                        DashIO
-                                        )
-from ...core.standard           import  VarStd
+from ...core.parameters import GEN, PRM, AIG, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FIT,
+    FitterBase,
+    TransformerBase,
+    ProcessorBase,
+    ModelProcessorBase,
+    ModelEnvelope,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.base.adapter import ModelAdapterBase
+from ...core.factory import Dataclass, DictClass
+from ...core.interop import Pd
+from ...core.foundation import AigParam
+from ...core.io import ModelIO, DashIO
+from ...core.standard import VarStd
 
-from .woe_encoder               import  WoeEncoder
-from .fitters.woe_analyzer      import  (
-                                        WoeStabilityAnalyzer,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitResult,
-                                        FitStats
-                                        )
-
+from .woe_encoder import WoeEncoder
+from .fitters.woe_analyzer import (
+    WoeStabilityAnalyzer,
+    FitParamsBase,
+    FitParamsCfg,
+    FitResult,
+    FitStats,
+)
 
 MODEL = AIGFLOW.Encoding.woe_stabilizer
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► WOE STABILIZE ► Analyze and Prune WOE Features on Predictive Stability'
-DEPS  = AIGFLOW.Encoding.woe_encoder
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG DATA STAGE ► WOE STABILIZE ► Analyze and Prune WOE Features on Predictive Stability"
+DEPS = AIGFLOW.Encoding.woe_encoder
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -118,7 +101,10 @@ DEPS  = AIGFLOW.Encoding.woe_encoder
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG = 'WoeStabilizer'
+
+    AIG = "WoeStabilizer"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -128,88 +114,105 @@ class REG(DictClass):
 @Dataclass.mapping
 class WoeParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.ENCODE.woe_stability.param   : (params.stability_cutoff, 'Stability Cutoff'     ),
-        PRM.ENCODE.woe_alpha.param       : (params.alpha,            'Stability Bins alpha' ),
-    }  
+    setup = {
+        PRM.ENCODE.woe_stability.param: (params.stability_cutoff, "Stability Cutoff"),
+        PRM.ENCODE.woe_alpha.param: (params.alpha, "Stability Bins alpha"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """ 
-    
+    """
+
     @FREG.register(REG.AIG)
     class WoeStabilityAnalyzerFitter(FitParamsBase):
 
-        config: dict|FitParamsCfg = FitParamsCfg(
-            target          = None,
-            time_var        = AIG.time_var.value,
-            time_unit       = None,
-            max_time_units  = None,
-            verbose         = True
+        config: dict | FitParamsCfg = FitParamsCfg(
+            target=None,
+            time_var=AIG.time_var.value,
+            time_unit=None,
+            max_time_units=None,
+            verbose=True,
         )
 
         @property
         def _model(self) -> WoeStabilityAnalyzer:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> WoeStabilityAnalyzer:            
+            return self.model
+
+        def _build(self, params: FitParamsBase, config: dict) -> WoeStabilityAnalyzer:
             setup = dict(params) | config
             return WoeStabilityAnalyzer(**setup)
 
         def get_result(self) -> FitResult:
             return self._model.result
-        
+
         def get_stats(self) -> FitStats:
-            return self._model.stats      
+            return self._model.stats
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
-    """Fitter params input design."""    
+    """Fitter params input design."""
+
     woe_features: list
-    woe_encoder:  ModelAdapterBase = None
+    woe_encoder: ModelAdapterBase = None
+
 
 @Dataclass.base
 class FitUpdateData:
     """Fitter update data design."""
+
     train_woe: pDF
-    test_woe:  pDF
+    test_woe: pDF
+
 
 @Dataclass.base
 class FitUpdatePrm:
     """Fitter update data design."""
-    th:             float
-    alpha:          float
-    is_th_only:     bool = False
+
+    th: float
+    alpha: float
+    is_th_only: bool = False
+
 
 @Dataclass.base
 class DashData:
     """Dash-Fitter vars connection design."""
-    th:            float
-    target:        str
-    consistency:   FitStats
+
+    th: float
+    target: str
+    consistency: FitStats
     test_data_woe: pDF
-    is_th_only:    bool
-    woe_encoder:   WoeEncoder
+    is_th_only: bool
+    woe_encoder: WoeEncoder
     dash_instance: object = None
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-class FitBase(FitterBase[FitParams]):    
+
+class FitBase(FitterBase[FitParams]):
 
     FREG = FREG
     DREG = DREG
-    
+
     @property
     def _woe_encoder(self) -> ModelAdapterBase:
         return self.params.woe_encoder
-    
+
     @property
     def _update_data(self) -> FitUpdateData:
         return self._relay
@@ -217,76 +220,81 @@ class FitBase(FitterBase[FitParams]):
     @property
     def _update_prm(self) -> FitUpdatePrm:
         return self._update_params
-    
-    def _set_relay_data(self, data:FitUpdateData) -> None:
+
+    def _set_relay_data(self, data: FitUpdateData) -> None:
         self._relay = data
 
-    def _set_update_params(self, data:FitUpdatePrm) -> None:
+    def _set_update_params(self, data: FitUpdatePrm) -> None:
         self._update_params = data
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _set_model(self, th:float, alpha:float) -> None:
+    def _set_model(self, th: float, alpha: float) -> None:
         self.model = self.fx.build(
-            params = self.params, **FitParamsBase(stability_cutoff=th, alpha=alpha)
+            params=self.params, **FitParamsBase(stability_cutoff=th, alpha=alpha)
         )
 
-    def _fit_model(self, train_woe:pDF, test_woe:pDF) -> None:
-        self.model.fit(train_woe, test_woe, self.params.woe_features)   
+    def _fit_model(self, train_woe: pDF, test_woe: pDF) -> None:
+        self.model.fit(train_woe, test_woe, self.params.woe_features)
 
-    def _update_model(self, stats:FitStats) -> None:
-        self.model.update(stats) 
+    def _update_model(self, stats: FitStats) -> None:
+        self.model.update(stats)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _get_mapped_model_cfg(self) -> dict:
-        c = self.model.get_params()['config']
+        c = self.model.get_params()["config"]
         p = Dataclass.schema(FitParamsCfg)
         return {
-            GEN.target.param:   c[p.target],
+            GEN.target.param: c[p.target],
             AIG.time_var.param: c[p.time_var],
         }
-    
-    def _get_model_cfg_vals(self, cols:list|str = None) -> list|str:
+
+    def _get_model_cfg_vals(self, cols: list | str = None) -> list | str:
         mc = self._get_mapped_model_cfg()
         if cols is None:
-            return list( mc.values() )
+            return list(mc.values())
         if isinstance(cols, str):
             return mc[cols]
-        return [mc[x] for x in cols]    
+        return [mc[x] for x in cols]
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _data_encoder(self, data:pDF) -> pDF:
+    def _data_encoder(self, data: pDF) -> pDF:
         fes = VarStd.fe_to_var(self.params.woe_features)
-        return self._woe_encoder.predict(data, subset = fes)
-    
+        return self._woe_encoder.predict(data, subset=fes)
+
     @staticmethod
-    def _is_data_woe_misaligned(data:pDF, data_woe:pDF) -> bool:
+    def _is_data_woe_misaligned(data: pDF, data_woe: pDF) -> bool:
         return (
-            ( data_woe is None ) or 
-            ( len(data.index) != len(data_woe.index) ) or
-            ( data.index != data_woe.index ).sum()
+            (data_woe is None)
+            or (len(data.index) != len(data_woe.index))
+            or (data.index != data_woe.index).sum()
         )
 
-    def _validate_data(self, data:pDF) -> None:
+    def _validate_data(self, data: pDF) -> None:
         cols = self._get_model_cfg_vals()
-        if ( 
-            ( data is not None ) and
-            ( len(data) ) and
-            all([x in data.columns for x in cols])
-        ): return
-        raise ValueError('AIG SAFETY'
-        '\n► Input data passing to stability test are internally encoded to WOE by trained WOE encoder.'
-        '\n► Data must contain orig. features needed to encode selected woe_features.'
-       f'\n► Stability test needs extra columns present in the data to conduct the test: {', '.join(cols)}.'
+        if (
+            (data is not None)
+            and (len(data))
+            and all([x in data.columns for x in cols])
+        ):
+            return
+        raise ValueError(
+            "AIG SAFETY"
+            "\n► Input data passing to stability test are internally encoded to WOE by trained WOE encoder."
+            "\n► Data must contain orig. features needed to encode selected woe_features."
+            f"\n► Stability test needs extra columns present in the data to conduct the test: {', '.join(cols)}."
         )
 
-    def _data_preprocess(self, data:pDF, data_woe:pDF=None) -> pDF|None:
+    def _data_preprocess(self, data: pDF, data_woe: pDF = None) -> pDF | None:
         self._validate_data(data)
 
         if self._is_data_woe_misaligned(data, data_woe):
             data_woe = self._data_encoder(data)
 
         cols = self._get_model_cfg_vals()
-        denc = data_woe     
+        denc = data_woe
 
         cols_na = [x for x in cols if x not in denc.columns]
         if cols_na:
@@ -294,88 +302,89 @@ class FitBase(FitterBase[FitParams]):
             return Pd.concat([dcfg, denc], axis=1)
 
         return denc
-    
-    def _data_to_woe(self, data:dict[str,tuple]) -> tuple[pDF,pDF]:
+
+    def _data_to_woe(self, data: dict[str, tuple]) -> tuple[pDF, pDF]:
         return (
-            self._data_preprocess(*data['train']),
-            self._data_preprocess(*data['test'])
-    )
+            self._data_preprocess(*data["train"]),
+            self._data_preprocess(*data["test"]),
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def _set_update_data(self, train_woe:pDF, test_woe:pDF) -> None:
-        self._set_relay_data(FitUpdateData(
-            train_woe = train_woe,
-            test_woe  = test_woe
-        ))
+
+    def _set_update_data(self, train_woe: pDF, test_woe: pDF) -> None:
+        self._set_relay_data(FitUpdateData(train_woe=train_woe, test_woe=test_woe))
 
     def _set_update_prm_init(self) -> None:
-        self._set_update_params(FitUpdatePrm(
-            th    = self.params.stability_cutoff,
-            alpha = self.params.alpha
-        ))
+        self._set_update_params(
+            FitUpdatePrm(th=self.params.stability_cutoff, alpha=self.params.alpha)
+        )
 
-    def _set_update_prm(self, th:float, alpha:float) -> None:
-        self._set_update_params(FitUpdatePrm(
-            th         = th,
-            alpha      = alpha,
-            is_th_only = self._is_th_update_only(th, alpha)
-        ))
+    def _set_update_prm(self, th: float, alpha: float) -> None:
+        self._set_update_params(
+            FitUpdatePrm(
+                th=th, alpha=alpha, is_th_only=self._is_th_update_only(th, alpha)
+            )
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _is_th_update_only(self, th:float=None, alpha:float=None) -> bool:
+    def _is_th_update_only(self, th: float = None, alpha: float = None) -> bool:
         return (
-            self._update_prm.th != th and 
-            self._update_prm.alpha == alpha
-        ) or not self._is_update(th, alpha) # no change → dashboard will reappear
+            self._update_prm.th != th and self._update_prm.alpha == alpha
+        ) or not self._is_update(
+            th, alpha
+        )  # no change → dashboard will reappear
 
-    def _is_update(self, th:float, alpha:float) -> bool:        
-        return (
-            self._update_prm.th != th or 
-            self._update_prm.alpha != alpha
-        )
-    
-    def _update_fit(self, th:float, alpha:float) -> None:
+    def _is_update(self, th: float, alpha: float) -> bool:
+        return self._update_prm.th != th or self._update_prm.alpha != alpha
+
+    def _update_fit(self, th: float, alpha: float) -> None:
         if not self._is_update(th, alpha):
             return
         self._set_model(th, alpha)
         if self._is_th_update_only(th, alpha):
             self._update_model(self.stats)
         else:
-            self._fit_model(
-                self._update_data.train_woe,
-                self._update_data.test_woe
-            )
+            self._fit_model(self._update_data.train_woe, self._update_data.test_woe)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def _set_result_dash(self, 
-        th: float = None, 
-        dash_instance: object = None, 
+    def _set_result_dash(
+        self,
+        th: float = None,
+        dash_instance: object = None,
     ) -> None:
         self.result: FitResult = self.model.get_result()
-        self.stats:   FitStats = self.model.get_stats()
+        self.stats: FitStats = self.model.get_stats()
 
-        self._init_dash(dash_data = DashData(
-            th            = th,
-            target        = self._get_model_cfg_vals(GEN.target.param),
-            consistency   = self.stats,
-            test_data_woe = self._update_data.test_woe,
-            is_th_only    = self._update_prm.is_th_only,
-            woe_encoder   = self._woe_encoder.model, 
-            dash_instance = dash_instance
-        ))
+        self._init_dash(
+            dash_data=DashData(
+                th=th,
+                target=self._get_model_cfg_vals(GEN.target.param),
+                consistency=self.stats,
+                test_data_woe=self._update_data.test_woe,
+                is_th_only=self._update_prm.is_th_only,
+                woe_encoder=self._woe_encoder.model,
+                dash_instance=dash_instance,
+            )
+        )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class Fitter(FitBase):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """     
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
 
-    def fit(self, 
-        train_set:  pDF, 
-        test_set:   pDF, 
-        train_woe:  pDF = None, 
-    ): 
+    def fit(
+        self,
+        train_set: pDF,
+        test_set: pDF,
+        train_woe: pDF = None,
+    ):
         """
         Analyze and Learn Features WOE predictive stability.
 
@@ -386,53 +395,53 @@ class Fitter(FitBase):
         train_woe : Optional, Input train data encoded as woe for woe stability analysis.
         test_woe  : Optionalm Input test data encoded as woe for woe stability analysis.
         """
-        d0, d1 = self._data_to_woe({
-            'train': (train_set, train_woe), 
-            'test':  (test_set,  None)
-        })
+        d0, d1 = self._data_to_woe(
+            {"train": (train_set, train_woe), "test": (test_set, None)}
+        )
         self._fit_model(d0, d1)
         self._set_update_prm_init()
         self._set_update_data(d0, d1)
         self._set_result_dash(self.params.stability_cutoff)
         return self
-    
-    def update(self, th:float, alpha:float):
-        """Updates WOE Features which suffer of Unstable Prediction."""   
-        self._update_fit(th, alpha) 
-        self._set_update_prm(th, alpha)                        
+
+    def update(self, th: float, alpha: float):
+        """Updates WOE Features which suffer of Unstable Prediction."""
+        self._update_fit(th, alpha)
+        self._set_update_prm(th, alpha)
         self._set_result_dash(th, self.dashboard)
         return self
-        
-    def _update_vars_by_ui(self) -> None: 
-        """Fitted by WoeStabilizerUI for reporting purposes."""        
+
+    def _update_vars_by_ui(self) -> None:
+        """Fitted by WoeStabilizerUI for reporting purposes."""
         self.dashboard._update_vars_out_user()
-    
-    def _get_ui_vars_out(self) -> list|None:
-        if self.verbose:        
+
+    def _get_ui_vars_out(self) -> list | None:
+        if self.verbose:
             return self.dashboard._get_vars_out_user()
         io = DashIO(self.setup)
-        return io.load(custom_path=io.get_custom_selection_path(MODEL))    
-    
-    def _get_result_woe(self, out:list) -> list:
+        return io.load(custom_path=io.get_custom_selection_path(MODEL))
+
+    def _get_result_woe(self, out: list) -> list:
         """Provide WOE Chosen Features."""
         woe = [x for x in self.params.woe_features if x not in out]
         return woe
-    
+
     def get_updated_result(self) -> FitResult:
         """Get fitter result with respect to user dynamic changes in UI."""
         out = self._get_ui_vars_out()
 
         if out is None:
             out = self.result.vars_dropped
-        
-        woe = self._get_result_woe(out)
-        
-        return FitResult(
-            vars_woe     = woe,
-            vars_dropped = out,
-        )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+        woe = self._get_result_woe(out)
+
+        return FitResult(
+            vars_woe=woe,
+            vars_dropped=out,
+        )
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -441,118 +450,132 @@ class Fitter(FitBase):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    vars_woe:       list
-    vars_dropped:   list
+
+    vars_woe: list
+    vars_dropped: list
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class TransUtils:
-    """Transformer Utilities."""       
+    """Transformer Utilities."""
 
-    def __init__(self, fitter:Fitter):
+    def __init__(self, fitter: Fitter):
         self.fitter = fitter
 
     def get_cols(self) -> TransResCols:
-        """Temporal Stability Transformer Features Result."""    
+        """Temporal Stability Transformer Features Result."""
         res = self.fitter.get_updated_result()
         return TransResCols(
-                vars_woe      = res.vars_woe,
-                vars_dropped  = res.vars_dropped,
-            )
+            vars_woe=res.vars_woe,
+            vars_dropped=res.vars_dropped,
+        )
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
 
     ModelFitter = Fitter
 
-    def _fit_data(self, inputs: "WoeStabilizerInput", train_woe:pDF): 
+    def _fit_data(self, inputs: "WoeStabilizerInput", train_woe: pDF):
         return inputs.train_set, inputs.test_set, train_woe
-    
+
     def _set_cols(self):
         return TransUtils(self.fitter).get_cols()
-            
-    def transform(self, data:pDF) -> TransResData: 
-        """Model meta-transform."""   
-        cols = [x for x in self.cols.vars_woe if x in data.columns]
-        return TransResData(
-            data = data[cols]
-        )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    def transform(self, data: pDF) -> TransResData:
+        """Model meta-transform."""
+        cols = [x for x in self.cols.vars_woe if x in data.columns]
+        return TransResData(data=data[cols])
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → WOE → PROCESSOR
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class ExtendedProcessor(ProcessorBase):
-    """Transformer Extended Processor."""  
+    """Transformer Extended Processor."""
 
     fx: Transformer
 
-    def update(self, th:float, alpha:float) -> None:
+    def update(self, th: float, alpha: float) -> None:
         """Update fitted function."""
-        if th is None: 
-              self.fx.trans_update()
-        else: self.fx.fit_update(th, alpha)  
+        if th is None:
+            self.fx.trans_update()
+        else:
+            self.fx.fit_update(th, alpha)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
-    Transformer - Fitter before execution begins.
-    """  
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = FitParamsCfg
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
+    Transformer - Fitter before execution begins.
+    """
+
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = WoeParamsMapping
 
-    ModelTransformer  = Transformer
-    ExtendedProcessor = ExtendedProcessor    
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+    ModelTransformer = Transformer
+    ExtendedProcessor = ExtendedProcessor
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"WoeStabilizerInput"):
+    def get_choice(self, fx_choice: str, inputs: "WoeStabilizerInput"):
         defaults = self.Config(
-            target    = AigParam.di(inputs.target,   self.setup.target),
-            verbose   = AigParam.di(inputs.verbose,  self.setup.verbose),
-            time_var  = AigParam.di(inputs.time_var, self.setup.time_var),
-            time_unit = None,
-            max_time_units = None,
-        )        
+            target=AigParam.di(inputs.target, self.setup.target),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+            time_var=AigParam.di(inputs.time_var, self.setup.time_var),
+            time_unit=None,
+            max_time_units=None,
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)  
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        return RegGet.choice(fx_choice, fx_config)
 
-    def get_params(self, fx_choice:str, inputs:"WoeStabilizerInput", params:dict):
-        params  = self.get_fit_params(fx_choice, inputs.fx_params, params)        
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "WoeStabilizerInput", params: dict):
+        params = self.get_fit_params(fx_choice, inputs.fx_params, params)
         encoder = self.get_model_dependecy(DEPS)
-        
+
         fit = FitParams(
-            woe_features = inputs.woe_features, 
-            woe_encoder  = ModelAdapterBase(encoder),
-            **params
+            woe_features=inputs.woe_features,
+            woe_encoder=ModelAdapterBase(encoder),
+            **params,
         )
         return fit, self.setup
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
- 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → WOE → API
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -588,13 +611,16 @@ class WoeStabilizerInput(ModelInput):
     specified time variable column (e.g., `'AIG_YY_MM'`) to
     group observations into time units for the consistency test.
     """
-    train_set:      pDF
-    test_set:       pDF
-    woe_features:   list|None = None  
+
+    train_set: pDF
+    test_set: pDF
+    woe_features: list | None = None
+
 
 @Dataclass.base(dynamic_params=True)
 class WoeStabilizerEnvelopeCfg:
-    train_woe:   pDF | None
+    train_woe: pDF | None
+
 
 @Dataclass.base(dynamic_params=True)
 class WoeStabilizerEnvelope(ModelEnvelope):
@@ -612,8 +638,10 @@ class WoeStabilizerEnvelope(ModelEnvelope):
     config : WoeStabilizerEnvelopeCfg
         Optional pre-computed WOE data.
     """
-    inputs: WoeStabilizerInput 
+
+    inputs: WoeStabilizerInput
     config: WoeStabilizerEnvelopeCfg
+
 
 @Dataclass.base
 class WoeStabilizerFeatureResult:
@@ -626,10 +654,12 @@ class WoeStabilizerFeatureResult:
         Features by woe naming convention.
     raw : list
         Original (raw input) feature names for the
-        woe features — the business-facing identifiers.    
+        woe features — the business-facing identifiers.
     """
+
     woe: list
     raw: list
+
 
 @Dataclass.base
 class WoeStabilizerResult(ModelResult):
@@ -653,13 +683,17 @@ class WoeStabilizerResult(ModelResult):
         business names. The implicit reason is temporal
         instability — the feature's target-separation was not
         consistent across time units.
-    """    
-    data:       pDF
-    features:   WoeStabilizerFeatureResult
-    dropped:    WoeStabilizerFeatureResult
+    """
+
+    data: pDF
+    features: WoeStabilizerFeatureResult
+    dropped: WoeStabilizerFeatureResult
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class WoeStabilizer(Processor, ModelBase):     
+
+class WoeStabilizer(Processor, ModelBase):
     """
     WOE Feature Stabilizer — Temporal Consistency Quality Gate.
 
@@ -729,7 +763,7 @@ class WoeStabilizer(Processor, ModelBase):
     >>>
     >>> # Fit WOE encoding on all encoded features
     >>> stabilizer.fit(WoeStabilizerInput(
-    ...     train_set = train_data, 
+    ...     train_set = train_data,
     ...     test_set  = test_data
     ... ))
     >>>
@@ -739,33 +773,37 @@ class WoeStabilizer(Processor, ModelBase):
     ... result.features     # Stable features  .woe / .org
     ... result.dropped      # Dropped features .woe / .org
     """
-    
+
     def _save(self, save_path) -> None:
         features = {
-            'features': self.cols.vars_woe,
+            "features": self.cols.vars_woe,
         }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)         
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _get_inputs(inputs: WoeStabilizerEnvelope | WoeStabilizerInput) -> WoeStabilizerInput:
+    def _get_inputs(
+        inputs: WoeStabilizerEnvelope | WoeStabilizerInput,
+    ) -> WoeStabilizerInput:
         if isinstance(inputs, WoeStabilizerEnvelope):
             return inputs.inputs
-        return inputs   
-    
+        return inputs
+
     def _get_train_woe(self, inputs: WoeStabilizerEnvelope | WoeStabilizerInput) -> pDF:
         if isinstance(inputs, WoeStabilizerEnvelope):
             return inputs.config.train_woe
         enc = self.get_model_dependecy(DEPS)
-        return enc.transform(inputs.train_set).data 
-    
+        return enc.transform(inputs.train_set).data
+
     @staticmethod
-    def _verify(inputs:WoeStabilizerInput) -> bool:
-        return ( 
-              len(inputs.train_set) and 
-              len(inputs.test_set)  and 
-            ( inputs.woe_features is None or len(inputs.woe_features) )
-        )    
+    def _verify(inputs: WoeStabilizerInput) -> bool:
+        return (
+            len(inputs.train_set)
+            and len(inputs.test_set)
+            and (inputs.woe_features is None or len(inputs.woe_features))
+        )
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def fit(self, inputs: WoeStabilizerInput, fx_choice: str = REG.AIG, **params):
@@ -795,30 +833,32 @@ class WoeStabilizer(Processor, ModelBase):
             The fitted stabilizer instance.
         """
         inputs_ = self._get_inputs(inputs)
-        
+
         self.choice = self.get_choice(fx_choice, inputs_)
         self.params = self.get_params(fx_choice, inputs_, params)
-        
+
         train_woe = self._get_train_woe(inputs)
 
         self.processor.fit(
-            inputs_, train_woe,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = self._verify(inputs_)
+            inputs_,
+            train_woe,
+            fx_choice=self.choice,
+            params=self.params,
+            verify=self._verify(inputs_),
         )
         self.custom_path = inputs_.save_path
         self._save(inputs_.save_path)
 
         _inputs: WoeStabilizerEnvelope = inputs
         update_data = (
-            (lambda: _inputs.config.train_woe) 
+            (lambda: _inputs.config.train_woe)
             if _inputs.config.train_woe is not None
             else (lambda: train_woe)
         )
         self._set_update_data(update_data)
 
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def update(self, *args, **kwargs):
@@ -844,14 +884,15 @@ class WoeStabilizer(Processor, ModelBase):
             The updated stabilizer instance.
         """
         self.processor.update(
-            th = kwargs.get(PRM.ENCODE.woe_stability.param), 
-            alpha = kwargs.get(PRM.ENCODE.woe_alpha.param)
+            th=kwargs.get(PRM.ENCODE.woe_stability.param),
+            alpha=kwargs.get(PRM.ENCODE.woe_alpha.param),
         )
         self._save(self.custom_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data:pDF) -> WoeStabilizerResult:
+    def transform(self, data: pDF) -> WoeStabilizerResult:
         """
         Select the stable WOE features from the input data.
 
@@ -872,29 +913,29 @@ class WoeStabilizer(Processor, ModelBase):
         """
         df = self.processor.transform(data)
         return WoeStabilizerResult(
-            data = df.data if not self._is_train_data(data) else None, 
-            features = WoeStabilizerFeatureResult(
-                woe = self.cols.vars_woe, 
-                raw = VarStd.fe_to_var(self.cols.vars_woe)
+            data=df.data if not self._is_train_data(data) else None,
+            features=WoeStabilizerFeatureResult(
+                woe=self.cols.vars_woe, raw=VarStd.fe_to_var(self.cols.vars_woe)
             ),
-            dropped = WoeStabilizerFeatureResult(
-                woe = self.cols.vars_dropped,
-                raw = VarStd.fe_to_var(self.cols.vars_dropped)
-            )
+            dropped=WoeStabilizerFeatureResult(
+                woe=self.cols.vars_dropped, raw=VarStd.fe_to_var(self.cols.vars_dropped)
+            ),
         )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → WOE → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class OptionUI(OptionUIBase):
-    title   = 'WOE STABILITY PANEL'
-    split   = 1
+    title = "WOE STABILITY PANEL"
+    split = 1
     Mapping = WoeParamsMapping
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -904,18 +945,18 @@ class WoeStabilizerUI(ModelUIBase[WoeStabilizer, OptionUI]):
     """
     AIG Flow Data WOE Features Stabilizer.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Screens Weight of Evidence (WOE) encoded features for stability 
-    to ensure that predictive behavior remains consistent across 
-    temporal splits or different data folds.    
+
+    Screens Weight of Evidence (WOE) encoded features for stability
+    to ensure that predictive behavior remains consistent across
+    temporal splits or different data folds.
     """
-    
-    Model  = WoeStabilizer
+
+    Model = WoeStabilizer
     Option = OptionUI
 
     def custom_update_vars(self, *args, **kwargs):
-        """User Custom Features Selection and propagation."""    
-        return self.model.update_transform()    
+        """User Custom Features Selection and propagation."""
+        return self.model.update_transform()
 
     def chosen_vars_update_info(self, *args, **kwargs):
         """User Custom Features Selection Save and Summary."""
@@ -927,25 +968,28 @@ class WoeStabilizerUI(ModelUIBase[WoeStabilizer, OptionUI]):
         # s = Dataclass.schema(WoeStabilizerInput)
         # return s.train_woe
         return FIT.UPDATE
-    
+
     @wraps(WoeStabilizer.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
         self.model_ui.fit(
             *args,
-            ui_params = self._get_ui_fit_defaults(
-                fit_transform_inputs_link   = self._fit_transform_data_link(),
-                parent_has_update_FX_method = True,
-                custom_update_fitted_8      = self.custom_update_vars,
-                gui_dynamic_w_fitted_8      = self.chosen_vars_update_info,
+            ui_params=self._get_ui_fit_defaults(
+                fit_transform_inputs_link=self._fit_transform_data_link(),
+                parent_has_update_FX_method=True,
+                custom_update_fitted_8=self.custom_update_vars,
+                gui_dynamic_w_fitted_8=self.chosen_vars_update_info,
             ),
-            **kwargs
-        )  
+            **kwargs,
+        )
 
     @wraps(WoeStabilizer.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
-        
+
     @property
-    def fitted(self) -> WoeStabilizerResult: return self.model_ui.fitted
+    def fitted(self) -> WoeStabilizerResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

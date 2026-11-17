@@ -20,9 +20,9 @@ What It Provides
   observation count for reporting and transparency.
 """
 
-from ...deps.data   import  pDF, pSe
-from ...ml.sampling import  Subsampling
-from .estimator     import  FeatureEstimator, OutputModel
+from ...deps.data import pDF, pSe
+from ...ml.sampling import Subsampling
+from .estimator import FeatureEstimator, OutputModel
 
 
 class SamplingUtils:
@@ -48,8 +48,8 @@ class SamplingUtils:
     @staticmethod
     def _is_gbm(model) -> bool:
         return FeatureEstimator(model).is_non_linear_estimator()
-    
-    def subsample(self, X:pDF, y:pSe) -> tuple[pDF, pSe]:
+
+    def subsample(self, X: pDF, y: pSe) -> tuple[pDF, pSe]:
         """
         Produce a stratified subsample appropriate for the model type.
 
@@ -65,8 +65,8 @@ class SamplingUtils:
         tuple[pDF, pSe]
             (X_subsampled, y_subsampled) — stratified
             subsample preserving the target distribution.
-        """        
-        rs = self.params.get('random_state', 42)
+        """
+        rs = self.params.get("random_state", 42)
         ss = Subsampling(X, y, rs)
         return ss.sensitivity(self.is_gbm)
 
@@ -75,7 +75,7 @@ class SamplingMixin:
     """
     Mixin providing subsampling and sample-spec tracking.
 
-    Adds to any host class, that defines `self.fitter.model`, the ability to 
+    Adds to any host class, that defines `self.fitter.model`, the ability to
     subsample data for sensitivity analysis and report the subsample ratio.
     """
 
@@ -93,9 +93,9 @@ class SamplingMixin:
         """
         Return the sample size used for the sensitivity evaluation.
         """
-        return self._sample_spec[0]          
+        return self._sample_spec[0]
 
-    def _get_subsample(self, X:pDF, y:pSe, params:dict) -> tuple[pDF, pSe]:
+    def _get_subsample(self, X: pDF, y: pSe, params: dict) -> tuple[pDF, pSe]:
         """
         Subsample the data and record the sample specification.
 
@@ -112,13 +112,13 @@ class SamplingMixin:
         -------
         tuple[pDF, pSe]
             (X_subsampled, y_subsampled)
-        """        
+        """
         su = SamplingUtils(self.fitter.model, params)
         X_, y_ = su.subsample(X, y)
         self._set_sample_spec(X, X_)
         return X_, y_
-    
-    def _set_sample_spec(self, X:pDF, X_:pDF) -> None:
+
+    def _set_sample_spec(self, X: pDF, X_: pDF) -> None:
         """
         Record the subsample observation count and ratio.
 
@@ -128,8 +128,6 @@ class SamplingMixin:
             Original full dataset.
         X_ : pDF
             Subsampled dataset.
-        """        
+        """
         obs = len(X_)
-        self._sample_spec = (
-            obs, round( obs / len(X), 4)
-        )  
+        self._sample_spec = (obs, round(obs / len(X), 4))

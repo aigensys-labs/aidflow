@@ -38,66 +38,43 @@ The `agent_choice` parameter supports two modes:
   diagnostic insights (SHAP drift, significance, etc.).
 """
 
-from ...deps.data                   import  pDF, pSe, np
-from ...deps.plots                  import  go
-from ...deps.types                  import  NDArray
+from ...deps.data import pDF, pSe, np
+from ...deps.plots import go
+from ...deps.types import NDArray
 
-from ...core.base                   import  FitterModelBase
-from ...core.factory                import  (
-                                            Dataclass, 
-                                            DictClass
-                                            )
-from ...core.foundation             import  AigParam
-from ...core.base.worker            import  WorkerBase
-from ...core.base.adapter           import  ModelAdapterBase
-from ...core.io                     import  (
-                                            TempRegistry,
-                                            Temp
-                                            )
-from ...core.interop                import  Pd
-from ...core.standard               import  VarStd
-from ...core.accessor               import  (
-                                            Format, 
-                                            Spinner
-                                            )
+from ...core.base import FitterModelBase
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.base.worker import WorkerBase
+from ...core.base.adapter import ModelAdapterBase
+from ...core.io import TempRegistry, Temp
+from ...core.interop import Pd
+from ...core.standard import VarStd
+from ...core.accessor import Format, Spinner
 
-from ...ml.features                 import  WoEPlot
-from ...ml.tests                    import  TestSampleDiff
-from ...ml.metrics                  import  (
-                                            LBL as LBL_D,
-                                            DiagnosticsResult,
-                                            SeparationDiagnostics,
-                                            GiniLiftPlot
-                                            )
-from ...learner.features.pruning    import  (
-                                            GINI as GINI_G,
-                                            GiniPath,
-                                            )
-from ...learner.features.importance import  (
-                                            LBL as LBL_I,
-                                            MTD as MTD_I
-                                            )
+from ...ml.features import WoEPlot
+from ...ml.tests import TestSampleDiff
+from ...ml.metrics import (
+    LBL as LBL_D,
+    DiagnosticsResult,
+    SeparationDiagnostics,
+    GiniLiftPlot,
+)
+from ...learner.features.pruning import (
+    GINI as GINI_G,
+    GiniPath,
+)
+from ...learner.features.importance import LBL as LBL_I, MTD as MTD_I
 
-from ...storage.export              import  Export
+from ...storage.export import Export
 
-from ...display.style               import  TableStyle
+from ...display.style import TableStyle
 
-from ..base.processor               import  (
-                                            AGENTS,
-                                            FitterSelectionBase
-                                            )
-from ..predict.adapter              import  PredictorAdapter                                            
-from ..compare.processor            import  (
-                                            STAT as STAT_C,
-                                            RANK as RANK_C,
-                                            ComparatorStats
-                                            )
+from ..base.processor import AGENTS, FitterSelectionBase
+from ..predict.adapter import PredictorAdapter
+from ..compare.processor import STAT as STAT_C, RANK as RANK_C, ComparatorStats
 
-from .agent                         import  (
-                                            AgentPredictorInput,
-                                            AgentPredictorResultDual,
-                                            AgentPredictor
-                                            )
+from .agent import AgentPredictorInput, AgentPredictorResultDual, AgentPredictor
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -105,38 +82,48 @@ from .agent                         import  (
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class ID(DictClass):
     """Static view file identifiers for HTML overview."""
-    P = lambda x: f'Static_View_of_Agent_{x}_Performance'
+
+    P = lambda x: f"Static_View_of_Agent_{x}_Performance"
+
 
 class LBL(DictClass):
     """Labels for performance metrics, drift indicators, and display."""
-    N  = lambda x: f'Agent {x}'
-    TD = 'TrainΔ'
-    VD = 'ValidΔ'
-    V  = 'Valid'
-    T  = 'Test'
-    D  = 'DriftΔ'
-    S  = 'SignificantΔ'
-    P  = 'PermutationΔ'
-    GT = 'Gini'
-    IV = 'IV'
-    KS = 'KS'
+
+    N = lambda x: f"Agent {x}"
+    TD = "TrainΔ"
+    VD = "ValidΔ"
+    V = "Valid"
+    T = "Test"
+    D = "DriftΔ"
+    S = "SignificantΔ"
+    P = "PermutationΔ"
+    GT = "Gini"
+    IV = "IV"
+    KS = "KS"
+
 
 class STAT(DictClass):
     """Store keys for per-agent diagnostic data."""
-    FS = 'fe_selected'
-    FO = 'fe_ordered'
-    FD = 'fe_description'
-    GP = 'gini_path'
-    SH = 'shap'
-    PM = 'permutation'
-    PF = 'performance'
-    SO = 'score_order'
+
+    FS = "fe_selected"
+    FO = "fe_ordered"
+    FD = "fe_description"
+    GP = "gini_path"
+    SH = "shap"
+    PM = "permutation"
+    PF = "performance"
+    SO = "score_order"
+
 
 class DIAG(DictClass):
     """Diagnostic comparison labels."""
-    T = 'Training Agent'
-    C = 'Champion Agent'
+
+    T = "Training Agent"
+    C = "Champion Agent"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 @Dataclass.base
 class SelectorParamsBase:
@@ -158,11 +145,13 @@ class SelectorParamsBase:
     create_html_overview : bool, default=False
         If True, generate and save a static HTML overview of
         each agent's performance (for documentation/archival).
-    """    
+    """
+
     alpha: float = 0.05
     proba_bins: int = 10
     agent_choice: int | dict[int, list] = 1
     create_html_overview: bool = False
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class SelectorParamsCfg:
@@ -189,19 +178,22 @@ class SelectorParamsCfg:
         will fit one during `process`.
     preprocess : bool | None, default=None
         If True, apply the full encoding pipeline to input data.
-    """    
-    predictors:  PredictorAdapter
-    fe_cleaner:  ModelAdapterBase    
-    woe_encoder: ModelAdapterBase    
-    comparator:  ModelAdapterBase    
-    target:      str
-    verbose:     bool | int = True
-    predictor:   ModelAdapterBase | AgentPredictor = None
-    preprocess:  bool|None = None
+    """
+
+    predictors: PredictorAdapter
+    fe_cleaner: ModelAdapterBase
+    woe_encoder: ModelAdapterBase
+    comparator: ModelAdapterBase
+    target: str
+    verbose: bool | int = True
+    predictor: ModelAdapterBase | AgentPredictor = None
+    preprocess: bool | None = None
+
 
 @Dataclass.base
 class SelectorParams(SelectorParamsBase, SelectorParamsCfg):
     """Woker params input design."""
+
 
 @Dataclass.base
 class SelectorInput:
@@ -219,9 +211,11 @@ class SelectorInput:
     agents : tuple | list | None
         Agents to include in the analysis. Default: all.
     """
-    test_set:   pDF 
-    train_set:  pDF = None
-    agents:     tuple|list|None = tuple(AGENTS)
+
+    test_set: pDF
+    train_set: pDF = None
+    agents: tuple | list | None = tuple(AGENTS)
+
 
 @Dataclass.base
 class SelectorResult:
@@ -238,10 +232,12 @@ class SelectorResult:
         Per-agent performance comparison (training vs. champion).
     shap : dict
         Per-agent SHAP drift analysis (train vs. test per feature).
-    """    
+    """
+
     agent_predictor: AgentPredictor
-    performance:     dict
-    shap:            dict
+    performance: dict
+    shap: dict
+
 
 @Dataclass.base
 class SelectorStats:
@@ -257,10 +253,14 @@ class SelectorStats:
     diagnostics : dict[str, DiagnosticsResult]
         Side-by-side diagnostic results for the training agent
         (`DIAG.T`) and the champion agent (`DIAG.C`).
-    """    
-    summary:     dict[int, dict]
+    """
+
+    summary: dict[int, dict]
     diagnostics: dict[str, DiagnosticsResult]
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class PredictorBase:
     """
@@ -276,38 +276,42 @@ class PredictorBase:
     preprocess : bool, default=False
         Whether to apply preprocessing when predicting.
     """
+
     _store: dict[int, dict] = {}
 
-    def __init__(self, predictors: PredictorAdapter, preprocess:bool=False):
-        self.predictors  = predictors
-        self.preprocess  = preprocess
+    def __init__(self, predictors: PredictorAdapter, preprocess: bool = False):
+        self.predictors = predictors
+        self.preprocess = preprocess
 
-    def _norm_idx(self, a:str|int) -> int:
+    def _norm_idx(self, a: str | int) -> int:
         """Normalize an agent identifier to its integer key."""
         if isinstance(a, int):
             return a
-        return {a:i for i,a in AGENTS.items()}[a]
-        
-    def _get_fes(self, a:int) -> tuple[list, list]:
+        return {a: i for i, a in AGENTS.items()}[a]
+
+    def _get_fes(self, a: int) -> tuple[list, list]:
         """Returns tuple of Agent's [0] Selected Features and [1] Selected Ordered Features."""
         model = self.predictors.get_agent(a)
-        fes   = model.state.features.selected
+        fes = model.state.features.selected
         order = [x for x in model.fitter.get_ordered_fes() if x in fes]
-        
+
         if len(fes) != len(order):
             raise ValueError(
-            f'AIG SAFETY ► Unexpected mismatch between selected vs. ordered Features in Agent {a}'
+                f"AIG SAFETY ► Unexpected mismatch between selected vs. ordered Features in Agent {a}"
             )
-        
+
         return fes, order
 
-    def _get_stored(self, method:str, a:int=None) -> pDF | tuple | None:
+    def _get_stored(self, method: str, a: int = None) -> pDF | tuple | None:
         """Retrieve a cached diagnostic result."""
         if a is None:
             return self._store[method]
-        return self._store[method].get(a)    
+        return self._store[method].get(a)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-    
+
+
 class WOEEncoder(PredictorBase):
     """
     WOE Data and Plot Provider for Selector Diagnostics.
@@ -327,16 +331,18 @@ class WOEEncoder(PredictorBase):
         Target column name.
     preprocess : bool, default=True
         Whether to apply the full encoding pipeline to input data.
-    """    
-    def __init__(self, 
-        predictors:  PredictorAdapter, 
-        woe_encoder: ModelAdapterBase, 
-        target:      str, 
-        preprocess:  bool = True
+    """
+
+    def __init__(
+        self,
+        predictors: PredictorAdapter,
+        woe_encoder: ModelAdapterBase,
+        target: str,
+        preprocess: bool = True,
     ):
         super().__init__(predictors, preprocess)
         self.woe_encoder = woe_encoder
-        self.target      = target
+        self.target = target
         self._set_fes()
 
     def _set_fes(self) -> None:
@@ -351,7 +357,7 @@ class WOEEncoder(PredictorBase):
           order (for plot column ordering).
         - `self._fes_org`: Union of all original feature names
           (for the WOE encoder input).
-        """        
+        """
         self._fes_order = {}
         org = []
 
@@ -365,10 +371,11 @@ class WOEEncoder(PredictorBase):
             else:
                 org.extend(VarStd.fe_to_var(fes))
 
-        self._fes_org = list(set(org))                
+        self._fes_org = list(set(org))
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-       
-    def create_ml_data(self, data:pDF) -> pDF:
+
+    def create_ml_data(self, data: pDF) -> pDF:
         """
         Create WOE-encoded data for the test set.
 
@@ -386,16 +393,17 @@ class WOEEncoder(PredictorBase):
             Input data + WOE-encoded feature columns.
         """
         w = self.woe_encoder.predict(
-            data, subset = self._fes_org, preprocess = self.preprocess
+            data, subset=self._fes_org, preprocess=self.preprocess
         )
         d = data.copy()
         d[w.columns] = w
         return d
 
-    def create_plots(self, 
-        ml_data:   pDF, 
-        agents:    tuple[int, ...] = tuple(AGENTS),
-        add_title: bool = False
+    def create_plots(
+        self,
+        ml_data: pDF,
+        agents: tuple[int, ...] = tuple(AGENTS),
+        add_title: bool = False,
     ) -> dict[int, go.Figure]:
         """
         Create interactive WOE dash plots for the specified agents.
@@ -418,29 +426,35 @@ class WOEEncoder(PredictorBase):
         dict[int, go.Figure]
             Per-agent WOE dash figures.
         """
-        title = lambda a: (f'{LBL.N(a)}'
-            '→ Test Data WOE View to Significant Features Behavior '
-            '→ Ordered by Training Feature Importance'
+        title = lambda a: (
+            f"{LBL.N(a)}"
+            "→ Test Data WOE View to Significant Features Behavior "
+            "→ Ordered by Training Feature Importance"
         )
-        update_layout = {'margin': dict(t=40, r=0, l=0, b=0)} if not add_title else {}
+        update_layout = {"margin": dict(t=40, r=0, l=0, b=0)} if not add_title else {}
 
         d = {}
         for a in agents:
             d[a] = WoEPlot(
-                encoder = self.woe_encoder,
-                apply_data_quality = False,
-                apply_woe_encoding = False
+                encoder=self.woe_encoder,
+                apply_data_quality=False,
+                apply_woe_encoding=False,
             ).dash(
-                data = ml_data,
-                target = self.target,
-                features = self._fes_order[a],
-                grid_cols = 3,
-                grid_title = title(a) if add_title else None, 
-                update_layout = update_layout,
-                verbose = False
-            )['fig']
+                data=ml_data,
+                target=self.target,
+                features=self._fes_order[a],
+                grid_cols=3,
+                grid_title=title(a) if add_title else None,
+                update_layout=update_layout,
+                verbose=False,
+            )[
+                "fig"
+            ]
         return d
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class PredictorStats(PredictorBase):
     """
@@ -470,28 +484,31 @@ class PredictorStats(PredictorBase):
         Significance level for SHAP drift testing.
     """
 
-    def __init__(self, 
-        predictors: PredictorAdapter, 
-        comparator: ModelAdapterBase, 
-        alpha: float = 0.05
+    def __init__(
+        self,
+        predictors: PredictorAdapter,
+        comparator: ModelAdapterBase,
+        alpha: float = 0.05,
     ):
         super().__init__(predictors)
         self.compare = comparator
-        self.alpha   = alpha
+        self.alpha = alpha
 
-        self._store  = {
+        self._store = {
             STAT.GP: {},
             STAT.PM: {},
             STAT.SH: {},
             STAT.PF: {},
             STAT.SO: {},
-        }   
+        }
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-        
-    def get_stats(self, 
-        test_ml:  pDF, 
-        train_ml: pDF = None, 
-        agents:   tuple[int, ...] = tuple(AGENTS)
+
+    def get_stats(
+        self,
+        test_ml: pDF,
+        train_ml: pDF = None,
+        agents: tuple[int, ...] = tuple(AGENTS),
     ) -> dict[int, dict]:
         """
         Compute the full diagnostic bundle for all specified agents.
@@ -517,17 +534,17 @@ class PredictorStats(PredictorBase):
             - `STAT.PM`: Permutation importance table.
             - `STAT.PF`: Performance comparison table.
         """
-        stats  = {}
+        stats = {}
         for a in AGENTS:
             if a not in agents:
                 continue
 
             fes, fe_order = self._get_fes(a)
-            g_p  = self._get_gini_path(a, fe_order)
+            g_p = self._get_gini_path(a, fe_order)
             shap = self._compare_shap(a, train_ml, test_ml, fes, fe_order)
             perm = self._get_permutation(a, fe_order)
             perf = self._get_performance(a)
-            
+
             fe_def = self._get_fes_def(fe_order, g_p, shap, perm)
 
             stats[a] = {
@@ -537,13 +554,14 @@ class PredictorStats(PredictorBase):
                 STAT.GP: g_p,
                 STAT.SH: shap,
                 STAT.PM: perm,
-                STAT.PF: perf
+                STAT.PF: perf,
             }
 
         return stats
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
-    def _get_performance(self, a:int) -> dict:
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def _get_performance(self, a: int) -> dict:
         """
         Get the performance comparison (training vs. test) for an agent.
 
@@ -554,28 +572,31 @@ class PredictorStats(PredictorBase):
         -------
         pDF
             Table with rows: Gini, IV, KS. Columns: Valid, Test, DriftΔ.
-        """        
+        """
         s = self._get_stored(STAT.PF, a)
         if s is not None:
             return s
-        
+
         m = self.predictors.get_agent(a)
-        d:DiagnosticsResult = m.stats.diagnostics
-                
-        test:ComparatorStats = self.compare.stats
+        d: DiagnosticsResult = m.stats.diagnostics
+
+        test: ComparatorStats = self.compare.stats
         p = test.summary[RANK_C.PE].loc[a]
-        p = pDF({
-            LBL.V: [d.gini, d.IV, d.KS],
-            LBL.T: [p[STAT_C.GT], p[STAT_C.IV], p[STAT_C.KS]]
-        })
-        p.index  = [LBL.GT, LBL.IV, LBL.KS]
+        p = pDF(
+            {
+                LBL.V: [d.gini, d.IV, d.KS],
+                LBL.T: [p[STAT_C.GT], p[STAT_C.IV], p[STAT_C.KS]],
+            }
+        )
+        p.index = [LBL.GT, LBL.IV, LBL.KS]
         p[LBL.D] = p[LBL.T] - p[LBL.V]
-        
+
         self._store[STAT.PF][a] = p
         return self._get_stored(STAT.PF, a)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def _get_gini_path(self, a:int, fe_order:list) -> pDF:
+
+    def _get_gini_path(self, a: int, fe_order: list) -> pDF:
         """
         Get the Gini path (incremental Gini per feature) for an agent.
 
@@ -589,24 +610,25 @@ class PredictorStats(PredictorBase):
         pDF
             One row per feature (in importance order) with
             TrainΔ and ValidΔ incremental Gini values.
-        """        
+        """
         s = self._get_stored(STAT.GP, a)
         if s is not None:
             return s
-        
+
         model = self.predictors.get_agent(a)
         gp: GiniPath = model.stats.gini_path
-        
-        tv  = gp.train_valid.loc[fe_order].copy()
-        tv  = tv.rename(columns={GINI_G.T: LBL.TD, GINI_G.V: LBL.VD})
+
+        tv = gp.train_valid.loc[fe_order].copy()
+        tv = tv.rename(columns={GINI_G.T: LBL.TD, GINI_G.V: LBL.VD})
         tv1 = tv.diff(1)
         tv1.iloc[0] = tv.iloc[0]
         self._store[STAT.GP][a] = tv1
 
         return self._get_stored(STAT.GP, a)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def _get_permutation(self, a:int, fe_order:list) -> pDF:
+
+    def _get_permutation(self, a: int, fe_order: list) -> pDF:
         """
         Get the permutation importance for an agent.
 
@@ -619,22 +641,23 @@ class PredictorStats(PredictorBase):
         pDF
             One row per feature (in importance order) with
             PermutationΔ value and significance flag.
-        """        
+        """
         s = self._get_stored(STAT.PM, a)
         if s is not None:
             return s
-        
+
         model = self.predictors.get_agent(a)
         fi = model.report.feature_importance.method_results
-        p:pDF = fi[MTD_I.P].set_index(LBL_I.F)
+        p: pDF = fi[MTD_I.P].set_index(LBL_I.F)
         p = p.loc[fe_order, [LBL_I.P, LBL_I.IS]].rename(columns={LBL_I.P: LBL.P})
 
         self._store[STAT.PM][a] = p
         return self._get_stored(STAT.PM, a)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
-    def _shap_stats(shap_array:NDArray) -> tuple[NDArray, NDArray, NDArray]:
+    def _shap_stats(shap_array: NDArray) -> tuple[NDArray, NDArray, NDArray]:
         """
         Compute per-feature SHAP summary statistics.
 
@@ -647,13 +670,13 @@ class PredictorStats(PredictorBase):
         -------
         tuple
             (mean_abs_shap, std_shap, n_samples)
-        """        
+        """
         m = np.abs(shap_array).mean(axis=0)
         s = shap_array.std(ddof=1, axis=0)
-        n = np.array([shap_array.shape[0]]*shap_array.shape[1])
+        n = np.array([shap_array.shape[0]] * shap_array.shape[1])
         return m, s, n
 
-    def _store_train_shap(self, a:int, train_ml:pDF|None, fes_orig:list):
+    def _store_train_shap(self, a: int, train_ml: pDF | None, fes_orig: list):
         """
         Compute and cache the training set SHAP statistics.
 
@@ -667,11 +690,11 @@ class PredictorStats(PredictorBase):
             Training data (WOE-encoded).
         fes_orig : list
             Original feature names for SHAP computation.
-        """        
+        """
         if self._get_stored(STAT.SH, a) is not None:
             return
         if train_ml is None:
-            nan = np.array([np.nan]*len(fes_orig))
+            nan = np.array([np.nan] * len(fes_orig))
             self._store[STAT.SH][a] = (nan, nan, nan)
             return
         model = self.predictors.get_agent(a)
@@ -679,12 +702,8 @@ class PredictorStats(PredictorBase):
         v_shap = model.fitter.shap_values(v)
         self._store[STAT.SH][a] = self._shap_stats(v_shap)
 
-    def _compare_shap(self, 
-        a:          int, 
-        train_ml:   pDF, 
-        test_ml:    pDF, 
-        fes_orig:   list, 
-        fes_order:  list
+    def _compare_shap(
+        self, a: int, train_ml: pDF, test_ml: pDF, fes_orig: list, fes_order: list
     ) -> pDF:
         """
         Compute SHAP drift analysis: train vs. test per feature.
@@ -713,21 +732,20 @@ class PredictorStats(PredictorBase):
         pDF
             Per-feature SHAP comparison: Valid, Test, DriftΔ,
             and SignificantΔ flag.
-        """        
-        self._store_train_shap(a, train_ml, fes_orig)        
+        """
+        self._store_train_shap(a, train_ml, fes_orig)
         model = self.predictors.get_agent(a)
 
         t_shap = model.fitter.shap_values(test_ml[fes_orig])
         tm, ts, tn = self._shap_stats(t_shap)
         vm, vs, vn = self._get_stored(STAT.SH, a)
 
-        s = pDF(index = fes_orig)
+        s = pDF(index=fes_orig)
         s[LBL.V] = vm
         s[LBL.T] = tm
         s[LBL.D] = s[LBL.T] - s[LBL.V]
         s[LBL.S] = TestSampleDiff(self.alpha).welch_mx(
-            m1 = tm, n1 = tn, s1 = ts, 
-            m2 = vm, n2 = vn, s2 = vs
+            m1=tm, n1=tn, s1=ts, m2=vm, n2=vn, s2=vs
         )
         s = s.loc[fes_order]
 
@@ -735,10 +753,13 @@ class PredictorStats(PredictorBase):
             return s[[LBL.T]]
 
         return s
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     @staticmethod
-    def _get_fes_def(fe_order:list, gini_path:pDF, shap:pDF, permutation:pDF) -> dict[str, dict]:
+    def _get_fes_def(
+        fe_order: list, gini_path: pDF, shap: pDF, permutation: pDF
+    ) -> dict[str, dict]:
         """
         Assemble per-feature description strings for display.
 
@@ -762,10 +783,10 @@ class PredictorStats(PredictorBase):
         -------
         dict[str, dict]
             {feature_name: {metric: formatted_value}}
-        """        
+        """
         defs = {}
-        gp = gini_path.map(lambda x: f"\u00A0{x:.3f}" if x >= 0 else f"{x:.3f}")
-        pm = permutation.map(lambda x: f"\u00A0{x:.3f}" if x >= 0 else f"{x:.3f}")
+        gp = gini_path.map(lambda x: f"\u00a0{x:.3f}" if x >= 0 else f"{x:.3f}")
+        pm = permutation.map(lambda x: f"\u00a0{x:.3f}" if x >= 0 else f"{x:.3f}")
         sh = shap.map("{:.3f}".format)
         for fe in fe_order:
             defs[fe] = {
@@ -774,7 +795,10 @@ class PredictorStats(PredictorBase):
                 STAT.SH: sh.loc[fe, [LBL.V, LBL.T]].to_dict(),
             }
         return defs
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class AgentChoicePredictor(PredictorBase):
     """
@@ -808,32 +832,33 @@ class AgentChoicePredictor(PredictorBase):
     bins : int, default=10
         Number of bins for lift/diagnostic tables.
     """
+
     _test_id: int = None
-    
-    def __init__(self, 
-        predictors:   PredictorAdapter, 
+
+    def __init__(
+        self,
+        predictors: PredictorAdapter,
         agent_choice: int | dict[int, list],
-        target:       str,
-        predictor:    ModelAdapterBase | AgentPredictor = None,
-        bins:         int = 10
+        target: str,
+        predictor: ModelAdapterBase | AgentPredictor = None,
+        bins: int = 10,
     ):
-        super().__init__(predictors)        
+        super().__init__(predictors)
         self.agent_choice = agent_choice
-        self.target       = target
-        self.bins         = bins
-        
+        self.target = target
+        self.bins = bins
+
         self.agent_predictor = predictor or AgentPredictor(self._get_setup())
-        self._agent_worker   = predictor
-        
-        self._store = {
-            STAT.PF: {}
-        }
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        self._agent_worker = predictor
+
+        self._store = {STAT.PF: {}}
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def _is_predictor_model(self) -> bool:
         """AgentPredictor (model) or AgentPredictorWorker (worker)."""
         return isinstance(self.agent_predictor, AgentPredictor)
-    
+
     def get_agent_predictor(self) -> AgentPredictor:
         """Returns agent predictor."""
         if self._is_predictor_model():
@@ -841,16 +866,18 @@ class AgentChoicePredictor(PredictorBase):
         w: WorkerBase = self.agent_predictor.model
         return w.model.model
 
-    def _get_agent_predictor_inputs(self, train_ml:pDF, test_ml:pDF) -> AgentPredictorInput:
+    def _get_agent_predictor_inputs(
+        self, train_ml: pDF, test_ml: pDF
+    ) -> AgentPredictorInput:
         return AgentPredictorInput(
-            train_set    = train_ml,
-            test_set     = test_ml,
-            features     = self._get_selected_fes(),
-            agent_choice = self._get_selected_agent(),
-            target       = self.target
-        )       
+            train_set=train_ml,
+            test_set=test_ml,
+            features=self._get_selected_fes(),
+            agent_choice=self._get_selected_agent(),
+            target=self.target,
+        )
 
-    def _fit_agent_predictor_model(self, train_ml:pDF, test_ml:pDF) -> None:
+    def _fit_agent_predictor_model(self, train_ml: pDF, test_ml: pDF) -> None:
         """
         Fit the champion agent predictor on training data.
 
@@ -866,32 +893,33 @@ class AgentChoicePredictor(PredictorBase):
             Test data (WOE-encoded) — used for dual evaluation.
         """
         inputs = self._get_agent_predictor_inputs(train_ml, test_ml)
-        predictor = self.agent_predictor # worker process api
-        if self._is_predictor_model():   # model fit api         
-            predictor = predictor.fit    
+        predictor = self.agent_predictor  # worker process api
+        if self._is_predictor_model():  # model fit api
+            predictor = predictor.fit
         predictor(inputs)
-    
-    def _transform(self, test_ml:pDF, is_inference:bool) -> NDArray:
+
+    def _transform(self, test_ml: pDF, is_inference: bool) -> NDArray:
         """Returns agent test data predicton."""
         m = self.agent_predictor
         f = self._get_selected_fes()
 
         if is_inference or self._is_predictor_model():
-            return m.transform(test_ml[f]).data.squeeze()  
+            return m.transform(test_ml[f]).data.squeeze()
 
         res: AgentPredictorResultDual = m.fitted
         return res.test_data.squeeze()
-    # ─────────────────────────────────────────────────────────────────────────────────────────────   
-    
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def _get_setup(self):
         m = self.predictors.get_agent(next(iter(AGENTS)))
         return m.model.setup
-    
+
     def _get_selected_agent(self) -> int:
         if isinstance(self.agent_choice, int):
             return self.agent_choice
         return next(iter(self.agent_choice))
-    
+
     def _get_agent_orig_model(self):
         """Agent Model from Training Phase."""
         a = self._get_selected_agent()
@@ -901,19 +929,20 @@ class AgentChoicePredictor(PredictorBase):
         """Agent's Selected Features in orig. data order."""
         a = self._get_selected_agent()
         return self._get_fes(a)[0]
-        
+
     def _get_selected_fes(self) -> list:
         """Agent's User Selected Features in orig. data order."""
-        fes = self._get_orig_fes() 
+        fes = self._get_orig_fes()
         if isinstance(self.agent_choice, int):
             return fes
         a = self._get_selected_agent()
-        return [x for x in fes if x in self.agent_choice[a]] # to maintain orig. order
-    
+        return [x for x in fes if x in self.agent_choice[a]]  # to maintain orig. order
+
     def _diagnostics(self, y: pSe, p: pSe) -> DiagnosticsResult:
         return SeparationDiagnostics(lift_bins=self.bins).evaluate(y, p)
-        
-    def _predict_diag(self, test_ml:pDF, train_ml:pDF=None, is_champion_agent:bool = False
+
+    def _predict_diag(
+        self, test_ml: pDF, train_ml: pDF = None, is_champion_agent: bool = False
     ) -> DiagnosticsResult:
         if not is_champion_agent:
             m = self._get_agent_orig_model()
@@ -922,9 +951,10 @@ class AgentChoicePredictor(PredictorBase):
         else:
             p = self._transform(test_ml, train_ml is None)
         return self._diagnostics(test_ml[self.target], p)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────         
-        
-    def create_diagnostics(self, test_ml:pDF, train_ml:pDF=None) -> dict:
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def create_diagnostics(self, test_ml: pDF, train_ml: pDF = None) -> dict:
         """
         Create side-by-side diagnostics for the Training vs Champion agent.
 
@@ -950,23 +980,20 @@ class AgentChoicePredictor(PredictorBase):
             {DIAG.T: DiagnosticsResult, DIAG.C: DiagnosticsResult}
         """
         a = self._get_selected_agent()
-        
-        if (
-            self._get_stored(STAT.PF, a) is None or 
-            id(test_ml) != self._test_id
-        ):
+
+        if self._get_stored(STAT.PF, a) is None or id(test_ml) != self._test_id:
             self._test_id = id(test_ml)
             self._store[STAT.PF][a] = self._predict_diag(test_ml)
-        
+
         o = self._get_stored(STAT.PF, a)
         r = self._predict_diag(test_ml, train_ml, True)
 
-        return {
-            DIAG.T: o, 
-            DIAG.C: r
-        }
+        return {DIAG.T: o, DIAG.C: r}
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-   
+
+
 class Fitter(FitterSelectionBase[SelectorInput, SelectorParams]):
     """
     Selector Fitter — orchestrates the full selection and deployment pipeline.
@@ -988,43 +1015,45 @@ class Fitter(FitterSelectionBase[SelectorInput, SelectorParams]):
     params : SelectorParams
         Full selector configuration (analysis settings + pipeline refs).
     """
-    
-    SelectionInput:  type = SelectorInput
+
+    SelectionInput: type = SelectorInput
     agents_condition: int = 1
 
     def __init__(self, params: SelectorParams):
         super().__init__(params)
-        
+
         self.woe_encoder = WOEEncoder(
-            predictors  = self.prm.predictors,
-            woe_encoder = self.prm.woe_encoder,
-            target      = self.prm.target,
-            preprocess  = self.prm.preprocess
+            predictors=self.prm.predictors,
+            woe_encoder=self.prm.woe_encoder,
+            target=self.prm.target,
+            preprocess=self.prm.preprocess,
         )
         self.predictor_stats = PredictorStats(
-            predictors  = self.prm.predictors,
-            comparator  = self.prm.comparator,
-            alpha       = self.prm.alpha
-        )        
-        self.agent_predictor = AgentChoicePredictor(
-            predictors  = self.prm.predictors,
-            agent_choice= self.prm.agent_choice,
-            predictor   = self.prm.predictor,
-            target      = self.prm.target,
-            bins        = self.prm.proba_bins
+            predictors=self.prm.predictors,
+            comparator=self.prm.comparator,
+            alpha=self.prm.alpha,
         )
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
+        self.agent_predictor = AgentChoicePredictor(
+            predictors=self.prm.predictors,
+            agent_choice=self.prm.agent_choice,
+            predictor=self.prm.predictor,
+            target=self.prm.target,
+            bins=self.prm.proba_bins,
+        )
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def _save_overview(self, overview: dict[int, str]):
         """Saves Static Prformance Overview to AIG temp folder."""
         for a, html in overview.items():
             m = self.prm.predictors.get_agent(a)
             s = m.get_project_signature()
             i = ID.P(a)
-            p = Temp.gen_path(i, file_type='html', project_signature=s)
+            p = Temp.gen_path(i, file_type="html", project_signature=s)
             TempRegistry.register(s, i, p)
             Export.html(html, p)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
     def process(self, inputs: SelectorInput | pDF, **kwargs) -> AgentPredictor:
         """
@@ -1053,8 +1082,8 @@ class Fitter(FitterSelectionBase[SelectorInput, SelectorParams]):
             Use `.transform(data)` for production scoring.
         """
 
-        inputs_  = self.get_inputs(inputs, kwargs)
-        data_ml  = self.woe_encoder.create_ml_data(inputs_.test_set)
+        inputs_ = self.get_inputs(inputs, kwargs)
+        data_ml = self.woe_encoder.create_ml_data(inputs_.test_set)
         train_ml = inputs_.train_set
 
         summary = self.predictor_stats.get_stats(data_ml, train_ml, self.agents)
@@ -1066,17 +1095,17 @@ class Fitter(FitterSelectionBase[SelectorInput, SelectorParams]):
 
         # Static Temp Overview
         if self.prm.create_html_overview:
-            woe_fig  = self.woe_encoder.create_plots(data_ml, self.agents)
+            woe_fig = self.woe_encoder.create_plots(data_ml, self.agents)
             overview = SelectorOverview(woe_fig, summary).create()
             self._save_overview(overview)
 
-        self.stats = SelectorStats(
-            summary = summary,
-            diagnostics = diag
-        )
+        self.stats = SelectorStats(summary=summary, diagnostics=diag)
 
         return self.agent_predictor.get_agent_predictor()
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class SelectorProcessor(FitterModelBase[Fitter]):
     """
@@ -1158,17 +1187,17 @@ class SelectorProcessor(FitterModelBase[Fitter]):
     >>> result = selector.process(test_data, train_set=train_data)
     """
 
-    def __init__(self, *args, params: dict|SelectorParams = None, **kwargs):
+    def __init__(self, *args, params: dict | SelectorParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(SelectorParams, params, args, kwargs)
         self._fitter = Fitter(self._params)
-        
-    def _get_stat(self, req:str) -> dict:
+
+    def _get_stat(self, req: str) -> dict:
         stat = {}
         stats: SelectorStats = self.stats
         for a, s in stats.summary.items():
             stat[a] = s[req]
         return stat
-    
+
     def process(self, inputs: SelectorInput | pDF, **kwargs) -> SelectorResult:
         """
         Execute the selector: fit the champion and return the deployment package.
@@ -1188,15 +1217,18 @@ class SelectorProcessor(FitterModelBase[Fitter]):
             - `performance`: Per-agent performance comparison tables.
             - `shap`: Per-agent SHAP drift tables.
         """
-        t = 'Agent Selector compute in progress'
+        t = "Agent Selector compute in progress"
         with Spinner(t, show_timer=True).progress(self._params.verbose):
             agent = self._fitter.process(inputs, **kwargs)
         return SelectorResult(
-            agent_predictor = agent,
-            performance     = self._get_stat(STAT.PF),
-            shap            = self._get_stat(STAT.SH),
+            agent_predictor=agent,
+            performance=self._get_stat(STAT.PF),
+            shap=self._get_stat(STAT.SH),
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class SelectorOverview:
     """
@@ -1223,74 +1255,72 @@ class SelectorOverview:
     stats : dict[int, dict[str, pDF|dict]]
         Per-agent diagnostic bundles (from `PredictorStats`).
     """
-    def __init__(self, 
-        woe_figs: dict[int, go.Figure], 
-        stats: dict[int, dict[str, pDF|dict]]
+
+    def __init__(
+        self, woe_figs: dict[int, go.Figure], stats: dict[int, dict[str, pDF | dict]]
     ):
-        self.figs  = woe_figs
+        self.figs = woe_figs
         self.stats = stats
-    
-    def _stats_to_html(self, a:int) -> str:
+
+    def _stats_to_html(self, a: int) -> str:
         stat = self.stats[a]
-        
+
         g = stat[STAT.GP].drop(LBL.TD, axis=1).copy()
         p = stat[STAT.PM]
         g[p.columns] = p
 
         g = Pd.style(
-            g, hide_axis = 0, 
-            format = dict(precision=4),
-            color  = dict(subset = LBL_I.IS, color = ['#B50064', None])
-        )
-        
-        s = stat[STAT.SH]                
-        c = dict(subset = LBL.S) if LBL.S in s.columns else None
-        s = Pd.style(
-            s,  
-            format = dict(precision=3), color = c
+            g,
+            hide_axis=0,
+            format=dict(precision=4),
+            color=dict(subset=LBL_I.IS, color=["#B50064", None]),
         )
 
-        o = Pd.style(
-            stat[STAT.PF],
-            format = dict(precision=4)
-        )
+        s = stat[STAT.SH]
+        c = dict(subset=LBL.S) if LBL.S in s.columns else None
+        s = Pd.style(s, format=dict(precision=3), color=c)
+
+        o = Pd.style(stat[STAT.PF], format=dict(precision=4))
 
         return TableStyle.combine_pdf_to_html(
-            [s, g, o], 
+            [s, g, o],
             [
-                'Feature Shap Value Drift', 
-                'Feature Gini Added Value to the Model',
-                'Model Performance '
-            ], 
-            tables_per_block = 2, 
-            h_align = 'left', 
-            show = False
+                "Feature Shap Value Drift",
+                "Feature Gini Added Value to the Model",
+                "Model Performance ",
+            ],
+            tables_per_block=2,
+            h_align="left",
+            show=False,
         )
 
     @staticmethod
-    def _html(a:int, stats:str, fig:str) -> str:
+    def _html(a: int, stats: str, fig: str) -> str:
         t1 = (
-            f'Agent {a} → Model Sensitivity Overview → '
-            'Ordered by Training Feature Importance'
-        ).upper()        
-        t2 = f'Agent {a} → WOE View to Features Behavior on Test Data'.upper()
-        s  = lambda x: Format.StyleStats(margin_t=0, margin_b=x, to_html=False)
+            f"Agent {a} → Model Sensitivity Overview → "
+            "Ordered by Training Feature Importance"
+        ).upper()
+        t2 = f"Agent {a} → WOE View to Features Behavior on Test Data".upper()
+        s = lambda x: Format.StyleStats(margin_t=0, margin_b=x, to_html=False)
 
         el = [
-            f'{Format.title(t1, style=s(25), show=False)} {stats}',
-            f'{Format.title(t2, style=s(10), show=False)} {fig}'
+            f"{Format.title(t1, style=s(25), show=False)} {stats}",
+            f"{Format.title(t2, style=s(10), show=False)} {fig}",
         ]
         return TableStyle.format_html(el)
-    
+
     def create(self) -> dict[int, str]:
         """Returns HTML string of Agents Performance on Validation and Test Samples"""
         html = {}
         for a, fig in self.figs.items():
             s = self._stats_to_html(a)
-            f = fig.to_html(full_html=False, include_plotlyjs='cdn')
+            f = fig.to_html(full_html=False, include_plotlyjs="cdn")
             html[a] = self._html(a, s, f)
         return html
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class SelectorGiniPlot:
     """
@@ -1311,25 +1341,22 @@ class SelectorGiniPlot:
         Side-by-side diagnostics: {DIAG.T: training, DIAG.C: champion}.
     update_layout : dict, default=None
         Additional Plotly layout overrides.
-    """   
-    def __init__(self, 
-        diagnostics:   dict[str, DiagnosticsResult], 
-        update_layout: dict = None
+    """
+
+    def __init__(
+        self, diagnostics: dict[str, DiagnosticsResult], update_layout: dict = None
     ):
         t = GiniLiftPlot.title_helper(diagnostics)
-        p = 'Test Performance'
-        titles = [
-            f'Gini {p} → {t[LBL_D.G]}',
-            f'Lift {p} → {t[LBL_D.L]}'
-        ]
+        p = "Test Performance"
+        titles = [f"Gini {p} → {t[LBL_D.G]}", f"Lift {p} → {t[LBL_D.L]}"]
         # Champion: 'rgb( 60,  95, 140)' | 'rgb(105, 120, 150)'
         #           'rgb( 90, 145, 170)' | 'rgb( 15,  90, 185)'
-        colors = ['rgb(150, 155, 170)', 'rgb( 90, 145, 170)']
+        colors = ["rgb(150, 155, 170)", "rgb( 90, 145, 170)"]
         self._gini_plot = GiniLiftPlot(
             diagnostics, plot_titles=titles, update_layout=update_layout, theme=colors
         )
-    
-    def create(self, show:bool = True):
+
+    def create(self, show: bool = True):
         """
         Render the Gini and Lift comparison plot.
 
@@ -1338,5 +1365,7 @@ class SelectorGiniPlot:
         go.Figure
             Dual-panel figure (Gini + Lift) with both agents overlaid.
         """
-        return self._gini_plot.create(show)        
+        return self._gini_plot.create(show)
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

@@ -48,39 +48,27 @@ The split serves dual purpose:
 - Validation diagnostics for fair comparison.
 """
 
-from ....deps.data              import  np, pd, pDF, pSe
-from ....deps.types             import  NDArray
+from ....deps.data import np, pd, pDF, pSe
+from ....deps.types import NDArray
 
-from ....core.base              import  (
-                                        FitterTrainBase, 
-                                        FitterModelBase
-                                        )
-from ....core.factory           import  Dataclass
-from ....core.foundation        import  AigParam
-from ....core.accessor          import  Spinner
+from ....core.base import FitterTrainBase, FitterModelBase
+from ....core.factory import Dataclass
+from ....core.foundation import AigParam
+from ....core.accessor import Spinner
 
-from ....ml.models              import  LGB, XGB
-from ....ml.sampling            import  Sampling
-from ....ml.metrics             import  (
-                                        DiagnosticsResult,
-                                        SeparationDiagnostics
-                                        )
-from ....display.verbosity      import  Verbosity
+from ....ml.models import LGB, XGB
+from ....ml.sampling import Sampling
+from ....ml.metrics import DiagnosticsResult, SeparationDiagnostics
+from ....display.verbosity import Verbosity
 
-from ...features.selection      import  (
-                                        TS, 
-                                        TreeSelectorGB
-                                        )
-from ...features.pruning        import  (
-                                        GiniPath,
-                                        FeaturesShadowPruner
-                                        )
-
+from ...features.selection import TS, TreeSelectorGB
+from ...features.pruning import GiniPath, FeaturesShadowPruner
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # LOCAL CONFIG
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 GBM = TreeSelectorGB.implemented_estimators
+
 
 @Dataclass.base
 class EstimatorCfg:
@@ -97,10 +85,12 @@ class EstimatorCfg:
         Additional solver-specific hyperparameters
         (e.g., `num_leaves`, `max_depth`, `colsample_bytree`).
     """
-    solver:  str = TS.L
-    config: dict = Dataclass.field({})
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    solver: str = TS.L
+    config: dict = Dataclass.field({})
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -133,13 +123,15 @@ class FitParamsBase:
         quantile of the shadow (permutation) distribution.
     cv : int, default=3
         Number of cross-validation folds for shadow evaluation.
-    """  
-    max_leaves:         int = 31
-    learning_rate:    float = 0.1
-    n_estimators:       int = 100
+    """
+
+    max_leaves: int = 31
+    learning_rate: float = 0.1
+    n_estimators: int = 100
     min_child_weight: float = 0.1
-    shadow_quantile:  float = 0.9
-    cv:                 int = 3
+    shadow_quantile: float = 0.9
+    cv: int = 3
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class FitParamsCfg:
@@ -160,16 +152,19 @@ class FitParamsCfg:
         Seed for reproducibility.
     verbose : bool | Verbosity, default=True
         Enable progress display.
-    """   
-    target:         str
-    val_size:       float = 0.33
+    """
+
+    target: str
+    val_size: float = 0.33
     n_permutations: int = 3
-    random_state:   int = 42
-    verbose:        bool|Verbosity = True
+    random_state: int = 42
+    verbose: bool | Verbosity = True
+
 
 @Dataclass.base
 class FitParams(FitParamsBase, FitParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class FitResult:
@@ -183,8 +178,10 @@ class FitResult:
     features_dropped : list
         Features that were eliminated.
     """
+
     features_selected: list
-    features_dropped:  list
+    features_dropped: list
+
 
 @Dataclass.base
 class FitStats:
@@ -205,10 +202,12 @@ class FitStats:
         Validation set metrics (AUC, Gini, lift table) from
         the final fitted model.
     """
+
     selector_path: dict
-    pruner_path:   dict
-    gini_path:     GiniPath
-    diagnostics:   DiagnosticsResult = None
+    pruner_path: dict
+    gini_path: GiniPath
+    diagnostics: DiagnosticsResult = None
+
 
 @Dataclass.base
 class FitDashLink:
@@ -233,13 +232,17 @@ class FitDashLink:
     val_idx : pd.Index
         Validation set row indices (for metric computation).
     """
-    pruner:    FeaturesShadowPruner
-    model:     LGB | XGB
-    target:    str
-    features:  list
+
+    pruner: FeaturesShadowPruner
+    model: LGB | XGB
+    target: str
+    features: list
     total_fes: int
-    val_idx:   pd.Index
+    val_idx: pd.Index
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.verify
 class FitWorker:
@@ -268,17 +271,19 @@ class FitWorker:
     config : EstimatorCfg
         Engine choice (LightGBM/XGBoost) and hyperparameters.
     """
-    selector = None
-    pruner   = None
-    result   = None
 
-    def __init__(self, params:FitParams, config:EstimatorCfg = None):
-        self.prm     = params
-        self.config  = config or EstimatorCfg()
-        self.target  = params.target
-        self.verbose = params.verbose        
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
+    selector = None
+    pruner = None
+    result = None
+
+    def __init__(self, params: FitParams, config: EstimatorCfg = None):
+        self.prm = params
+        self.config = config or EstimatorCfg()
+        self.target = params.target
+        self.verbose = params.verbose
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def _get_setup(self) -> dict:
         """
         Assemble the tree selector constructor arguments.
@@ -290,22 +295,20 @@ class FitWorker:
         -------
         dict
             Complete parameter set for `TreeSelectorGB`.
-        """        
-        default = dict(
-            random_state = self.prm.random_state,
-            verbose      = False
-        )
+        """
+        default = dict(random_state=self.prm.random_state, verbose=False)
         prm = dict(
-            solver           = self.config.solver,
-            max_leaves       = self.prm.max_leaves,
-            learning_rate    = self.prm.learning_rate,
-            n_estimators     = self.prm.n_estimators,
-            min_child_weight = self.prm.min_child_weight,
+            solver=self.config.solver,
+            max_leaves=self.prm.max_leaves,
+            learning_rate=self.prm.learning_rate,
+            n_estimators=self.prm.n_estimators,
+            min_child_weight=self.prm.min_child_weight,
         )
-        return default | self.config.config | prm    
+        return default | self.config.config | prm
 
-    def _train_valid_split(self, data:pDF, num:list, cat:list = None
-    ) -> tuple[ tuple[pDF,pSe], tuple[pDF,pSe] ]:
+    def _train_valid_split(
+        self, data: pDF, num: list, cat: list = None
+    ) -> tuple[tuple[pDF, pSe], tuple[pDF, pSe]]:
         """
         Stratified train/validation split for selection and fitting.
 
@@ -326,13 +329,13 @@ class FitWorker:
         -------
         tuple
             ((X_train, y_train), (X_valid, y_valid))
-        """        
+        """
         return Sampling(
-            sample_size  = self.prm.val_size, 
-            stratify     = data[self.prm.target], 
-            random_state = self.prm.random_state, 
-            shuffle      = True
-        ).train_valid_split(data[num + (cat or [])], data[self.target])   
+            sample_size=self.prm.val_size,
+            stratify=data[self.prm.target],
+            random_state=self.prm.random_state,
+            shuffle=True,
+        ).train_valid_split(data[num + (cat or [])], data[self.target])
 
     def _get_n_permutations(self) -> int:
         """
@@ -346,9 +349,9 @@ class FitWorker:
         int
             Number of shadow samples (clipped to [2, 10]).
         """
-        return np.clip(int(self.prm.n_permutations * self.prm.cv/1.5), 2, 10)
-    
-    def fit_selector(self, data:pDF, num:list, cat:list) -> None:
+        return np.clip(int(self.prm.n_permutations * self.prm.cv / 1.5), 2, 10)
+
+    def fit_selector(self, data: pDF, num: list, cat: list) -> None:
         """
         Stage 1: Tree-based feature selection with early stopping.
 
@@ -369,9 +372,9 @@ class FitWorker:
         self.selector = TreeSelectorGB(**self._get_setup(), categorical_feature=cat)
         self.selector.fit(
             *Xy_train,
-            shadow_quantile = self.prm.shadow_quantile,
-            n_permutations  = self._get_n_permutations(),
-            eval_set = [Xy_valid]
+            shadow_quantile=self.prm.shadow_quantile,
+            n_permutations=self._get_n_permutations(),
+            eval_set=[Xy_valid],
         )
 
     def _get_selector_result(self) -> list:
@@ -387,12 +390,13 @@ class FitWorker:
         ------
         ValueError
             If `fit_selector` has not been called.
-        """        
+        """
         if self.selector is None:
             raise ValueError("Fit selector .fit_selector() prior calling results.")
         return self.selector.result
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
     def _get_n_shadow_samples(self) -> int:
         """
         Determine shadow permutation count for the pruning stage.
@@ -404,8 +408,8 @@ class FitWorker:
         """
         x = max(2, int(20 / self.prm.cv))
         return np.clip(self.prm.n_permutations, 2, x)
-                    
-    def fit_pruner(self, data:pDF) -> None:
+
+    def fit_pruner(self, data: pDF) -> None:
         """
         Stage 2: Shadow feature pruning.
 
@@ -419,19 +423,17 @@ class FitWorker:
         """
         fes = self._get_selector_result()
         self.pruner = FeaturesShadowPruner(
-            model           = self.selector,
-            n_permutations  = self._get_n_shadow_samples(),
-            cv              = self.prm.cv,
-            val_size        = self.prm.val_size,
-            random_state    = self.prm.random_state,
-            verbose         = False
-        ).fit(
-            data[fes], data[self.target], 
-            shadow_quantile = self.prm.shadow_quantile
-        )
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
-    
-    def _get_result(self, fes:list) -> tuple[FitResult, FitStats]:
+            model=self.selector,
+            n_permutations=self._get_n_shadow_samples(),
+            cv=self.prm.cv,
+            val_size=self.prm.val_size,
+            random_state=self.prm.random_state,
+            verbose=False,
+        ).fit(data[fes], data[self.target], shadow_quantile=self.prm.shadow_quantile)
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def _get_result(self, fes: list) -> tuple[FitResult, FitStats]:
         """
         Assemble the final result and stats from both stages.
 
@@ -444,20 +446,22 @@ class FitWorker:
         -------
         tuple[FitResult, FitStats]
             Selected/dropped features + diagnostic paths.
-        """        
+        """
         return (
             FitResult(
-                features_selected = self.pruner.result,
-                features_dropped  = [x for x in fes if x not in self.pruner.result],
-            ), 
+                features_selected=self.pruner.result,
+                features_dropped=[x for x in fes if x not in self.pruner.result],
+            ),
             FitStats(
-                selector_path = self.selector.optim_path,
-                pruner_path   = self.pruner.optim_path,
-                gini_path     = self.pruner.gini_path,
-            ))    
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+                selector_path=self.selector.optim_path,
+                pruner_path=self.pruner.optim_path,
+                gini_path=self.pruner.gini_path,
+            ),
+        )
 
-    def pipeline(self, data:pDF, num:list, cat:list) -> None:     
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def pipeline(self, data: pDF, num: list, cat: list) -> None:
         """
         Execute the full two-stage feature selection pipeline.
 
@@ -473,9 +477,11 @@ class FitWorker:
             Categorical feature names.
         """
         self.fit_selector(data, num, cat)
-        self.fit_pruner(data)        
-        
-    def process(self, data:pDF, num:list, cat:list) -> tuple[FitResult, FitStats, FeaturesShadowPruner]:
+        self.fit_pruner(data)
+
+    def process(
+        self, data: pDF, num: list, cat: list
+    ) -> tuple[FitResult, FitStats, FeaturesShadowPruner]:
         """
         Entry point: execute the selection pipeline and return all results.
 
@@ -496,8 +502,11 @@ class FitWorker:
         self.pipeline(data, num, cat)
         result, stats = self._get_result(num + cat)
         return result, stats, self.pruner
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
-   
+
+
 class Fitter(FitterTrainBase):
     """
     GBM Training — execution backend.
@@ -527,32 +536,33 @@ class Fitter(FitterTrainBase):
     config : EstimatorCfg
         Engine choice and hyperparameters.
     """
+
     _model: LGB | XGB = None
-    
-    def __init__(self, params:FitParams, config:EstimatorCfg=None):
-        self.prm = params 
+
+    def __init__(self, params: FitParams, config: EstimatorCfg = None):
+        self.prm = params
         self.config = config or EstimatorCfg()
-    
-    def _get_result_c(self, cat:list) -> tuple[list, list]:
+
+    def _get_result_c(self, cat: list) -> tuple[list, list]:
         return [x for x in self.features if x in cat]
-    
-    def _fit(self, worker:FitWorker, data:pDF, cat:list) -> pd.Index:        
+
+    def _fit(self, worker: FitWorker, data: pDF, cat: list) -> pd.Index:
         Xy_train, Xy_valid = worker._train_valid_split(data, self.features)
 
-        e: LGB|XGB = GBM[self.config.solver]
+        e: LGB | XGB = GBM[self.config.solver]
         s = self.get_estimator_shared_setup(e, self.prm) | dict(verbose=-1)
 
-        self._model = e(**s, categorical_feature = self._get_result_c(cat))
-        self._model.fit(*Xy_train, eval_set = [Xy_valid])  
+        self._model = e(**s, categorical_feature=self._get_result_c(cat))
+        self._model.fit(*Xy_train, eval_set=[Xy_valid])
 
         return Xy_valid[0].index
 
-    def _valid_diagnostics(self, d_val:pDF) -> DiagnosticsResult:
-            t = d_val[self.prm.target]
-            p = self.predict_proba(d_val)[:, 1]
-            return SeparationDiagnostics(lift_bins=10).evaluate(t, p)
-    
-    def fit(self, data:pDF, num:list, cat:list):
+    def _valid_diagnostics(self, d_val: pDF) -> DiagnosticsResult:
+        t = d_val[self.prm.target]
+        p = self.predict_proba(d_val)[:, 1]
+        return SeparationDiagnostics(lift_bins=10).evaluate(t, p)
+
+    def fit(self, data: pDF, num: list, cat: list):
         """
         Execute the full GBM training pipeline.
 
@@ -579,27 +589,30 @@ class Fitter(FitterTrainBase):
         """
         worker = FitWorker(self.prm, self.config)
         self.result, stats, pruner = worker.process(data, num, cat)
-        
+
         self.features = self.result.features_selected
         val_idx = self._fit(worker, data, cat)
-        
+
         self.stats = FitStats(
-            **(dict(stats) | dict(diagnostics = self._valid_diagnostics(data.loc[val_idx])))
-        )        
+            **(
+                dict(stats)
+                | dict(diagnostics=self._valid_diagnostics(data.loc[val_idx]))
+            )
+        )
         self.ordered_features = pruner.get_ordered_importance_fes(self.features)
 
         self.dash = FitDashLink(
-            pruner    = pruner,
-            model     = self._model,
-            target    = self.prm.target,
-            features  = self.features,
-            total_fes = len(num)+len(cat),
-            val_idx   = val_idx
+            pruner=pruner,
+            model=self._model,
+            target=self.prm.target,
+            features=self.features,
+            total_fes=len(num) + len(cat),
+            val_idx=val_idx,
         )
 
-        return self  
-        
-    def predict_proba(self, data:pDF) -> NDArray:
+        return self
+
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities using the fitted GBM model.
 
@@ -614,8 +627,9 @@ class Fitter(FitterTrainBase):
             2-D array of shape (n_samples, 2): [P(0), P(1)] per row.
         """
         return self.model.predict_proba(data[self.features])
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -691,18 +705,21 @@ class BinaryGBM(FitterModelBase[Fitter]):
     --------
     >>> from aidflow.models import LightBinaryGBM
     """
+
     _solver: str = None
 
-    def __init__(self, *args, params: dict|FitParams = None, **kwargs):
+    def __init__(self, *args, params: dict | FitParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(FitParams, params, args, kwargs)
         self._config = self.get_estimator_config(self._params, kwargs)
-    
-    def _get_fes(self, data:pDF, num:list|None, cat:list|None) -> list:
+
+    def _get_fes(self, data: pDF, num: list | None, cat: list | None) -> list:
         if num is not None or cat is not None:
             return num or [], cat or []
-        return [x for x in data.columns if x!=self._params.target], [] # default all num, no cat
-        
-    def fit(self, data:pDF, num_features:list = None, cat_features:list = None):
+        return [
+            x for x in data.columns if x != self._params.target
+        ], []  # default all num, no cat
+
+    def fit(self, data: pDF, num_features: list = None, cat_features: list = None):
         """
         Fit the GBM: feature selection + tree-based training.
 
@@ -726,18 +743,18 @@ class BinaryGBM(FitterModelBase[Fitter]):
         -------
         self
             Fitted instance ready for `predict_proba`.
-        """       
+        """
         num, cat = self._get_fes(data, num_features, cat_features)
-        cfg = EstimatorCfg(solver = self._solver, config = self._config)
+        cfg = EstimatorCfg(solver=self._solver, config=self._config)
         self._fitter = Fitter(self._params, cfg)
 
-        title = f'GBM {self._solver.upper()} training in progress'
-        with Spinner(title, show_timer=True).progress(self._params.verbose):        
+        title = f"GBM {self._solver.upper()} training in progress"
+        with Spinner(title, show_timer=True).progress(self._params.verbose):
             self._fitter.fit(data, num, cat)
-            
+
         return self
-    
-    def predict_proba(self, data:pDF) -> NDArray:
+
+    def predict_proba(self, data: pDF) -> NDArray:
         """
         Predict event probabilities.
 
@@ -765,8 +782,11 @@ class BinaryGBM(FitterModelBase[Fitter]):
         list
             Feature names, most important first.
         """
-        return self.fitter.ordered_features    
+        return self.fitter.ordered_features
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class LightBinaryGBM(BinaryGBM):
     """
@@ -816,8 +836,10 @@ class LightBinaryGBM(BinaryGBM):
     ...           cat_features=['segment'])
     >>> model.predict_proba(new_data)
     """
+
     _solver = TS.L
     _estimator = GBM[_solver]
+
 
 class ExtremeBinaryGBM(BinaryGBM):
     """
@@ -868,6 +890,9 @@ class ExtremeBinaryGBM(BinaryGBM):
     >>> model.fit(data, num_features=['score_WOE', 'util_WOE'])
     >>> model.predict_proba(new_data)
     """
+
     _solver = TS.X
     _estimator = GBM[_solver]
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

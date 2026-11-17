@@ -2,7 +2,7 @@
 Data Encoding Application — Bridge to ML Training.
 
 This module implements the final step of the encoding phase, responsible
-for applying all previously trained encodings (standardize, WOE transformation) 
+for applying all previously trained encodings (standardize, WOE transformation)
 to produce standardized train/test samples ready for model training.
 
 Pipeline Position
@@ -32,28 +32,23 @@ train/test leakage from the encoding step and ensures the model
 sees consistent representations.
 """
 
-from ...deps.struct             import  dataclass
-from ...deps.data               import  pa, pDF, pSe
-from ...deps.types              import  Callable
+from ...deps.struct import dataclass
+from ...deps.data import pa, pDF, pSe
+from ...deps.types import Callable
 
-from ...core.base               import  (
-                                        FitterDataBase, 
-                                        FitterModelBase
-                                        )
-from ...core.factory            import  Dataclass
-from ...core.foundation         import  (
-                                        AigParam, 
-                                        AigStop
-                                        )
-from ...core.interop            import  Pd, Arrow
-from ...core.base.adapter       import  ModelAdapterBase
-from ...core.standard           import  UniType
+from ...core.base import FitterDataBase, FitterModelBase
+from ...core.factory import Dataclass
+from ...core.foundation import AigParam, AigStop
+from ...core.interop import Pd, Arrow
+from ...core.base.adapter import ModelAdapterBase
+from ...core.standard import UniType
 
-from ...ml.sampling             import  Sampling
-from ...display.rgb             import  RgbANSI
+from ...ml.sampling import Sampling
+from ...display.rgb import RgbANSI
 
-from ..screen.fe_cleaner        import  TransResCols as CleanerFes
-from ..encode.woe_encoder       import  TransResCols as WoEFes
+from ..screen.fe_cleaner import TransResCols as CleanerFes
+from ..encode.woe_encoder import TransResCols as WoEFes
+
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → TRAININING → SAMPLES ENCODING
@@ -67,10 +62,12 @@ class EncoderParamsBase:
     ----------
     test_size : float, default=0.3
         Fraction of data allocated to the test set (used only when
-        no explicit test set is provided).        
+        no explicit test set is provided).
         - Special case 0: returns test_set = None - no data split
     """
-    test_size:      float = 0.3
+
+    test_size: float = 0.3
+
 
 @Dataclass.base(update_specs=dict(slots=False))
 class EncoderParamsCfg:
@@ -82,7 +79,7 @@ class EncoderParamsCfg:
     fe_cleaner : ModelAdapterBase
         Trained feature cleaner.
     woe_encoder : ModelAdapterBase, default=None
-        Optional trained WOE encoder. Applied to all features to produce 
+        Optional trained WOE encoder. Applied to all features to produce
         the final WOE representation.
         Default None will skip WOE feature encoding.
     time_var : str, default=None
@@ -90,13 +87,16 @@ class EncoderParamsCfg:
         chronologically (most recent `test_size` fraction = test).
         If None or not present in data, a random split is used.
     """
-    fe_cleaner:     ModelAdapterBase
-    woe_encoder:    ModelAdapterBase = None
-    time_var:       str = None
+
+    fe_cleaner: ModelAdapterBase
+    woe_encoder: ModelAdapterBase = None
+    time_var: str = None
+
 
 @Dataclass.base
 class EncoderParams(EncoderParamsBase, EncoderParamsCfg):
     """Fitter params input design."""
+
 
 @Dataclass.base
 class EncoderStats:
@@ -109,10 +109,14 @@ class EncoderStats:
         {'n_observations': int, 'n_features': int, 'dst': describe()}
     test : dict | None
         Same structure for the test sample if sample test_size > 0.
-    """    
+    """
+
     train: dict
-    test:  dict|None
+    test: dict | None
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class EncoderInput:
@@ -133,10 +137,12 @@ class EncoderInput:
         WOE feature column names to include. If None, all WOE features
         from the encoder output are used.
     """
-    train_set: pDF 
-    test_set:  pDF|None = None
-    train_woe: pDF|None = None
-    woe_features: list|None = None
+
+    train_set: pDF
+    test_set: pDF | None = None
+    train_woe: pDF | None = None
+    woe_features: list | None = None
+
 
 @Dataclass.base
 class EncoderResult:
@@ -155,38 +161,48 @@ class EncoderResult:
         Ordered feature column names (model input order).
     dtypes : pSe
         Expected dtypes per column (for downstream verification).
-    """    
+    """
+
     train_set: pDF
-    test_set:  pDF|None
-    features:  list
-    dtypes:    pSe
+    test_set: pDF | None
+    features: list
+    dtypes: pSe
+
 
 @dataclass
 class _Woe:
     """Internal: WOE-encoded data carrier."""
-    data: pDF|None = None
-    fes: list|None = None 
+
+    data: pDF | None = None
+    fes: list | None = None
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class _Predictor:
     """
     Encapsulated access to trained model adapters.
 
     Provides a uniform interface to invoke the trained preprocessing,
-    and WOE encoding models, decoupling the encoder logic from the 
+    and WOE encoding models, decoupling the encoder logic from the
     specific adapter implementations.
     """
-    def __init__(self, prm: EncoderParams):
-        self.prm  = prm
 
-    def pre(self, data:pDF):
+    def __init__(self, prm: EncoderParams):
+        self.prm = prm
+
+    def pre(self, data: pDF):
         """Apply trained feature cleaner."""
         return self.prm.fe_cleaner.predict(data)
 
-    def woe(self, data:pDF):
+    def woe(self, data: pDF):
         """Apply trained WOE encoder (produce WOE values per feature)."""
         return self.prm.woe_encoder.predict(data)
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Fitter(FitterDataBase):
     """
@@ -205,7 +221,8 @@ class Fitter(FitterDataBase):
     params : EncoderParams
         Trained adapters and pipeline flags.
     """
-    stats:  EncoderStats = None
+
+    stats: EncoderStats = None
 
     def __init__(self, params: EncoderParams):
         self.prm = params
@@ -214,64 +231,68 @@ class Fitter(FitterDataBase):
 
     def _set_dtypes(self):
         cols: CleanerFes = self.prm.fe_cleaner.cols
-        self.trained_dtypes = cols.vars_types    
+        self.trained_dtypes = cols.vars_types
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
+
     def _get_woe_fes(self) -> list:
         cols: WoEFes = self.prm.woe_encoder.cols
         return cols.vars_woe
 
-    def _get_woe(self, inputs: EncoderInput, is_train: bool) -> _Woe:        
+    def _get_woe(self, inputs: EncoderInput, is_train: bool) -> _Woe:
         fes = inputs.woe_features
 
         if not is_train:
-            return _Woe(fes = fes)
-        
-        return _Woe(data = inputs.train_woe, fes = fes)
-            
-    def _encode_data(self, d:pDF, inputs:EncoderInput, is_train:bool) -> _Woe:
+            return _Woe(fes=fes)
+
+        return _Woe(data=inputs.train_woe, fes=fes)
+
+    def _encode_data(self, d: pDF, inputs: EncoderInput, is_train: bool) -> _Woe:
         """
         Apply WOE encoding to the data (or use pre-computed).
 
         If pre-computed WOE is available (train), skips the encoding
-        step. Otherwise, invokes the trained WOE encoder.        
+        step. Otherwise, invokes the trained WOE encoder.
         """
         woe = self._get_woe(inputs, is_train)
         fes = self._get_woe_fes()
 
-        if woe.data is None: woe.data = self.predict.woe(d)
-        if woe.fes  is None: woe.fes  = [x for x in fes if x in woe.data.columns]
+        if woe.data is None:
+            woe.data = self.predict.woe(d)
+        if woe.fes is None:
+            woe.fes = [x for x in fes if x in woe.data.columns]
 
         return woe
-   
-    def _extend_data(self, d:pDF, inputs:EncoderInput, is_train:bool = False) -> pDF:
+
+    def _extend_data(self, d: pDF, inputs: EncoderInput, is_train: bool = False) -> pDF:
         """Extend data by encoded WOE feature data."""
         if self.prm.woe_encoder is None:
             return d
         woe = self._encode_data(d, inputs, is_train)
         return Pd.concat([d, woe.data[woe.fes]], axis=1)
-    # ─────────────────────────────────────────────────────────────────────────────────────────────    
-    
-    def _fx_preprocess(self, data:tuple, fx:Callable) -> tuple:
+
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def _fx_preprocess(self, data: tuple, fx: Callable) -> tuple:
         res = []
         for d in data:
             res.append(fx(d))
         return tuple(res)
 
-    def _is_preprocess(self, data:tuple[pDF]) -> bool:
+    def _is_preprocess(self, data: tuple[pDF]) -> bool:
         for d in data:
-            dt   = d.dtypes
-            tt   = self.trained_dtypes
+            dt = d.dtypes
+            tt = self.trained_dtypes
             cols = [x for x in d.columns if x in tt.index]
             diff = [x for x in cols if dt[x] not in UniType.get_group(tt[x])]
 
             is_diff = bool(diff)
             if is_diff:
                 break
-        
+
         return is_diff
 
-    def _preprocess(self, *data) -> tuple|pDF:
+    def _preprocess(self, *data) -> tuple | pDF:
         """
         Apply the full preprocessing pipeline to one or more datasets.
 
@@ -292,7 +313,7 @@ class Fitter(FitterDataBase):
 
         return data[0] if len(data) == 1 else data
 
-    def _split_data(self, d:pDF, test_size:float=None) -> tuple[pDF, pDF]:
+    def _split_data(self, d: pDF, test_size: float = None) -> tuple[pDF, pDF]:
         """
         Split data into train/test.
 
@@ -315,7 +336,9 @@ class Fitter(FitterDataBase):
             return Sampling(size).time_split(d, time_var=self.prm.time_var)
         return Sampling(size).train_valid_split(d)
 
-    def _get_tt_data(self, inputs: EncoderInput, test_size:float=None) -> tuple[pDF, pDF|None]:
+    def _get_tt_data(
+        self, inputs: EncoderInput, test_size: float = None
+    ) -> tuple[pDF, pDF | None]:
         """
         Resolve the train/test data pair.
 
@@ -335,53 +358,56 @@ class Fitter(FitterDataBase):
         """
         if inputs.test_set is not None:
             return self._preprocess(inputs.train_set, inputs.test_set)
-        
+
         d = self._preprocess(inputs.train_set)
         if test_size == 0:
             return d, None
         return self._split_data(d, test_size)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
-    
-    def _verify(self, inputs:EncoderInput) -> None:
+
+    def _verify(self, inputs: EncoderInput) -> None:
         """Safety gate: verify input data dtypes match the trained schema."""
-        schema  = Dataclass.schema(EncoderInput)
-        verify  = (schema.train_set, schema.test_set)
+        schema = Dataclass.schema(EncoderInput)
+        verify = (schema.train_set, schema.test_set)
         trained = self.trained_dtypes.index.to_list()
 
         for name, data in inputs.items():
             if name not in verify or data is None:
                 continue
-            
+
             cols = [x for x in data.columns if x in trained]
 
             if not cols:
                 AigStop.custom(
-                    RgbANSI.bold_red(f'► AIG SAFETY ► Inconsistent {name} data dtypes '
-                    '► Non of provided columns were present in training data')+
-                    f'\n► Supported columns: \n{trained}', 
-                    red=False, bold=False
+                    RgbANSI.bold_red(
+                        f"► AIG SAFETY ► Inconsistent {name} data dtypes "
+                        "► Non of provided columns were present in training data"
+                    )
+                    + f"\n► Supported columns: \n{trained}",
+                    red=False,
+                    bold=False,
                 )
-    
+
     def _get_inputs(self, inputs: EncoderInput | pDF | pa.Table) -> EncoderInput:
-        """Normalize and verify the input."""        
+        """Normalize and verify the input."""
         if isinstance(inputs, pa.Table):
             inputs = Arrow.to_pandas(inputs)
         if isinstance(inputs, pDF):
             inputs = EncoderInput(train_set=inputs)
         self._verify(inputs)
         return inputs
-    
+
     @staticmethod
-    def get_stats(data:pDF|None) -> dict | None:
+    def get_stats(data: pDF | None) -> dict | None:
         """Compute shape and description statistics for a sample."""
         if data is None:
             return
         s = data.shape
-        return dict(n_observations = s[0], n_features = s[1], dst = data.describe())
-    
-    def process(self, 
-        inputs: EncoderInput | pDF | pa.Table,
-        test_size: float = None
+        return dict(n_observations=s[0], n_features=s[1], dst=data.describe())
+
+    def process(
+        self, inputs: EncoderInput | pDF | pa.Table, test_size: float = None
     ) -> tuple[pDF, pDF | None]:
         """
         Execute the full encoding pipeline and produce train/test samples.
@@ -399,7 +425,7 @@ class Fitter(FitterDataBase):
             Input data (raw features, pre-WOE).
         test_size : float, default=None
             Fraction of data allocated to the test set (used only when
-            no explicit test set is provided).        
+            no explicit test set is provided).
             - None: uses value set during init
             - 0: returns test_set = None - no data split
 
@@ -407,20 +433,23 @@ class Fitter(FitterDataBase):
         -------
         tuple[pDF, pDF]
             (train, test) — ML-ready samples with WOE features.
-        """        
+        """
         inputs_ = self._get_inputs(inputs)
         train, test = self._get_tt_data(inputs_, test_size)
         train = self._extend_data(train, inputs_, is_train=True)
-        
+
         if test is not None:
             test = self._extend_data(test, inputs_)[train.columns]
 
         self.stats = EncoderStats(
-            train  = self.get_stats(train),
-            test   = self.get_stats(test),
+            train=self.get_stats(train),
+            test=self.get_stats(test),
         )
         return train, test
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
 
 class DataEncoderProcessor(FitterModelBase[Fitter]):
     """
@@ -445,8 +474,8 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
     **Single source of truth**: The same trained adapters are applied
     to both train and test, eliminating encoding-related leakage.
 
-    **Dtype safety**: Input dtypes are verified against the trained 
-    schema to catch silent mismatches. Trained feature cleaner 
+    **Dtype safety**: Input dtypes are verified against the trained
+    schema to catch silent mismatches. Trained feature cleaner
     normalizes dtypes when any mismatch is present.
 
     **Native dtypes output**: Arrow-backed dtypes are converted to
@@ -475,13 +504,12 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
     >>> result.features[:5]  # ['target', 'revenue_WOE', ...]
     """
 
-    def __init__(self, *args, params: dict|EncoderParams = None, **kwargs):
+    def __init__(self, *args, params: dict | EncoderParams = None, **kwargs):
         self._params = AigParam.param_ar_kw(EncoderParams, params, args, kwargs)
-        self._fitter = Fitter(params = self._params)
-    
-    def transform(self, 
-        inputs: EncoderInput | pDF | pa.Table, 
-        test_size: float = None
+        self._fitter = Fitter(params=self._params)
+
+    def transform(
+        self, inputs: EncoderInput | pDF | pa.Table, test_size: float = None
     ) -> EncoderResult:
         """
         Produce ML-ready train/test samples from raw data.
@@ -502,10 +530,10 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
             - An EncoderInput with pre-computed WOE (skip encoding).
         test_size : float, default=None
             Fraction of data allocated to the test set (used only when
-            no explicit test set is provided).        
+            no explicit test set is provided).
             - None: uses value set during init
             - 0: returns test_set = None - no data split
-            
+
         Returns
         -------
         EncoderResult
@@ -524,9 +552,8 @@ class DataEncoderProcessor(FitterModelBase[Fitter]):
         dt = train.dtypes
 
         return EncoderResult(
-            train_set = train,            
-            test_set  = test,
-            features  = dt.index.to_list(),
-            dtypes    = dt
+            train_set=train, test_set=test, features=dt.index.to_list(), dtypes=dt
         )
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬

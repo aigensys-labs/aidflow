@@ -34,10 +34,10 @@ are stable enough to retain.
 
 Role in the Pipeline
 --------------------
-This is a **data encoding** stage. It consumes raw categorical 
-features and produces merged, stable category features, which 
-are then fed into the WOE encoding stage (next in the pipeline). 
-The output is the category encoding maps that all downstream 
+This is a **data encoding** stage. It consumes raw categorical
+features and produces merged, stable category features, which
+are then fed into the WOE encoding stage (next in the pipeline).
+The output is the category encoding maps that all downstream
 GLM agents operate on.
 
 Dependencies
@@ -46,48 +46,37 @@ Requires the Feature Cleaner stage to be completed (categorical
 features should be type-standardized before encoding).
 """
 
-from ...deps.common             import  wraps
-from ...deps.data               import  pDF
+from ...deps.common import wraps
+from ...deps.data import pDF
 
-from ...core.parameters         import  (
-                                        PRM,
-                                        AIGFLOW
-                                        )
-from ...core.registry           import  (
-                                        FitRegister, 
-                                        FitRegOpt,   
-                                        DashRegister,  
-                                        RegGet
-                                        )
-from ...core.base               import  (
-                                        FitterBase,
-                                        TransformerBase,
-                                        ModelProcessorBase,
-                                        ModelInput,
-                                        ModelResult,
-                                        ModelBase,  
-                                        OptionUIBase,
-                                        ModelUIBase
-                                        )
-from ...core.factory            import  (
-                                        Dataclass,
-                                        DictClass
-                                        )
-from ...core.foundation         import  AigParam
-from ...core.io                 import  ModelIO
+from ...core.parameters import PRM, AIGFLOW
+from ...core.registry import FitRegister, FitRegOpt, DashRegister, RegGet
+from ...core.base import (
+    FitterBase,
+    TransformerBase,
+    ModelProcessorBase,
+    ModelInput,
+    ModelResult,
+    ModelBase,
+    OptionUIBase,
+    ModelUIBase,
+)
+from ...core.factory import Dataclass, DictClass
+from ...core.foundation import AigParam
+from ...core.io import ModelIO
 
-from .fitters.cat_standardizer  import  (
-                                        CategoricalEncoder,
-                                        FitParamsBase,
-                                        FitParamsCfg,
-                                        FitResult,
-                                        FitStats
-                                        )
+from .fitters.cat_standardizer import (
+    CategoricalEncoder,
+    FitParamsBase,
+    FitParamsCfg,
+    FitResult,
+    FitStats,
+)
 
 MODEL = AIGFLOW.Encoding.cat_encoder
-FREG  = FitRegister(MODEL)
-DREG  = DashRegister(MODEL)
-DESC  = 'AIG DATA STAGE ► CATEGORICAL ENCODING ► Transform Categorical Features to Encoded Standard'
+FREG = FitRegister(MODEL)
+DREG = DashRegister(MODEL)
+DESC = "AIG DATA STAGE ► CATEGORICAL ENCODING ► Transform Categorical Features to Encoded Standard"
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -95,7 +84,10 @@ DESC  = 'AIG DATA STAGE ► CATEGORICAL ENCODING ► Transform Categorical Featu
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class REG(DictClass):
     """Fit Models Registry Name."""
-    AIG: str = 'CatEncoder'
+
+    AIG: str = "CatEncoder"
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
@@ -105,60 +97,66 @@ class REG(DictClass):
 @Dataclass.mapping
 class CatParamsMapping:
     """Model - Inner Fitter params mapping to Config defaults."""
+
     params = Dataclass.schema(FitParamsBase)
-    setup  = {
-        PRM.ENCODE.mbs.param  : (params.min_bin_share, 'Minimum Bin Size'    ),
-        PRM.ENCODE.gini.param : (params.gini_cutoff,   'Gini Feature Cutoff' ),
-    }  
+    setup = {
+        PRM.ENCODE.mbs.param: (params.min_bin_share, "Minimum Bin Size"),
+        PRM.ENCODE.gini.param: (params.gini_cutoff, "Gini Feature Cutoff"),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class FitOptions(FitRegOpt):
     """
     Model-to-Fitter Registration Layer.
-    
+
     This class acts as the bridge between the high-level Model and the low-level Fitter.
-    It utilizes a registration pattern to ensure that adding new prediction 
+    It utilizes a registration pattern to ensure that adding new prediction
     algorithms only requires a new entry here, keeping the top-layer API stable.
-    """ 
+    """
 
     @FREG.register(REG.AIG)
     class CategoricalEncoderFitter(FitParamsBase):
 
-        config: dict|FitParamsCfg = FitParamsCfg(
-            target   = None,
-            verbose  = True
-        )
+        config: dict | FitParamsCfg = FitParamsCfg(target=None, verbose=True)
 
         @property
         def _model(self) -> CategoricalEncoder:
-            return self.model        
-        
-        def _build(self, params:FitParamsBase, config:dict) -> CategoricalEncoder:            
-            setup  = dict(params) | config
+            return self.model
+
+        def _build(self, params: FitParamsBase, config: dict) -> CategoricalEncoder:
+            setup = dict(params) | config
             return CategoricalEncoder(**setup)
 
         def get_result(self) -> FitResult:
             return self._model.result
 
         def get_stats(self) -> FitStats:
-            return self._model.stats   
+            return self._model.stats
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 @Dataclass.base
 class FitParams(FitParamsBase):
     """Fitter params input design."""
+
     cat_features: list
+
 
 class Fitter(FitterBase[FitParams]):
     """
-    The primary point of ML training. The low-level compute layer responsible 
-    for passing parametrization to chosen internal fitter. 
-    """       
-    
-    FREG = FREG
-    DREG = DREG    
+    The primary point of ML training. The low-level compute layer responsible
+    for passing parametrization to chosen internal fitter.
+    """
 
-    def fit(self, data:pDF): 
+    FREG = FREG
+    DREG = DREG
+
+    def fit(self, data: pDF):
         """
         Analyze and learn categorical encoding.
 
@@ -168,32 +166,33 @@ class Fitter(FitterBase[FitParams]):
         """
         if self._fit_no_model(MODEL, self.params.cat_features, FitResult):
             return
-        
-        self.model.fit(data, self.params.cat_features)        
+
+        self.model.fit(data, self.params.cat_features)
         self.result: FitResult = self.model.get_result()
-        self.stats:  FitStats  = self.model.get_stats()
+        self.stats: FitStats = self.model.get_stats()
         self._init_dash()
 
         return self
-    
-    def transform(self, data:pDF) -> pDF:
-        """ 
+
+    def transform(self, data: pDF) -> pDF:
+        """
         Transform Categorical Features to Encoding Space.
 
         Parameters
         ----------
         data : New Data to apply trained transformation.
-                
+
         Returns
         -------
         Transformed Data with transformed numerical features.
         """
         if self._is_no_model:
-            return pDF() 
-                
-        return self.model.transform(data)
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+            return pDF()
 
+        return self.model.transform(data)
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -202,49 +201,54 @@ class Fitter(FitterBase[FitParams]):
 @Dataclass.base
 class TransResCols:
     """Transfomer cols output design."""
-    encoding:       dict
-    vars_cat:       list
-    vars_selected:  list
-    vars_dropped:   list
-    vars_map:       dict
+
+    encoding: dict
+    vars_cat: list
+    vars_selected: list
+    vars_dropped: list
+    vars_map: dict
+
 
 @Dataclass.base
 class TransResData:
     """Transfomer data output design."""
+
     data: pDF
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+
 
 class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
     """
     Transformer meta-processing between Fitter-Model.
-    
-    Handles the post-processing of Fitter results. Its primary role is to standardize 
+
+    Handles the post-processing of Fitter results. Its primary role is to standardize
     the raw output from various fitters into a unified TransResCols, TransResData
     format, enabling seamless transition regardless of the underlying fitter choice.
     """
 
     ModelFitter = Fitter
 
-    def _fit_data(self, inputs:"CatEncoderInput"): 
+    def _fit_data(self, inputs: "CatEncoderInput"):
         return inputs.train_set
 
     def _set_cols(self):
         res = self.fitter.result
         return TransResCols(
-            encoding        = res.encoding,
-            vars_cat        = res.vars_cat,
-            vars_selected   = list(res.vars_map),
-            vars_dropped    = res.vars_dropped,
-            vars_map        = res.vars_map
+            encoding=res.encoding,
+            vars_cat=res.vars_cat,
+            vars_selected=list(res.vars_map),
+            vars_dropped=res.vars_dropped,
+            vars_map=res.vars_map,
         )
-        
-    def transform(self, data:pDF) -> TransResData: 
-        """Model meta-transform."""
-        return TransResData(
-            data = self.fitter.transform(data)
-        )
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+    def transform(self, data: pDF) -> TransResData:
+        """Model meta-transform."""
+        return TransResData(data=self.fitter.transform(data))
+
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -253,38 +257,40 @@ class Transformer(TransformerBase[Fitter, FitStats, TransResCols]):
 class Processor(ModelProcessorBase[Transformer, TransResCols, TransResData]):
     """
     Logic Processor.
-    
-    Coordinates the lifecycle between FitChoice selection and Parameter resolution. 
-    It ensures that params and dependencies are correctly injected into the 
+
+    Coordinates the lifecycle between FitChoice selection and Parameter resolution.
+    It ensures that params and dependencies are correctly injected into the
     Transformer - Fitter before execution begins.
     """
-    
-    MODEL  = MODEL
-    DESC   = DESC
 
-    Config  = FitParamsCfg
+    MODEL = MODEL
+    DESC = DESC
+
+    Config = FitParamsCfg
     Mapping = CatParamsMapping
 
     ModelTransformer = Transformer
-    # ─────────────────────────────────────────────────────────────────────────────────────────────         
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def get_choice(self, fx_choice:str, inputs:"CatEncoderInput"):
+    def get_choice(self, fx_choice: str, inputs: "CatEncoderInput"):
         defaults = self.Config(
-            target  = AigParam.di(inputs.target,  self.setup.target),
-            verbose = AigParam.di(inputs.verbose, self.setup.verbose)
-        )     
+            target=AigParam.di(inputs.target, self.setup.target),
+            verbose=AigParam.di(inputs.verbose, self.setup.verbose),
+        )
         fx_config = self.get_fit_config(fx_choice, inputs.fx_config, defaults)
-        return RegGet.choice(fx_choice, fx_config)  
-    # ─────────────────────────────────────────────────────────────────────────────────────────────            
+        return RegGet.choice(fx_choice, fx_config)
 
-    def get_params(self, fx_choice:str, inputs:"CatEncoderInput", params:dict):
-        params = self.get_fit_params(fx_choice, inputs.fx_params, params)        
-        fit = FitParams(cat_features = inputs.cat_features, **params)
+    # ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    def get_params(self, fx_choice: str, inputs: "CatEncoderInput", params: dict):
+        params = self.get_fit_params(fx_choice, inputs.fx_params, params)
+        fit = FitParams(cat_features=inputs.cat_features, **params)
         return fit, self.setup
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
- 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → CAT → API
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -319,8 +325,10 @@ class CatEncoderInput(ModelInput):
     the Feature Cleaner stage typically resolves the categorical
     feature list before this stage.
     """
-    train_set:      pDF
-    cat_features:   list|None = None
+
+    train_set: pDF
+    cat_features: list | None = None
+
 
 @Dataclass.base
 class CatEncoderResult(ModelResult):
@@ -353,15 +361,19 @@ class CatEncoderResult(ModelResult):
         category). Used by the WOE encoder for probability
         computation.
     """
-    data:       pDF
-    features:   list
-    selected:   list
-    dropped:    list
-    fe_map:     dict
-    encoding:   dict
+
+    data: pDF
+    features: list
+    selected: list
+    dropped: list
+    fe_map: dict
+    encoding: dict
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-class CatEncoder(Processor, ModelBase):     
+
+class CatEncoder(Processor, ModelBase):
     """
     Categorical Feature Encoding — Rare Category Merging & WOE Preparation.
 
@@ -433,14 +445,12 @@ class CatEncoder(Processor, ModelBase):
     """
 
     def _save(self, save_path) -> None:
-        features = {
-            'features': self.cols.vars_cat,
-            'map': self.cols.vars_map
-        }
-        ModelIO(self.setup).save(MODEL, self, features, custom_path = save_path)         
+        features = {"features": self.cols.vars_cat, "map": self.cols.vars_map}
+        ModelIO(self.setup).save(MODEL, self, features, custom_path=save_path)
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def fit(self, inputs:CatEncoderInput, fx_choice:str = REG.AIG, **params):
+    def fit(self, inputs: CatEncoderInput, fx_choice: str = REG.AIG, **params):
         """
         Analyze and learn categorical encoding.
 
@@ -466,21 +476,19 @@ class CatEncoder(Processor, ModelBase):
             The fitted encoder instance.
         """
         verify = len(inputs.train_set)
-        
+
         self.choice = self.get_choice(fx_choice, inputs)
         self.params = self.get_params(fx_choice, inputs, params)
 
         self.processor.fit(
-            inputs,
-            fx_choice = self.choice,
-            params    = self.params, 
-            verify    = verify
+            inputs, fx_choice=self.choice, params=self.params, verify=verify
         )
         self._save(inputs.save_path)
         return self
+
     # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    def transform(self, data:pDF, subset:list=None) -> CatEncoderResult:
+    def transform(self, data: pDF, subset: list = None) -> CatEncoderResult:
         """
         Apply fitted category mappings to new data.
 
@@ -492,8 +500,8 @@ class CatEncoder(Processor, ModelBase):
         data : pDF
             New data containing the original categorical features.
         subset : list, optional
-            Specific features to process and return. 
-            Default = None: all trained features. 
+            Specific features to process and return.
+            Default = None: all trained features.
 
         Returns
         -------
@@ -502,48 +510,48 @@ class CatEncoder(Processor, ModelBase):
         """
         c_all = self.cols.vars_selected
         c_sub = subset or data.columns
-        cols  = [x for x in c_sub if x in c_all]
+        cols = [x for x in c_sub if x in c_all]
 
         miss = c_all if not cols else None
-        df = self.processor.transform(data[cols], verify = miss)
+        df = self.processor.transform(data[cols], verify=miss)
 
         return CatEncoderResult(
-            data     = df.data, 
-            features = self.cols.vars_cat,
-            selected = self.cols.vars_selected,
-            dropped  = self.cols.vars_dropped,
-            fe_map   = self.cols.vars_map,
-            encoding = self.cols.encoding
-        )    
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+            data=df.data,
+            features=self.cols.vars_cat,
+            selected=self.cols.vars_selected,
+            dropped=self.cols.vars_dropped,
+            fe_map=self.cols.vars_map,
+            encoding=self.cols.encoding,
+        )
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 # DATA → CAT → UI → OPTIONS
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 class OptionUI(OptionUIBase):
-    
-    title   = 'CATEGORICAL ENCODING PANEL'
-    split   = 1
+
+    title = "CATEGORICAL ENCODING PANEL"
+    split = 1
     Mapping = CatParamsMapping
-        
+
     def _min_share_constrain(self, value):
-        if value < 1: # Driven by param design in PRM
+        if value < 1:  # Driven by param design in PRM
             return 0  # shared param - either float or int
         return value
-    
+
     def options(self):
         super().options()
 
         mbs = PRM.ENCODE.mbs.param
-        desc = {
-            mbs: ['Minimum Bin Size', [0], self._min_share_constrain]
-        }     
-        self.wg.params_to_values(desc)        
-        self.wg.shared_param_link( {mbs: self.wg.shared_relat_abs} )        
-# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        desc = {mbs: ["Minimum Bin Size", [0], self._min_share_constrain]}
+        self.wg.params_to_values(desc)
+        self.wg.shared_param_link({mbs: self.wg.shared_relat_abs})
 
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
@@ -553,23 +561,26 @@ class CatEncoderUI(ModelUIBase):
     """
     AIG Flow Data Categorical Features Encoder.
     Model Wrapper to provide UI as Dynamic User Panel - Dashboard - Data Outputs.
-    
-    Analyzes categorical features and applies the chosen encoding 
-    strategy to convert categories into numerical representations.    
+
+    Analyzes categorical features and applies the chosen encoding
+    strategy to convert categories into numerical representations.
     """
 
-    Model  = CatEncoder
+    Model = CatEncoder
     Option = OptionUI
-        
+
     @wraps(CatEncoder.fit)
     def fit(self, *args, **kwargs):
         """Encoder fit UI wrapper."""
-        self.model_ui.fit(*args, ui_params = self._get_ui_fit_defaults(), **kwargs)  
-    
+        self.model_ui.fit(*args, ui_params=self._get_ui_fit_defaults(), **kwargs)
+
     @wraps(CatEncoder.transform)
     def transform(self, *args, **kwargs):
         return self.model.transform(*args, **kwargs)
-        
+
     @property
-    def fitted(self) -> CatEncoderResult: return self.model_ui.fitted
+    def fitted(self) -> CatEncoderResult:
+        return self.model_ui.fitted
+
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
