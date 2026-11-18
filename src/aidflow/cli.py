@@ -33,7 +33,7 @@ class _Utils:
         """Print the AIDflow version banner."""
         print(r"""
         ┌─────────────────────────────────────────────┐
-        │ AIDflow v3.0                                │
+        │ AIDflow v3.1                                │
         │ Scorecard Development                       │
         │ Automated Interactive Development Framework │
         └─────────────────────────────────────────────┘

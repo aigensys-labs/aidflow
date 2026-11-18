@@ -962,6 +962,26 @@ class PredictBaseGB:
         """
         return self._model.predict(self._align_X_transform_cat(X), **kwargs)
 
+    def decision_function(self, X: pDF | NDArray, **kwargs) -> NDArray:
+        """
+        Return the raw margin (decision) values for each sample.
+        Starting in LGB 4.7+. XGB fallback to positive proba class.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+
+        Returns
+        -------
+        array
+            Raw decision values (margins) at exog.
+        """
+        X_ = self._align_X_transform_cat(X)
+        if hasattr(self._model, "decision_function"):
+            return self._model.decision_function(X_, **kwargs)
+        # XGB fallback: positive-class probability is a valid ranking score
+        return self._model.predict_proba(X_, **kwargs)[:, 1]
+
     def shap_values(self, X: pDF | NDArray, **kwargs) -> NDArray:
         """Model shap values by TreeExplainer."""
         explainer = TreeExplainer(self._model, **kwargs)
@@ -1091,12 +1111,15 @@ class ModelBaseGB(PredictBaseGB, ModelBase):
         eval_set = kwargs.pop(es, None)
         if eval_set is None:
             return kwargs, [None] * 2
-        kwargs[es] = [(self._align_X_transform_cat(Xy[0]), Xy[1]) for Xy in eval_set]
-        # if self._solver == 'xgb':
-        #     kwargs[es] = [(self._transform_cat(Xy[0]), Xy[1]) for Xy in eval_set]
-        # if self._solver == 'lgb':
-        #     kwargs['eval_X'] = [self._transform_cat(Xy[0]) for Xy in eval_set]
-        #     kwargs['eval_y'] = [Xy[1] for Xy in eval_set]
+        if self._solver == "xgb":
+            kwargs[es] = [
+                (self._align_X_transform_cat(Xy[0]), Xy[1]) for Xy in eval_set
+            ]
+        if self._solver == "lgb":
+            X = tuple(self._align_X_transform_cat(Xy[0]) for Xy in eval_set)
+            y = tuple(Xy[1] for Xy in eval_set)
+            kwargs["eval_X"] = X if len(X) > 1 else X[0]
+            kwargs["eval_y"] = y if len(X) > 1 else y[0]
         return kwargs, eval_set[0]
 
     def _set_summary(self, Xy: list) -> None:

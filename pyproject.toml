@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aidflow"
-version = "3.0.12"
+version = "3.1.0"
 description = "Automated Interactive Development Framework | Scorecard DEV"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -53,9 +53,9 @@ dependencies = [
     "statsmodels >= 0.15",
     # gbm
     "xgboost >= 3.4",
-    "lightgbm == 4.6",
+    "lightgbm >= 4.7",
     "shap >= 0.54",
-    "optuna >= 5.0",
+    "optuna >= 5.1",
     "optuna-integration[lightgbm,xgboost]",
     # artifact io base
     "mgzip >= 0.2.5",

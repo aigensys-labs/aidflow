@@ -34,7 +34,7 @@ at instantiation: `worker(param1=1, param2=2)`.
 **`input_source`** : *`str = "file"`*
 <div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Defines the ingestion engine. Options:<br />• file:  Local or network file system (csv / gz / parquet / feather)<br />• spark: Distributed Spark DataFrame<br />• db:    SQL Database connection</div>
 
-**`input_cols`** : *`list = None`*
+**`input_cols`** : *`list | dict = None`*
 <div style={{"paddingLeft": "1.25rem", "marginTop": "0.25rem", "marginBottom": "1rem"}}>Explicit list of columns to load. Leave empty to load ALL available columns from the source.<br />Supports also syntax by dictionary:<br />• `{"remove": "COL1", "COL2"}`<br />• `{"keep": "COL1", "COL2"}`</div>
 
 **`flow_vars`** : *`list = None`*
